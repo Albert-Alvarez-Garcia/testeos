@@ -1,0 +1,6 @@
+visor bbdd/data/default-cards.json
+**/default-cards.json
+*.db
+*.sqlite
+node_modules/
+.env

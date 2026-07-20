@@ -1,0 +1,58 @@
+.
+├── apivisor
+│   ├── index.html
+│   ├── Magicthegathering-logo(1).svg
+│   ├── public
+│   │   ├── assets
+│   │   └── Magicthegathering-logo(1).svg
+│   ├── themes.css
+│   ├── version basica visor
+│   │   ├── index.html
+│   │   ├── Magicthegathering-logo(1).svg
+│   │   ├── public
+│   │   ├── themes.css
+│   │   ├── visor.css
+│   │   ├── visor.html
+│   │   └── visor.js
+│   ├── visor.css
+│   ├── visor.html
+│   └── visor.js
+├── data
+│   └── default-cards.json
+├── database
+│   └── init.sql
+├── docker-compose.yml
+├── index.html
+├── logo.txt
+├── magiclogo.txt
+├── magiclogo.txt~
+├── Magicthegathering-logo(1).svg
+├── Makefile
+├── public
+│   ├── assets
+│   │   ├── 1.webp
+│   │   ├── 2
+│   │   ├── 2webp
+│   │   ├── 3.webp
+│   │   └── Magicthegathering-logo(1).svg
+│   └── Magicthegathering-logo(1).svg
+├── scripts
+│   ├── download_bulk.py
+│   └── import_bulk.py
+├── themes.css
+├── tree.txt
+├── version basica visor
+│   ├── index.html
+│   ├── Magicthegathering-logo(1).svg
+│   ├── public
+│   │   ├── assets
+│   │   └── Magicthegathering-logo(1).svg
+│   ├── themes.css
+│   ├── visor.css
+│   ├── visor.html
+│   └── visor.js
+├── visor.css
+├── visor.html
+└── visor.js
+
+13 directories, 42 files

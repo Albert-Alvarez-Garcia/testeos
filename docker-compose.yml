@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  postgres_db:
+    image: postgres:15-alpine
+    container_name: card_binder_db
+    restart: always
+    environment:
+      POSTGRES_USER: binder_user
+      POSTGRES_PASSWORD: binder_password
+      POSTGRES_DB: card_binder_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: card_binder_api
+    restart: always
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=postgres_db
+      - DB_PORT=5432
+      - DB_NAME=card_binder_db
+      - DB_USER=binder_user
+      - DB_PASSWORD=binder_password
+    depends_on:
+      - postgres_db
+
+volumes:
+  pgdata:

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro — Workspace y Visor 2.5D</title>
+    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="visor-admin-25d.css">
+</head>
+<body>
+
+    <header>
+      <div class="logo-container">
+        <img src="Magicthegathering-logo(1).svg" alt="Magic: The Gathering Logo">
+        <span class="app-subtitle">Binder Pro</span>
+      </div>
+
+      <div class="header-search-container">
+          <input type="text" id="searchInput" placeholder="Buscar carta en la base de datos local (ej. Lightning)...">
+          <button id="searchBtn" class="visor-mode-btn" style="width: auto; padding: 0 1.25rem;">Buscar</button>
+      </div>
+    </header>
+
+    <main>
+        <div class="workspace-grid">
+            
+            <div class="visor-column">
+                <button id="toggleMagnifierBtn" class="visor-mode-btn">
+                    🔍 Modo Lupa: <span id="modeStatus">DESACTIVADO</span>
+                </button>
+
+                <div class="card-perspective-container" id="cardContainer">
+                    <div class="interactive-card" id="interactiveCard">
+                        <img id="dynamicCardImg" src="public/assets/capicarta.png" alt="Vista previa de la carta">
+                    </div>
+                    <div class="card-magnifier" id="cardMagnifier"></div>
+                </div>
+            </div>
+
+            <div class="details-column">
+                <h2>📋 Resultados de Búsqueda</h2>
+                <div class="results-list" id="resultsList">
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Realiza una búsqueda arriba para listar cartas...</p>
+                </div>
+
+                <h2>⚙️ Gestión de Inventario y Estado</h2>
+                <div class="inventory-form">
+                    <div>
+                        <label for="cardQuantity">Cantidad</label>
+                        <input type="number" id="cardQuantity" value="1" min="0">
+                    </div>
+                    <div>
+                        <label for="cardLocation">Ubicación / Mazo</label>
+                        <input type="text" id="cardLocation" placeholder="Ej. Archivador 1">
+                    </div>
+                    <div>
+                        <label for="cardState">Estado de la Carta</label>
+                        <select id="cardState">
+                            <option value="NM">Near Mint (NM)</option>
+                            <option value="LP">Lightly Played (LP)</option>
+                            <option value="MP">Moderately Played (MP)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="cardOwned">¿En posesión?</label>
+                        <select id="cardOwned">
+                            <option value="true">Sí</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <button class="save-btn" id="saveInventoryBtn">Guardar Cambios de Inventario</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="visor-admin-25d.js"></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('preferred-mana-theme') || 'default';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // Lógica de respaldo para el buscador y nocapi.png
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const cardImg = document.getElementById('dynamicCardImg');
+        const resultsList = document.getElementById('resultsList');
+
+        function triggerFallbackSearch() {
+          const query = searchInput.value.trim().toLowerCase();
+          
+          if (query === "") {
+            cardImg.src = "public/assets/capicarta.png";
+            resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Realiza una búsqueda arriba para listar cartas...</p>`;
+            return;
+          }
+
+          // Si la búsqueda no es "capibara" (o el término válido que maneje tu app), muestra nocapi
+          if (query !== "capibara" && query !== "capibara, arquitecta del código") {
+            cardImg.src = "public/assets/nocapi.png";
+            cardImg.alt = "Carta no encontrada";
+            resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Vaya... No se ha encontrado ninguna carta con ese nombre. ¡Prueba otra búsqueda!</p>`;
+          }
+        }
+
+        searchBtn.addEventListener('click', triggerFallbackSearch);
+        searchInput.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            triggerFallbackSearch();
+          }
+        });
+      });
+    </script>
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor 2.5D con Metadatos - Card Binder</title>
+    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="visor.css">
+    <style>
+        /* Estilos rápidos para maquetar el panel de info al lado (usando variables del tema) */
+        .visor-layout {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .card-info-panel {
+            width: 320px;
+            color: var(--text-main);
+            font-family: inherit;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .info-card {
+            background: var(--bg-app);
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 12px;
+        }
+        .info-card h3 {
+            margin: 0 0 0.5rem 0;
+            color: var(--accent);
+            font-size: 1.1rem;
+        }
+        .info-card p {
+            margin: 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .price-tag {
+            color: #4ade80;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="visor-wrapper" style="display: flex; flex-direction: column; align-items: center; gap: 1.5rem; padding-top: 2rem;">
+        
+        <!-- Botón de control de la lupa -->
+        <button id="toggleMagnifierBtn" class="visor-mode-btn">
+            🔍 Modo Lupa: <span id="modeStatus">DESACTIVADO</span>
+        </button>
+
+        <!-- Contenedor principal en fila: Visor + Panel de Info -->
+        <div class="visor-layout">
+            
+            <div class="card-perspective-container" id="cardContainer">
+                <div class="interactive-card" id="interactiveCard">
+                    <img id="dynamicCardImg" src="" alt="Carta desde Scryfall">
+                </div>
+                <div class="card-magnifier" id="cardMagnifier"></div>
+            </div>
+
+            <!-- Panel de Metadatos de la API -->
+        <!-- Panel de Metadatos de la API -->
+        <div class="card-info-panel">
+            <div class="info-card">
+                <h3 id="cardName">Cargando nombre...</h3>
+                <p id="cardType" style="font-style: italic; color: var(--text-main); margin-bottom: 0.5rem;"></p>
+            </div>
+            <div class="info-card">
+                <h3 style="font-size: 0.95rem; color: var(--text-main);">Texto de reglas</h3>
+                <p id="cardText">Esperando respuesta de Scryfall...</p>
+            </div>
+            <div class="info-card" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.9rem;">Artista:</span>
+                    <span id="cardArtist" style="font-size: 0.9rem; color: var(--text-main); font-weight: 500;">-</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.9rem;">Rareza:</span>
+                    <span id="cardRarity" style="font-size: 0.9rem; text-transform: uppercase; font-weight: bold; color: var(--accent);">-</span>
+                </div>
+            </div>
+            <div class="info-card" style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="font-size: 0.9rem;">Precio estimado:</span>
+                <span id="cardPrice" class="price-tag">- €</span>
+            </div>
+        </div>
+
+        </div>
+
+    </div>
+
+    <!-- Script para heredar el tema de maná guardado desde el index -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('preferred-mana-theme') || 'default';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        });
+    </script>
+
+    <script src="visor.js"></script>
+</body>
+</html>

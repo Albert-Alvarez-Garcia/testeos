@@ -1,0 +1,25 @@
+                  id                  |                                                                     name                                                                      
+--------------------------------------+-----------------------------------------------------------------------------------------------------------------------------------------------
+ d953bbf0-8fd7-44ab-89ca-2acaad0817bb | Forest
+ 698bf721-f3e1-4c62-9f95-8168c0d2897e | Fury Sliver
+ c2fb657a-2685-49c5-a38f-ed1c4ec105cf | Kor Outfitter
+ 039d7210-b225-4443-a25e-ef431fac92fc | Siren Lookout
+ 1332e881-eeda-4e40-859d-77fd8260ae20 | Web
+ 8699dd0d-34ef-4078-b549-4e551db0a7d2 | Wastewood Verge
+ 23c678e1-cdfd-484d-b058-6d8df6aa38ba | Surge of Brilliance
+ cf5fb57f-b172-4b38-ba57-771438b4269c | Obyra's Attendants // Desperate Parry
+ c0931f6a-b09c-47cc-a758-659160b0ae79 | Venerable Knight
+ 3c4bd774-c9ce-4426-8e64-30f2f6f72d87 | Wildcall
+ 4e2070a3-8e72-4df2-8355-4bf2a4fcc739 | Fell Beast's Shriek // Fell Beast's Shriek
+ 49f461f1-8264-4114-8dec-91421ab8a53f | Mystic Skyfish
+ 523393a6-6681-4b75-90ff-bb674388583d | Swamp
+ 8ce42d9b-c044-425d-b802-148473260905 | Battlewing Mystic
+ a04e10ca-8521-4ae7-af3d-9189e86ce906 | Birds of Paradise
+ 8e4aa09e-45ca-4e51-886f-4c63b3731e6e | Bronze Horse
+--More--           614e720e-a31e-4a39-8bcc-4e85c698bcea | Wall of Vipers
+--More--           afdbdf5d-62e6-44f3-960b-af92b1a64e21 | Admiral Beckett Brass
+--More--           6868e6b2-0fac-4d17-bb99-8420ddbc4931 | Ragged Playmate
+--More--           6391fd08-4402-4285-9cf1-2e83ee672544 | Mulch
+--More--          (Enter:next line Space:next page Q:quit R:show the rest)                                                         606623e1-30cf-41b3-9738-f3a29941d1c9 | Whiptongue Hydra
+--More--          (Enter:next line Space:next page Q:quit R:show the rest)
+Cancel request sent

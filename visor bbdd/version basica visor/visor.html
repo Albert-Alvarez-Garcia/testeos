@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor 2.5D con Lupa Conmutable - Card Binder</title>
+    <link rel="stylesheet" href="visor.css">
+</head>
+<body>
+
+    <div class="visor-wrapper" style="display: flex; flex-direction: column; align-items: center; gap: 1.5rem;">
+        
+        <!-- Botón de control de la lupa -->
+        <button id="toggleMagnifierBtn" class="visor-mode-btn">
+            🔍 Modo Lupa: <span id="modeStatus">DESACTIVADO</span>
+        </button>
+
+        <div class="card-perspective-container" id="cardContainer">
+            <div class="interactive-card" id="interactiveCard">
+                <img src="public/assets/2webp" alt="Buster Sword">
+            </div>
+            <div class="card-magnifier" id="cardMagnifier"></div>
+        </div>
+
+    </div>
+
+    <script src="visor.js"></script>
+</body>
+</html>

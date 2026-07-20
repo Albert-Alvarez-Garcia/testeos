@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro — Workspace</title>
+    <link rel="stylesheet" href="themes.css">
+</head>
+<body>
+
+<header>
+  <div class="logo-container">
+    <img src="Magicthegathering-logo(1).svg" alt="Magic: The Gathering Logo">
+    <span class="app-subtitle">Binder Pro</span>
+  </div>
+
+  <div class="theme-selector">
+    <label for="themeSelect">Color de Maná:</label>
+    <select id="themeSelect" onchange="changeTheme(this.value)" aria-label="Seleccionar tema de maná">
+      <option value="default">✨ Clásico / Neutro (Default)</option>
+      <option value="blue">🔵 Éter Azul (Island)</option>
+      <option value="white">⚪ Pergamino Blanco (Plains)</option>
+      <option value="black">⚫ Sombra Negra (Swamp)</option>
+      <option value="red">🔴 Fuego Rojo (Mountain)</option>
+      <option value="green">🟢 Esencia Verde (Forest)</option>
+    </select>
+  </div>
+</header>
+
+<main>
+  <div class="card-grid">
+    <!-- Carta 1: Betor -->
+    <article class="card-item">
+      <div class="card-image-wrapper">
+        <img src="public/assets/1.webp" alt="Betor, Kin to All" loading="lazy">
+      </div>
+      <div class="card-content">
+        <span class="card-type">Criatura Legendaria — Espíritu Dragón</span>
+        <h2>Betor, Kin to All</h2>
+        <p class="card-desc">Al inicio de tu paso final, si las criaturas que controlas tienen resistencia total de 10 o más, roba una carta y desata el poder del dragón.</p>
+      </div>
+    </article>
+
+    <!-- Carta 2: Buster Sword -->
+    <article class="card-item">
+      <div class="card-image-wrapper">
+        <img src="public/assets/2webp" alt="Buster Sword" loading="lazy">
+      </div>
+      <div class="card-content">
+        <span class="card-type">Artefacto — Equipo</span>
+        <h2>Buster Sword</h2>
+        <p class="card-desc">La criatura equipada obtiene +3/+2 y habilita interacciones de robo masivo al impactar directamente al oponente.</p>
+      </div>
+    </article>
+
+    <!-- Carta 3: Engrampacráneo -->
+    <article class="card-item">
+      <div class="card-image-wrapper">
+        <img src="public/assets/3.webp" alt="Engrampacráneo" loading="lazy">
+      </div>
+      <div class="card-content">
+        <span class="card-type">Artefacto — Equipo</span>
+        <h2>Engrampacráneo</h2>
+        <p class="card-desc">La criatura equipada obtiene +1/-1. Siempre que la criatura equipada muera, roba dos cartas y recarga tu mano.</p>
+      </div>
+    </article>
+  </div>
+</main>
+
+<script>
+  function changeTheme(themeName) {
+    document.documentElement.setAttribute('data-theme', themeName);
+    localStorage.setItem('preferred-mana-theme', themeName);
+  }
+
+  // Cargar la preferencia de tema al iniciar (con fallback a 'default')
+  window.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('preferred-mana-theme') || 'default';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.getElementById('themeSelect').value = savedTheme;
+  });
+</script>
+
+</body>
+</html>
