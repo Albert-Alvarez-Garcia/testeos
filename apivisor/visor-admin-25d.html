@@ -32,9 +32,10 @@
         </div>
       </header>
 
-    <main>
+      <main>
         <div class="workspace-grid">
             
+            <!-- Columna Izquierda: Visor 2.5D + Datos integrados -->
             <div class="visor-column">
                 <button id="toggleMagnifierBtn" class="visor-mode-btn">
                     🔍 Modo Lupa: <span id="modeStatus">DESACTIVADO</span>
@@ -46,8 +47,18 @@
                     </div>
                     <div class="card-magnifier" id="cardMagnifier"></div>
                 </div>
+
+                <!-- Panel integrado único para los datos extra de la carta -->
+                <div class="visor-card-details" id="visorCardDetails" style="margin-top: 1rem; padding: 0.85rem 1rem; background: var(--bg-card, #1e1e1e); border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-main);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <span id="visorCardName" style="font-weight: 600; font-size: 1rem;">Selecciona una carta</span>
+                        <span id="visorCardMana" style="font-family: monospace; font-size: 0.9rem; color: var(--primary-color);"></span>
+                    </div>
+                    <div id="visorCardType" style="font-size: 0.8rem; color: var(--text-muted);">—</div>
+                </div>
             </div>
 
+            <!-- Columna Derecha: Resultados y Gestión de Inventario -->
             <div class="details-column">
                 <h2>📋 Resultados de Búsqueda</h2>
                 <div class="results-list" id="resultsList">

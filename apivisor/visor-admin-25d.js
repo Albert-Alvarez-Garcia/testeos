@@ -198,6 +198,15 @@ function seleccionarCarta(cardData) {
         cardImage.src = "public/assets/nocapi.png";
     }
 
+    // --- NUEVO: Rellenar los datos extra en el visor 2.5D ---
+    const visorName = document.getElementById("visorCardName");
+    const visorMana = document.getElementById("visorCardMana");
+    const visorType = document.getElementById("visorCardType");
+    
+    if (visorName) visorName.textContent = cardData.name || "Sin nombre";
+    if (visorMana) visorMana.textContent = cardData.mana_cost || "";
+    if (visorType) visorType.textContent = cardData.type_line || "";
+
     // Rellenar datos de inventario
     cardQuantity.value = cardData.quantity ?? 1;
     cardLocation.value = cardData.location ?? 'Binder Principal';
