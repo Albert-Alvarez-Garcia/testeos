@@ -19,6 +19,7 @@ help: logo
 	@echo "  $(GREEN)make download$(RESET)- Descarga el Bulk Data de Scryfall a la carpeta local data/"
 	@echo "  $(GREEN)make import  $(RESET)- Ejecuta el script de Python para importar los datos a Postgres"
 	@echo "  $(GREEN)make clean   $(RESET)- $(PINK)ATENCIÓN:$(RESET) Apaga contenedores y borra el volumen de datos"
+	@echo "  $(GREEN)make prune   $(RESET)- Purga y elimna contenedores en desuso:$(RESET) "
 	@echo ""
 
 # Imprime el arte ASCII directamente con colores ANSI
@@ -61,24 +62,31 @@ import:
 
 # Levanta todos los contenedores en segundo plano (con build automático)
 up:
-	docker-compose up --build -d
+	docker compose up --build -d
 	@echo "🚀 Entorno levantado correctamente (Base de datos + API)."
 
 # Para y apaga los contenedores
 down:
-	docker-compose down
+	docker compose down --remove-orphans
 	@echo "🛑 Contenedores detenidos."
 
+# Limpieza profunda de contenedores detenidos, redes y caché de Docker sin usar
+prune:
+	docker system prune -f --volumes
+	@echo "💀 Se hizo la purga de contenedores."
 # Reinicia los contenedores
 restart:
-	docker-compose down && docker-compose up --build -d
+	docker compose down --remove-orphans
+	docker rm -f card_binder_db card_binder_api 2>/dev/null || true
+	docker system prune -f
+	docker compose up --build -d
 	@echo "🔄 Contenedores reiniciados."
 
 # Muestra los logs en tiempo real de todos los servicios
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 # Limpia contenedores y borra el volumen de datos
 clean:
-	docker-compose down -v
+	docker compose down -v
 	@echo "⚠️ Contenedores y volumen de datos eliminados."
