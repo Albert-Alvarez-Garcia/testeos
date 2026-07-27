@@ -12,22 +12,25 @@ const magnifier = document.getElementById('cardMagnifier');
 const toggleBtn = document.getElementById('toggleMagnifierBtn');
 const modeStatus = document.getElementById('modeStatus');
 
-// Campos de inventario
+// Campos e inputs de inventario
 const cardQuantity = document.getElementById('cardQuantity');
 const cardLocation = document.getElementById('cardLocation');
 const cardState = document.getElementById('cardState');
 const cardOwned = document.getElementById('cardOwned');
 const saveInventoryBtn = document.getElementById('saveInventoryBtn');
+const filterContainerTypeSelect = document.getElementById('filterContainerType'); // Nuevo selector de filtro
 
 let isMagnifierEnabled = false;
 let currentSelectedCard = null;
 let globalTaxonomy = {};
+let allContainersList = []; // Array global para almacenar todos los contenedores obtenidos de la API
 
 const ZOOM_SCALE = 2; 
 const MAGNIFIER_SIZE = 160; 
 
-// --- Carga inicial de la taxonomía limpia para los desplegables ---
+// --- Carga inicial de la taxonomía y de los contenedores ---
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Cargar taxonomía de tipos
     try {
         const response = await fetch('http://localhost:8000/api/cards/types-taxonomy');
         globalTaxonomy = await response.json();
@@ -43,7 +46,72 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (e) {
         console.error("Error al cargar la taxonomía de tipos:", e);
     }
+
+    // 2. Cargar contenedores en el desplegable de inventario
+    await cargarContenedores();
+    
+    // Auto-recargar contenedores si el usuario hace foco en el desplegable (por si creó uno nuevo)
+    if (cardLocation) {
+        cardLocation.addEventListener('focus', cargarContenedores);
+    }
+
+    // 3. Escuchar cambios en el filtro de tipos de contenedor
+    if (filterContainerTypeSelect) {
+        filterContainerTypeSelect.addEventListener('change', actualizarDesplegableContenedores);
+    }
 });
+
+// --- Función para cargar los contenedores desde la API ---
+async function cargarContenedores() {
+    try {
+        const response = await fetch('http://localhost:8000/api/containers/');
+        if (!response.ok) {
+            console.error("Error al obtener contenedores, status:", response.status);
+            return;
+        }
+        
+        const containers = await response.json();
+        
+        if (Array.isArray(containers)) {
+            allContainersList = containers; // Guardamos la lista completa en memoria
+            actualizarDesplegableContenedores(); // Poblamos el select aplicando el filtro actual
+        }
+    } catch (err) {
+        console.error("Error de conexión al cargar los contenedores:", err);
+    }
+}
+
+// --- Función para pintar el select de ubicaciones según el filtro seleccionado ---
+function actualizarDesplegableContenedores() {
+    if (!cardLocation) return;
+
+    const valorActual = cardLocation.value; // Guardar selección actual para no perderla si coincide
+    const selectedType = filterContainerTypeSelect ? filterContainerTypeSelect.value : 'all';
+    
+    cardLocation.innerHTML = '<option value="">Selecciona un contenedor...</option>';
+    
+    // Filtrar la lista global según el tipo seleccionado (binder, deck, box, etc.)
+    const containersFiltered = allContainersList.filter(c => {
+        const tipoContenedor = (c.type || c.tipo || '').toLowerCase();
+        if (selectedType === 'all') return true;
+        return tipoContenedor === selectedType.toLowerCase();
+    });
+
+    containersFiltered.forEach(c => {
+        const option = document.createElement('option');
+        option.value = c.id || c._id || c.container_id; 
+        const nombre = c.name || c.nombre || 'Contenedor sin nombre';
+        const tipo = c.type || c.tipo || 'GENERAL';
+        
+        option.textContent = `${nombre} (${tipo.toUpperCase()})`;
+        cardLocation.appendChild(option);
+    });
+    
+    // Restaurar el valor previo si todavía existe en las opciones filtradas
+    if (valorActual) {
+        cardLocation.value = valorActual;
+    }
+}
 
 // --- Comportamiento dinámico: actualizar subtipos al cambiar la macro-categoría ---
 if (macroCategorySelect) {
@@ -83,13 +151,12 @@ toggleBtn.addEventListener('click', () => {
     }
 });
 
-// --- Búsqueda local flexible (permite buscar solo por texto, solo por filtros o ambos) ---
+// --- Búsqueda local flexible ---
 async function realizarBusqueda() {
     const query = searchInput.value.trim();
     const macroCategory = macroCategorySelect ? macroCategorySelect.value.trim() : '';
     const subtype = subtypeSelect ? subtypeSelect.value.trim() : '';
 
-    // Validamos que haya al menos 2 letras en el texto O bien algún filtro desplegable activo
     const hasValidText = query.length >= 2;
     const hasFilters = macroCategory !== '' || subtype !== '';
 
@@ -99,10 +166,8 @@ async function realizarBusqueda() {
     }
 
     try {
-        // Construcción dinámica de la URL
         let url = `http://localhost:8000/api/cards/filter?`;
         
-        // Si hay texto con 2+ caracteres lo mandamos; si está vacío pero hay filtros, el backend lo gestionará con el comodín
         if (hasValidText) {
             url += `name=${encodeURIComponent(query)}`;
         } else {
@@ -133,11 +198,11 @@ async function realizarBusqueda() {
         }
 
         resultsList.innerHTML = '';
-        detailsColumn.classList.add('has-selection'); // Muestra los campos de inventario
+        detailsColumn.classList.add('has-selection');
 
         cards.forEach((cardData, index) => {
             const item = document.createElement('div');
-            item.className = 'result-card-item'; // Clase de cuadrícula
+            item.className = 'result-card-item';
             
             const imgSrc = cardData.image_uri ? cardData.image_uri : "public/assets/nocapi.png";
 
@@ -149,7 +214,6 @@ async function realizarBusqueda() {
             item.addEventListener('click', () => seleccionarCarta(cardData));
             resultsList.appendChild(item);
 
-            // Seleccionar automáticamente el primer resultado por defecto
             if (index === 0) {
                 seleccionarCarta(cardData);
             }
@@ -161,12 +225,11 @@ async function realizarBusqueda() {
     }
 }
 
-// --- Manejo cuando no hay resultados (Uso de nocapi.png) ---
 function manejarSinResultados() {
     resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: span 5; text-align: center;">Vaya... No se ha encontrado ninguna carta. ¡Prueba otra búsqueda!</p>`;
     cardImage.src = "public/assets/nocapi.png";
     currentSelectedCard = null;
-    detailsColumn.classList.remove('has-selection'); // Oculta inventario si no hay carta
+    detailsColumn.classList.remove('has-selection');
 }
 
 searchBtn.addEventListener('click', realizarBusqueda);
@@ -174,7 +237,6 @@ searchInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') realizarBusqueda();
 });
 
-// Soporte para buscar pulsando Enter en los selectores si se desea
 if (macroCategorySelect) {
     macroCategorySelect.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') realizarBusqueda();
@@ -187,18 +249,16 @@ if (subtypeSelect) {
 }
 
 // --- Cargar carta seleccionada en el visor y formulario ---
-function seleccionarCarta(cardData) {
+/*function seleccionarCarta(cardData) {
     currentSelectedCard = cardData;
-    detailsColumn.classList.add('has-selection'); // Asegura que se vea el inventario
+    detailsColumn.classList.add('has-selection');
     
-    // Asignar imagen de la base de datos o fallback si falla
     if (cardData.image_uri) {
         cardImage.src = cardData.image_uri;
     } else {
         cardImage.src = "public/assets/nocapi.png";
     }
 
-    // --- NUEVO: Rellenar los datos extra en el visor 2.5D ---
     const visorName = document.getElementById("visorCardName");
     const visorMana = document.getElementById("visorCardMana");
     const visorType = document.getElementById("visorCardType");
@@ -209,12 +269,71 @@ function seleccionarCarta(cardData) {
 
     // Rellenar datos de inventario
     cardQuantity.value = cardData.quantity ?? 1;
-    cardLocation.value = cardData.location ?? 'Binder Principal';
     cardState.value = cardData.state ?? 'NM';
-    cardOwned.value = cardData.owned ? 'true' : 'true';
+    
+    // --- MEJORA 1 y 2: Mantener contenedor previo o recuperar de localStorage ---
+    const lastContainer = localStorage.getItem('last_selected_container');
+    
+    // Si la carta ya tiene contenedor asignado explícitamente, úsalo. 
+    // Si no, mantén el último que usó el usuario (si existe en el desplegable), o déjalo vacío.
+    let targetContainer = cardData.container_id || cardData.location || lastContainer || '';
+    
+    if (targetContainer) {
+        cardLocation.value = targetContainer;
+        // Si ya hay un contenedor seleccionado de forma persistente, ponemos "¿En posesión?" en Sí por defecto
+        if (cardOwned) cardOwned.value = 'true';
+    } else {
+        cardLocation.value = '';
+    }
+}*/
+function seleccionarCarta(cardData) {
+    // --- IMPRESIÓN DE DEPURACIÓN CRUCIAL ---
+    console.log("🔍 OBJETO ENTERO DEVUELTO POR EL BUSCADOR:", cardData);
+    
+    currentSelectedCard = cardData;
+    detailsColumn.classList.add('has-selection');
+    
+    if (cardData.image_uri) {
+        cardImage.src = cardData.image_uri;
+    } else {
+        cardImage.src = "public/assets/nocapi.png";
+    }
+
+    const visorName = document.getElementById("visorCardName");
+    const visorMana = document.getElementById("visorCardMana");
+    const visorType = document.getElementById("visorCardType");
+    
+    if (visorName) visorName.textContent = cardData.name || "Sin nombre";
+    if (visorMana) visorMana.textContent = cardData.mana_cost || "";
+    if (visorType) visorType.textContent = cardData.type_line || "";
+
+    cardQuantity.value = cardData.quantity ?? 1;
+    cardState.value = cardData.state ?? 'NM';
+    
+    const lastContainer = localStorage.getItem('last_selected_container');
+    let targetContainer = cardData.container_id || cardData.location || lastContainer || '';
+    
+    if (targetContainer) {
+        cardLocation.value = targetContainer;
+        if (cardOwned) cardOwned.value = 'true';
+    } else {
+        cardLocation.value = '';
+    }
 }
 
-// Inicializar tamaño del fondo de la lupa cuando cargue la imagen
+// --- Escuchar cambios en el selector de ubicación para guardarlo y marcar "En posesión" ---
+if (cardLocation) {
+    cardLocation.addEventListener('change', (e) => {
+        const selectedVal = e.target.value;
+        if (selectedVal) {
+            // Guardamos en memoria local el último contenedor elegido para las siguientes cartas
+            localStorage.setItem('last_selected_container', selectedVal);
+            // Si selecciona un contenedor, asumimos automáticamente que está en posesión ("Sí")
+            if (cardOwned) cardOwned.value = 'true';
+        }
+    });
+}
+
 cardImage.addEventListener('load', () => {
     magnifier.style.backgroundSize = `${card.offsetWidth * ZOOM_SCALE}px auto`;
 });
@@ -261,11 +380,102 @@ container.addEventListener('mouseleave', () => {
 });
 
 // --- Guardar cambios de inventario ---
-saveInventoryBtn.addEventListener('click', () => {
+function mostrarNotificacionFlotante(mensaje) {
+    // Evitar duplicadas si el usuario hace clic muy rápido
+    const existingToast = document.getElementById('toast-notification');
+    if (existingToast) existingToast.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'toast-notification';
+    toast.textContent = mensaje;
+    
+    // Estilos inline para que aparezca flotando abajo a la derecha de forma elegante
+    Object.assign(toast.style, {
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        backgroundColor: '#10b981', // Verde éxito
+        color: '#ffffff',
+        padding: '12px 20px',
+        borderRadius: '8px',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
+        zIndex: '10000',
+        fontFamily: 'inherit',
+        fontSize: '0.95rem',
+        fontWeight: '500',
+        transition: 'opacity 0.3s ease-in-out'
+    });
+
+    document.body.appendChild(toast);
+
+    // Se desvanece y desaparece sola a los 2.5 segundos
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 300);
+    }, 2500);
+}
+
+saveInventoryBtn.addEventListener('click', async () => {
     if (!currentSelectedCard) {
         alert("Selecciona una carta primero.");
         return;
     }
-    
-    alert(`Inventario actualizado para: ${currentSelectedCard.name}\nCantidad: ${cardQuantity.value}\nUbicación: ${cardLocation.value}\nEstado: ${cardState.value}`);
+
+    const containerId = cardLocation.value;
+    if (!containerId) {
+        alert("Por favor, selecciona un contenedor de destino.");
+        return;
+    }
+
+    // Usamos scryfall_id que es la propiedad real que devuelve tu endpoint de filtro
+    const printingId = currentSelectedCard.scryfall_id || currentSelectedCard.id || currentSelectedCard.printing_id;
+
+    if (!printingId) {
+        alert("Error: La carta seleccionada no tiene un ID de impresión válido.");
+        return;
+    }
+
+    const payload = {
+        printing_id: printingId,
+        container_id: containerId,
+        condition: cardState.value || "Near Mint",
+        language: "en",
+        is_foil: false
+    };
+
+    try {
+        const response = await fetch('http://localhost:8000/api/containers/items', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            let errorMsg = 'Error al guardar la carta.';
+            if (data.detail) {
+                errorMsg = Array.isArray(data.detail) 
+                    ? data.detail.map(err => err.msg).join(', ') 
+                    : String(data.detail);
+            }
+
+            const errorLower = errorMsg.toLowerCase();
+            if (errorLower.includes('espacio') || errorLower.includes('capacity') || response.status === 400) {
+                alert("⚠️ ¡Contenedor lleno! No hay espacio libre disponible en este contenedor.");
+            } else {
+                alert(`Error / Validación: ${errorMsg}`);
+            }
+            return;
+        }
+
+        mostrarNotificacionFlotante(`¡${currentSelectedCard.name} añadida al contenedor con éxito!`);
+
+    } catch (error) {
+        console.error("Error al guardar inventario:", error);
+        alert(`Hubo un error de conexión: ${error.message}`);
+    }
 });

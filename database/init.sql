@@ -1,12 +1,14 @@
 -- Habilitar la extensión para UUIDs si no está activa
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Tabla maestra de contenedores (Debe ir primero para que otras tablas puedan referenciarla)
+-- 1. Tabla maestra de contenedores (Actualizada con soporte para slots por página y total de páginas)
 CREATE TABLE IF NOT EXISTS containers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'binder', 'box', 'deck'
     max_capacity INTEGER,      -- Límite total o principal
+    slots_per_page INTEGER DEFAULT 9, -- Estructura por página para archivadores (ej. 9, 4, 12)
+    total_pages INTEGER,       -- Número total de páginas calculado
     sideboard_capacity INTEGER, -- Específico para mazos (banquillo/reserva)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

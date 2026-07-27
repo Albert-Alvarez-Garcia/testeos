@@ -29,10 +29,14 @@ form.addEventListener('submit', async (e) => {
     const type = containerTypeSelect.value;
     
     let max_capacity = null;
+    let slots_per_page = 9; // Valor por defecto para archivadores
+    let total_pages = null;   // Nuevo campo para las páginas
     let sideboard_capacity = null;
 
     if (type === 'binder') {
-        max_capacity = parseInt(document.getElementById('binderCapacity').value) || 360;
+        total_pages = parseInt(document.getElementById('binderPages').value) || 40;
+        slots_per_page = parseInt(document.getElementById('binderSlotsPerPage').value) || 9;
+        max_capacity = total_pages * slots_per_page; // Cálculo automático del total
     } else if (type === 'deck') {
         max_capacity = parseInt(document.getElementById('deckMainCapacity').value) || 60;
         sideboard_capacity = parseInt(document.getElementById('deckSideboardCapacity').value) || 15;
@@ -44,7 +48,14 @@ form.addEventListener('submit', async (e) => {
         const response = await fetch('http://localhost:8000/api/containers/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, type, max_capacity, sideboard_capacity })
+            body: JSON.stringify({ 
+                name, 
+                type, 
+                max_capacity, 
+                slots_per_page,   
+                total_pages,      // Enviamos también el total de páginas
+                sideboard_capacity 
+            })
         });
 
         if (!response.ok) {

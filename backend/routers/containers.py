@@ -37,49 +37,33 @@ def create_container(data: ContainerCreate):
         new_container = cursor.fetchone()
         container_id = new_container["id"]
 
-        # 2. Si es un Binder, podemos generar los slots automáticos (ej. hojas de 9 huecos)
+        # Función auxiliar interna para insertar slots y evitar repetición de código
+        def insert_slots(count: int, section: str, page: int = 1):
+            for slot_idx in range(1, count + 1):
+                cursor.execute(
+                    """
+                    INSERT INTO container_slots (container_id, page_number, slot_index, section, is_occupied)
+                    VALUES (%s, %s, %s, %s, FALSE)
+                    """,
+                    (container_id, page, slot_idx, section)
+                )
+
+        # 2. Generación automática de slots según el tipo de contenedor
         if data.type == 'binder' and data.max_capacity:
             slots_per_page = 9
             total_pages = (data.max_capacity + slots_per_page - 1) // slots_per_page
             
             for page in range(1, total_pages + 1):
-                for slot_idx in range(1, slots_per_page + 1):
-                    # Evitar superar la capacidad máxima exacta si no es múltiplo de 9
-                    current_slot_number = ((page - 1) * slots_per_page) + slot_idx
-                    if current_slot_number > data.max_capacity:
-                        break
-                    
-                    cursor.execute(
-                        """
-                        INSERT INTO container_slots (container_id, page_number, slot_index, section)
-                        VALUES (%s, %s, %s, 'main')
-                        """,
-                        (container_id, page, slot_idx)
-                    )
+                page_capacity = min(slots_per_page, data.max_capacity - ((page - 1) * slots_per_page))
+                if page_capacity <= 0:
+                    break
+                insert_slots(page_capacity, 'main', page=page)
 
-        # 3. Si es un Deck, podemos generar slots para el main y el sideboard
         elif data.type == 'deck':
             main_cap = data.max_capacity or 60
             side_cap = data.sideboard_capacity or 15
-            
-            # Slots principales
-            for slot_idx in range(1, main_cap + 1):
-                cursor.execute(
-                    """
-                    INSERT INTO container_slots (container_id, page_number, slot_index, section)
-                    VALUES (%s, 1, %s, 'main')
-                    """,
-                    (container_id, slot_idx)
-                )
-            # Slots de banquillo/reserva
-            for slot_idx in range(1, side_cap + 1):
-                cursor.execute(
-                    """
-                    INSERT INTO container_slots (container_id, page_number, slot_index, section)
-                    VALUES (%s, 1, %s, 'sideboard')
-                    """,
-                    (container_id, slot_idx)
-                )
+            insert_slots(main_cap, 'main')
+            insert_slots(side_cap, 'sideboard')
 
         conn.commit()
         return dict(new_container)
@@ -109,14 +93,39 @@ def add_card_to_container(data: AddCardToContainerRequest):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        # --- BÚSQUEDA CORREGIDA SEGÚN TU ESQUEMA ---
+        # El scryfall_id que manda el frontend pertenece a la tabla 'cards'. 
+        # Buscamos la primera impresión (printing) asociada a esa carta.
+        cursor.execute(
+            """
+            SELECT p.id 
+            FROM printings p
+            JOIN cards c ON p.card_id = c.id
+            WHERE c.scryfall_id::text = %s OR p.id::text = %s
+            LIMIT 1;
+            """,
+            (data.printing_id, data.printing_id)
+        )
+        printing_row = cursor.fetchone()
+        
+        if not printing_row:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No se ha encontrado ninguna impresión asociada al identificador: {data.printing_id}"
+            )
+        
+        internal_printing_id = printing_row["id"]
+
         target_slot_id = data.slot_id
-        # Si no se especifica slot, buscamos el primer hueco libre disponible en el contenedor
         if not target_slot_id:
             cursor.execute(
                 """
                 SELECT id FROM container_slots 
                 WHERE container_id = %s AND is_occupied = FALSE 
-                ORDER BY page_number ASC, slot_index ASC 
+                ORDER BY 
+                    CASE WHEN section = 'main' THEN 1 ELSE 2 END ASC,
+                    page_number ASC, 
+                    slot_index ASC 
                 LIMIT 1;
                 """,
                 (data.container_id,)
@@ -125,7 +134,12 @@ def add_card_to_container(data: AddCardToContainerRequest):
             if free_slot:
                 target_slot_id = free_slot["id"]
 
-        # Insertar la copia física de la carta vinculada al contenedor y opcionalmente al slot
+        if not target_slot_id:
+            raise HTTPException(
+                status_code=400, 
+                detail="No hay huecos libres disponibles en este contenedor o no se han generado."
+            )
+
         cursor.execute(
             """
             INSERT INTO card_copies (printing_id, container_id, slot_id, condition, language, is_foil, notes)
@@ -133,7 +147,7 @@ def add_card_to_container(data: AddCardToContainerRequest):
             RETURNING id, container_id, slot_id, condition, language, is_foil, created_at;
             """,
             (
-                data.printing_id, 
+                internal_printing_id, 
                 data.container_id, 
                 target_slot_id, 
                 data.condition, 
@@ -144,24 +158,69 @@ def add_card_to_container(data: AddCardToContainerRequest):
         )
         new_copy = cursor.fetchone()
 
-        # Si se ocupó un slot, lo marcamos como True
-        if target_slot_id:
-            cursor.execute(
-                """
-                UPDATE container_slots 
-                SET is_occupied = TRUE 
-                WHERE id = %s;
-                """,
-                (target_slot_id,)
-            )
+        cursor.execute(
+            """
+            UPDATE container_slots 
+            SET is_occupied = TRUE 
+            WHERE id = %s;
+            """,
+            (target_slot_id,)
+        )
 
         conn.commit()
         return {"status": "success", "copy": dict(new_copy)}
 
+    except HTTPException as he:
+        conn.rollback()
+        raise he
     except Exception as e:
         conn.rollback()
         print(f"❌ Error al añadir carta al contenedor: {e}")
         raise HTTPException(status_code=500, detail="Error interno al guardar la carta en el contenedor.")
+    finally:
+        cursor.close()
+        conn.close()
+
+@router.get("/{container_id}/slots")
+def get_container_slots_with_cards(container_id: str):
+    """Devuelve todos los slots de un contenedor (tanto libres como ocupados con su carta, impresión y copia física)."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT 
+                s.id AS slot_id,
+                s.container_id,
+                s.page_number,
+                s.slot_index,
+                s.section,
+                s.is_occupied,
+                c.id AS copy_id,
+                c.condition,
+                c.language,
+                c.is_foil,
+                c.notes,
+                sc.id AS card_id,
+                sc.name AS card_name,
+                sc.mana_cost,
+                sc.type_line,
+                p.image_uri
+            FROM container_slots s
+            LEFT JOIN card_copies c ON c.slot_id = s.id
+            LEFT JOIN printings p ON c.printing_id = p.id
+            LEFT JOIN cards sc ON p.card_id = sc.id
+            WHERE s.container_id = %s
+            ORDER BY s.page_number ASC, s.slot_index ASC;
+            """,
+            (container_id,)
+        )
+        slots = cursor.fetchall()
+        return [dict(slot) for slot in slots]
+
+    except Exception as e:
+        print(f"❌ Error al obtener los slots del contenedor: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al cargar la estructura del contenedor.")
     finally:
         cursor.close()
         conn.close()

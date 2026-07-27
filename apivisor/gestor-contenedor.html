@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro — Gestión Carta</title>
+    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="visor-containers.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+          <img src="Magicthegathering-logo(1).svg" alt="Magic: The Gathering Logo">
+          <span class="app-subtitle">Gestión Carta</span>
+        </div>
+  
+        <div class="header-controls" style="display: flex; gap: 10px; align-items: center;">
+          <!-- Únicamente el selector de contenedor necesario -->
+          <select id="containerSelector" style="padding: 0.65rem; border-radius: 8px; background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-color);">
+              <option value="">Selecciona un contenedor para gestionar...</option>
+          </select>
+        </div>
+    </header>
+
+    <main>
+        <div class="workspace-grid">
+            
+            <!-- Columna Izquierda: Visor 2.5D + Datos integrados + Zona en blanco para acciones -->
+            <div class="visor-column">
+                <button id="toggleMagnifierBtn" class="visor-mode-btn">
+                    🔍 Modo Lupa: <span id="modeStatus">DESACTIVADO</span>
+                </button>
+
+                <div class="card-perspective-container" id="cardContainer">
+                    <div class="interactive-card" id="interactiveCard">
+                        <img id="dynamicCardImg" src="public/assets/capicarta.png" alt="Vista previa de la carta">
+                    </div>
+                    <div class="card-magnifier" id="cardMagnifier"></div>
+                </div>
+
+                <!-- Datos básicos integrados -->
+                <div class="visor-card-details" id="visorCardDetails" style="margin-top: 1rem; padding: 0.85rem 1rem; background: var(--bg-card, #1e1e1e); border-radius: 8px; border: 1px solid var(--border-color); color: var(--text-main);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <span id="visorCardName" style="font-weight: 600; font-size: 1rem;">Selecciona una carta</span>
+                        <span id="visorCardMana" style="font-family: monospace; font-size: 0.9rem; color: var(--primary-color);"></span>
+                    </div>
+                    <div id="visorCardType" style="font-size: 0.8rem; color: var(--text-muted);">—</div>
+                </div>
+
+                <!-- Zona en blanco inferior para futuras acciones e información -->
+                <div id="cardActionZone" style="margin-top: 1rem; padding: 1rem; background: var(--bg-card, #1e1e1e); border-radius: 8px; border: 1px solid var(--border-color); min-height: 100px;">
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0; text-align: center;">Acciones e información de la carta...</p>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Contenedor y su estructura -->
+            <div class="details-column" style="display: flex; flex-direction: column; gap: 1rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 id="containerTitle" style="margin: 0; font-size: 1.2rem;">Selecciona un contenedor</h2>
+                    <div id="containerStats" style="color: var(--text-muted); font-size: 0.85rem;">—</div>
+                </div>
+
+                <div class="visual-workspace" id="visualWorkspace" style="background: var(--bg-card, #1e1e1e); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; min-height: 500px; max-height: 70vh; overflow-y: auto;">
+                    <div class="placeholder-msg" style="text-align: center; margin-top: 15vh;">
+                        <p style="color: var(--text-muted); font-size: 0.95rem;">Elige un contenedor arriba para desplegar sus huecos...</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="visor-containers.js"></script>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('preferred-mana-theme') || 'default';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      });
+    </script>
+</body>
+</html>
