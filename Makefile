@@ -56,7 +56,7 @@ download:
 
 # Ejecuta el script de importación desde el JSON local
 import:
-	python3 scripts/import_bulk.py
+	docker compose exec backend python3 scripts/import_bulk.py
 	@echo "✨ Importación a base de datos finalizada."
 
 
