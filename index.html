@@ -9,7 +9,12 @@
     <!-- Enlace a la hoja de estilos externa -->
     <link rel="stylesheet" href="styles.css">
 </head>
-<body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none">
+<body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-hidden">
+
+    <!-- ILUSTRACIÓN CENTRAL DECORATIVA (DECO1) -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+        <img src="./public/assets/deco1.png" alt="Decorative Character" class="hero-illustration h-full max-h-[90vh] w-auto object-contain">
+    </div>
 
     <!-- HEADER / ICONOS DE MANÁ CON TOOLTIPS FUNCIONALES -->
     <div class="w-full flex justify-center items-center z-30 pt-2">
@@ -17,7 +22,7 @@
             
             <!-- MANÁ BLANCO: Buscador de cartas -->
             <div class="relative group">
-                <a href="apivisor/visor-admin-25d.html" class="metal-orb w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Blanco">
+                <a href="apivisor/visor-admin-25d.html" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Blanco">
                     <img src="./public/assets/blanco-removebg-preview.png" alt="White Mana" class="w-full h-full object-contain drop-shadow-md">
                 </a>
                 <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
@@ -28,7 +33,7 @@
             
             <!-- MANÁ AZUL: Crear contenedores -->
             <div class="relative group">
-                <a href="apivisor/containers.html" class="metal-orb w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Azul">
+                <a href="apivisor/containers.html" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Azul">
                     <img src="./public/assets/azul-removebg-preview.png" alt="Blue Mana" class="w-full h-full object-contain drop-shadow-md">
                 </a>
                 <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
@@ -39,7 +44,7 @@
 
             <!-- MANÁ NEGRO: Acceder a los contenedores -->
             <div class="relative group">
-                <a href="apivisor/visor-containers.html" class="metal-orb w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Negro">
+                <a href="apivisor/visor-containers.html" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Negro">
                     <img src="./public/assets/negro-removebg-preview.png" alt="Black Mana" class="w-full h-full object-contain drop-shadow-md">
                 </a>
                 <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
@@ -50,7 +55,7 @@
             
             <!-- MANÁ ROJO: Evaluar mazo -->
             <div class="relative group">
-                <button class="metal-orb w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Rojo">
+                <button class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Rojo">
                     <img src="./public/assets/rojo-removebg-preview.png" alt="Red Mana" class="w-full h-full object-contain drop-shadow-md">
                 </button>
                 <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
@@ -61,7 +66,7 @@
             
             <!-- MANÁ VERDE: Parte social de la web -->
             <div class="relative group">
-                <button class="metal-orb w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Verde">
+                <button class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Verde">
                     <img src="./public/assets/verde-removebg-preview.png" alt="Green Mana" class="w-full h-full object-contain drop-shadow-md">
                 </button>
                 <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
@@ -74,7 +79,7 @@
     </div>
 
     <!-- CENTRO: Logo grande y Buscador -->
-    <div class="my-auto text-center relative z-10 flex flex-col items-center">
+    <div class="my-auto text-center relative z-20 flex flex-col items-center">
         <!-- Logo central -->
         <div class="px-6 py-2 relative flex items-center justify-center mb-6">
             <img src="./public/assets/logomagic.png" alt="Card Binder Logo" class="relative z-25 max-h-56 w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]">
