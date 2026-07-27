@@ -21,6 +21,7 @@ services:
       dockerfile: backend/Dockerfile
     container_name: card_binder_api
     restart: always
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload --log-level debug
     ports:
       - "8000:8000"
     volumes:

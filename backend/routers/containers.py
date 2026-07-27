@@ -22,6 +22,11 @@ class AddCardToContainerRequest(BaseModel):
     is_foil: Optional[bool] = False
     notes: Optional[str] = None
 
+class MoveCardRequest(BaseModel):
+    copy_id: str
+    from_slot_id: str
+    to_slot_id: str
+
 @router.post("/")
 def create_container(data: ContainerCreate):
     conn = get_db_connection()
@@ -231,6 +236,92 @@ def get_container_slots_with_cards(container_id: str):
     except Exception as e:
         print(f"❌ Error al obtener los slots del contenedor: {e}")
         raise HTTPException(status_code=500, detail="Error interno al cargar la estructura del contenedor.")
+    finally:
+        cursor.close()
+        conn.close()
+
+@router.put("/{container_id}/slots")
+def update_container_slots_layout(container_id: str, slots_data: list[dict]):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SELECT id FROM containers WHERE id = %s;", (container_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Contenedor no encontrado.")
+
+        # 1. Desvinculamos temporalmente las copias físicas de este contenedor para evitar conflictos de claves únicas
+        cursor.execute(
+            """
+            UPDATE card_copies 
+            SET slot_id = NULL 
+            WHERE container_id = %s;
+            """,
+            (container_id,)
+        )
+
+        # 2. Reseteamos la ocupación de todos los slots del contenedor
+        cursor.execute(
+            """
+            UPDATE container_slots 
+            SET is_occupied = FALSE 
+            WHERE container_id = %s;
+            """,
+            (container_id,)
+        )
+
+        # 3. Procesamos la nueva distribución mandada por el frontend
+        for slot in slots_data:
+            slot_index = slot.get("slot_index")
+            page_number = slot.get("page_number", 1)
+            is_occupied = slot.get("is_occupied", False)
+            copy_id = slot.get("copy_id")
+
+            # Buscamos el ID real del slot físico en base a su página e índice dentro del contenedor
+            cursor.execute(
+                """
+                SELECT id FROM container_slots 
+                WHERE container_id = %s AND page_number = %s AND slot_index = %s
+                LIMIT 1;
+                """,
+                (container_id, page_number, slot_index)
+            )
+            slot_row = cursor.fetchone()
+
+            if slot_row:
+                target_slot_id = slot_row["id"]
+
+                # Si el slot está ocupado según el array recibido
+                if is_occupied:
+                    cursor.execute(
+                        """
+                        UPDATE container_slots 
+                        SET is_occupied = TRUE 
+                        WHERE id = %s;
+                        """,
+                        (target_slot_id,)
+                    )
+
+                    # Si además viene acompañada de un ID de copia, la reubicamos en este slot
+                    if copy_id:
+                        cursor.execute(
+                            """
+                            UPDATE card_copies 
+                            SET slot_id = %s 
+                            WHERE id = %s AND container_id = %s;
+                            """,
+                            (target_slot_id, copy_id, container_id)
+                        )
+
+        conn.commit()
+        return {"status": "success", "message": "Distribución del contenedor actualizada correctamente."}
+
+    except HTTPException as he:
+        conn.rollback()
+        raise he
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Error al actualizar los slots del contenedor: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al actualizar la distribución.")
     finally:
         cursor.close()
         conn.close()
