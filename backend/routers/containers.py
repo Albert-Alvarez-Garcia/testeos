@@ -7,8 +7,10 @@ router = APIRouter(prefix="/api/containers", tags=["Containers"])
 
 class ContainerCreate(BaseModel):
     name: str
-    type: str  # 'binder', 'box', 'deck'
+    type: str  # Recibirá 'binder', 'binder_s', 'binder_m', 'binder_xl', 'deck', 'box'
     max_capacity: Optional[int] = None
+    slots_per_page: Optional[int] = 9
+    total_pages: Optional[int] = None
     sideboard_capacity: Optional[int] = None
 
 class AddCardToContainerRequest(BaseModel):
@@ -25,19 +27,26 @@ def create_container(data: ContainerCreate):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # 1. Insertar el contenedor maestro
+        # 1. Insertar el contenedor maestro respetando estrictamente el esquema SQL
         cursor.execute(
             """
-            INSERT INTO containers (name, type, max_capacity, sideboard_capacity)
-            VALUES (%s, %s, %s, %s)
-            RETURNING id, name, type, max_capacity, sideboard_capacity, created_at;
+            INSERT INTO containers (name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING id, name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity, created_at;
             """,
-            (data.name, data.type, data.max_capacity, data.sideboard_capacity)
+            (
+                data.name, 
+                data.type, 
+                data.max_capacity, 
+                data.slots_per_page, 
+                data.total_pages, 
+                data.sideboard_capacity
+            )
         )
         new_container = cursor.fetchone()
         container_id = new_container["id"]
 
-        # Función auxiliar interna para insertar slots y evitar repetición de código
+        # Función auxiliar interna para insertar slots
         def insert_slots(count: int, section: str, page: int = 1):
             for slot_idx in range(1, count + 1):
                 cursor.execute(
@@ -48,16 +57,21 @@ def create_container(data: ContainerCreate):
                     (container_id, page, slot_idx, section)
                 )
 
-        # 2. Generación automática de slots según el tipo de contenedor
-        if data.type == 'binder' and data.max_capacity:
-            slots_per_page = 9
-            total_pages = (data.max_capacity + slots_per_page - 1) // slots_per_page
+        # 2. Generación automática de slots robusta para 2x2 (4), 3x3 (9) y 4x3 (12)
+        is_binder = data.type == 'binder' or data.type.startswith('binder_')
+        
+        if is_binder and data.total_pages:
+            # Mapeo exacto según la variante enviada o el slots_per_page recibido
+            slots_map = {
+                'binder_s': 4,   # Formato 2x2
+                'binder_m': 9,   # Formato 3x3
+                'binder_xl': 12  # Formato 4x3
+            }
             
-            for page in range(1, total_pages + 1):
-                page_capacity = min(slots_per_page, data.max_capacity - ((page - 1) * slots_per_page))
-                if page_capacity <= 0:
-                    break
-                insert_slots(page_capacity, 'main', page=page)
+            slots_per_page = slots_map.get(data.type, data.slots_per_page if data.slots_per_page in [4, 9, 12] else 9)
+            
+            for page in range(1, data.total_pages + 1):
+                insert_slots(slots_per_page, 'main', page=page)
 
         elif data.type == 'deck':
             main_cap = data.max_capacity or 60
@@ -81,7 +95,7 @@ def list_containers():
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT id, name, type, max_capacity, sideboard_capacity, created_at FROM containers ORDER BY created_at DESC;")
+        cursor.execute("SELECT id, name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity, created_at FROM containers ORDER BY created_at DESC;")
         containers = cursor.fetchall()
         return [dict(c) for c in containers]
     finally:
@@ -93,9 +107,6 @@ def add_card_to_container(data: AddCardToContainerRequest):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # --- BÚSQUEDA CORREGIDA SEGÚN TU ESQUEMA ---
-        # El scryfall_id que manda el frontend pertenece a la tabla 'cards'. 
-        # Buscamos la primera impresión (printing) asociada a esa carta.
         cursor.execute(
             """
             SELECT p.id 
@@ -183,7 +194,6 @@ def add_card_to_container(data: AddCardToContainerRequest):
 
 @router.get("/{container_id}/slots")
 def get_container_slots_with_cards(container_id: str):
-    """Devuelve todos los slots de un contenedor (tanto libres como ocupados con su carta, impresión y copia física)."""
     conn = get_db_connection()
     cursor = conn.cursor()
     try:

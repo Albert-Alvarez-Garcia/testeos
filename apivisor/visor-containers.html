@@ -17,12 +17,14 @@
   
         <div class="header-controls" style="display: flex; gap: 10px; align-items: center;">
           <!-- Filtro por tipo de contenedor -->
-          <select id="filterContainerType" style="padding: 0.65rem; border-radius: 8px; background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-color);">
-              <option value="all">Todos los tipos</option>
-              <option value="binder">Archivador (Binder)</option>
-              <option value="deck">Mazo (Deck)</option>
-              <option value="box">Caja (Box)</option>
-          </select>
+            <select id="filterContainerType" style="padding: 0.65rem; border-radius: 8px; background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-color);">
+                <option value="all">Todos los tipos</option>
+                <option value="binder_s">Binder Pequeño (2x2)</option>
+                <option value="binder_m">Binder Mediano (3x3)</option>
+                <option value="binder_xl">Binder Grande (4x3)</option>
+                <option value="deck">Mazo (Deck)</option>
+                <option value="box">Caja (Box)</option>
+            </select>
 
           <!-- Selector de contenedor a inspeccionar -->
           <select id="containerSelector" style="padding: 0.65rem; border-radius: 8px; background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-color);">
@@ -253,34 +255,35 @@
             }
         }
 
-        function renderizarBinder(slots) {
+function renderizarBinder(slots) {
             let columnas = 3;
             let itemsPerPage = 9;
 
             if (currentContainerData) {
                 const containerType = (currentContainerData.type || "").toLowerCase();
-                const containerName = (currentContainerData.name || "").toLowerCase();
 
-                if (containerType.includes('binder_s') || containerName.includes('2x2')) {
+                // EVALUACIÓN EXPLÍCITA DE LAS 3 CATEGORÍAS EXACTAS (Sin comodines genéricos)
+                if (containerType === 'binder_s') {
                     columnas = 2;
                     itemsPerPage = 4;
-                } else if (containerType.includes('binder_l')) {
+                } else if (containerType === 'binder_xl' || containerType === 'binder_l') {
                     columnas = 4;
                     itemsPerPage = 12;
+                } else if (containerType === 'binder_m') {
+                    columnas = 3;
+                    itemsPerPage = 9;
                 } else {
+                    // Fallback de seguridad estricto por si viene vacío, por defecto mediano
                     columnas = 3;
                     itemsPerPage = 9;
                 }
             }
 
-            console.log("--- DEBUG ARCHIVADOR ---");
-            console.log("Tipo detectado:", currentContainerData ? currentContainerData.type : 'N/A');
+            console.log("--- DEBUG ARCHIVADOR ESTRICTO ---");
+            console.log("Tipo exacto detectado:", currentContainerData ? currentContainerData.type : 'N/A');
             console.log("Columnas aplicadas:", columnas);
             console.log("Items por página:", itemsPerPage);
-            console.log("Capacidad máxima:", currentContainerData ? currentContainerData.max_capacity : 'N/A');
-            console.log("Slots totales recibidos:", slots.length);
 
-            // --- 2. CÁLCULO DINÁMICO DEL TOTAL DE PÁGINAS ---
             const maxCapacity = Number(
                 currentContainerData.max_capacity || 
                 currentContainerData.capacity || 
@@ -289,10 +292,8 @@
             );
 
             const totalPages = Math.ceil(maxCapacity / itemsPerPage);
-            console.log("Páginas totales calculadas:", totalPages);
-
-            // --- 3. DISTRIBUCIÓN DINÁMICA EN EL MAPA DE PÁGINAS ---
             const pagesMap = {};
+            
             for (let i = 1; i <= totalPages; i++) {
                 pagesMap[i] = [];
             }
@@ -311,7 +312,6 @@
 
             if (currentBinderPage > totalPages) currentBinderPage = 1;
 
-            // --- 4. RENDERIZADO DEL VISOR ---
             visualWorkspace.innerHTML = `
                 <div class="binder-navigation-controls">
                     <button id="prevPageBtn" class="nav-btn" ${currentBinderPage <= 1 ? 'disabled' : ''}>◀ Página Anterior</button>

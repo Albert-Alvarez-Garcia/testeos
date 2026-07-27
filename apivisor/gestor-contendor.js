@@ -5,20 +5,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const visualWorkspace = document.getElementById('visualWorkspace');
     const filterContainerTypeSelect = document.getElementById('filterContainerType');
     
-    // Elementos de la lupa 2.5D (heredados de tu visor principal)
+    // Elementos de la lupa 2.5D
     const container = document.getElementById('cardContainer');
     const card = document.getElementById('interactiveCard');
     const cardImage = document.getElementById('dynamicCardImg');
     const magnifier = document.getElementById('cardMagnifier');
     const toggleBtn = document.getElementById('toggleMagnifierBtn');
     const modeStatus = document.getElementById('modeStatus');
-    const slotActionPanel = document.getElementById('slotActionPanel');
 
     let isMagnifierEnabled = false;
     let currentContainerData = null;
     let allContainersList = [];
     let currentBinderPage = 1;
-    let selectedSlotData = null;
 
     const ZOOM_SCALE = 2; 
     const MAGNIFIER_SIZE = 160; 
@@ -34,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (err) {
             console.error("Error al cargar contenedores:", err);
-            containerSelector.innerHTML = '<option value="">Error al cargar contenedores</option>';
+            if (containerSelector) containerSelector.innerHTML = '<option value="">Error al cargar contenedores</option>';
         }
     }
 
@@ -49,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const containersFiltered = allContainersList.filter(c => {
             const tipoContenedor = (c.type || c.tipo || '').toLowerCase();
             if (selectedType === 'all') return true;
-            return tipoContenedor === selectedType.toLowerCase();
+            return tipoContenedor.includes(selectedType.toLowerCase());
         });
 
         containersFiltered.forEach(c => {
@@ -66,9 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (containerSelector.value === "") {
-            containerTitle.textContent = "Selecciona un contenedor";
-            containerStats.textContent = "—";
-            visualWorkspace.innerHTML = `<div class="placeholder-msg" style="text-align: center; margin-top: 15vh;"><p style="color: var(--text-muted); font-size: 0.95rem;">Elige un archivador, mazo o caja arriba para desplegar sus huecos...</p></div>`;
+            if (containerTitle) containerTitle.textContent = "Selecciona un contenedor";
+            if (containerStats) containerStats.textContent = "—";
+            if (visualWorkspace) visualWorkspace.innerHTML = `<div class="placeholder-msg" style="text-align: center; margin-top: 15vh;"><p style="color: var(--text-muted); font-size: 0.95rem;">Elige un archivador, mazo o caja arriba para desplegar sus huecos...</p></div>`;
             currentContainerData = null;
         }
     }
@@ -78,23 +76,25 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- 2. Selección de contenedor ---
-    containerSelector.addEventListener('change', async (e) => {
-        const containerId = e.target.value;
-        if (!containerId) {
-            containerTitle.textContent = "Selecciona un contenedor";
-            containerStats.textContent = "—";
-            visualWorkspace.innerHTML = `<div class="placeholder-msg" style="text-align: center; margin-top: 15vh;"><p style="color: var(--text-muted); font-size: 0.95rem;">Elige un archivador, mazo o caja arriba para desplegar sus huecos...</p></div>`;
-            return;
-        }
+    if (containerSelector) {
+        containerSelector.addEventListener('change', async (e) => {
+            const containerId = e.target.value;
+            if (!containerId) {
+                containerTitle.textContent = "Selecciona un contenedor";
+                containerStats.textContent = "—";
+                visualWorkspace.innerHTML = `<div class="placeholder-msg" style="text-align: center; margin-top: 15vh;"><p style="color: var(--text-muted); font-size: 0.95rem;">Elige un archivador, mazo o caja arriba para desplegar sus huecos...</p></div>`;
+                return;
+            }
 
-        currentContainerData = allContainersList.find(c => (c.id === containerId || c._id === containerId));
-        if (!currentContainerData) return;
-        
-        containerTitle.textContent = currentContainerData.name;
-        containerStats.textContent = `Tipo: ${(currentContainerData.type || 'GENERAL').toUpperCase()} | Capacidad Máx: ${currentContainerData.max_capacity || 'N/A'}`;
+            currentContainerData = allContainersList.find(c => (c.id === containerId || c._id === containerId));
+            if (!currentContainerData) return;
+            
+            containerTitle.textContent = currentContainerData.name;
+            containerStats.textContent = `Tipo: ${(currentContainerData.type || 'GENERAL').toUpperCase()} | Capacidad Máx: ${currentContainerData.max_capacity || 'N/A'}`;
 
-        await cargarSlotsContenedor(containerId);
-    });
+            await cargarSlotsContenedor(containerId);
+        });
+    }
 
     async function cargarSlotsContenedor(containerId) {
         visualWorkspace.innerHTML = `<div class="placeholder-msg" style="text-align: center; margin-top: 15vh;"><p style="color: var(--text-muted);">Cargando estructura física...</p></div>`;
@@ -106,7 +106,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const slots = await response.json();
             const tipo = (currentContainerData.type || 'binder').toLowerCase();
             
-            if (tipo === 'binder') {
+            // Evaluación estricta de variantes de Binder o Deck/Box
+            if (tipo.includes('binder')) {
                 renderizarBinder(slots);
             } else {
                 renderizarDeckBox(slots);
@@ -118,16 +119,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- 3. Renderizado de Archivador (Binder) ---
+    // --- 3. Renderizado de Archivador (Binder con soporte para S, M, XL) ---
     function renderizarBinder(slots) {
+        let columnas = 3;
+        let itemsPerPage = 9;
+
+        if (currentContainerData) {
+            const containerType = (currentContainerData.type || "").toLowerCase();
+            if (containerType === 'binder_s') {
+                columnas = 2;
+                itemsPerPage = 4;
+            } else if (containerType === 'binder_xl' || containerType === 'binder_l') {
+                columnas = 4;
+                itemsPerPage = 12;
+            } else {
+                columnas = 3;
+                itemsPerPage = 9;
+            }
+        }
+
+        const maxCapacity = Number(
+            currentContainerData.max_capacity || 
+            currentContainerData.capacity || 
+            slots.length || 
+            (itemsPerPage * 3)
+        );
+
+        const totalPages = Math.ceil(maxCapacity / itemsPerPage);
         const pagesMap = {};
-        slots.forEach(slot => {
-            const page = slot.page_number || 1;
+        
+        for (let i = 1; i <= totalPages; i++) {
+            pagesMap[i] = [];
+        }
+
+        slots.forEach((slot, index) => {
+            let page = Number(slot.page_number || slot.pagina);
+            if (!page || page < 1 || page > totalPages) {
+                page = Math.floor(index / itemsPerPage) + 1;
+            }
             if (!pagesMap[page]) pagesMap[page] = [];
             pagesMap[page].push(slot);
         });
 
-        const totalPages = Object.keys(pagesMap).length;
         if (currentBinderPage > totalPages) currentBinderPage = 1;
 
         visualWorkspace.innerHTML = `
@@ -136,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="page-indicator">Página <strong id="currentPageNum">${currentBinderPage}</strong> de ${totalPages || 1}</span>
                 <button id="nextPageBtn" class="nav-btn" ${currentBinderPage >= totalPages ? 'disabled' : ''}>Página Siguiente ▶</button>
             </div>
-            <div class="binder-page-container" id="binderPageGrid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;"></div>
+            <div class="binder-page-container" id="binderPageGrid" data-columns="${columnas}"></div>
         `;
 
         const gridEl = document.getElementById('binderPageGrid');
@@ -145,18 +178,17 @@ document.addEventListener('DOMContentLoaded', () => {
         currentSlots.forEach(slot => {
             const slotDiv = document.createElement('div');
             slotDiv.className = `binder-slot ${slot.is_occupied ? 'occupied' : 'empty'}`;
-            slotDiv.style.cssText = "aspect-ratio: 5/7; border-radius: 6px; border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; background: rgba(255,255,255,0.02); cursor: pointer;";
             
             if (slot.is_occupied && slot.image_uri) {
                 slotDiv.innerHTML = `
-                    <img src="${slot.image_uri}" alt="${slot.card_name}" style="width: 100%; height: 100%; object-fit: cover;" loading="lazy">
-                    <div class="slot-overlay-info" style="position: absolute; bottom: 4px; right: 4px; background: rgba(0,0,0,0.8); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; color: #fff;">
-                        <span>${slot.condition || 'NM'}</span>
+                    <img src="${slot.image_uri}" alt="${slot.card_name}" loading="lazy">
+                    <div class="slot-overlay-info">
+                        <span class="slot-badge">${slot.condition || 'NM'}</span>
                     </div>
                 `;
                 slotDiv.addEventListener('click', () => seleccionarSlotParaGestion(slot));
             } else {
-                slotDiv.innerHTML = `<span class="empty-slot-text" style="font-size: 0.75rem; color: var(--text-muted);">Hueco ${slot.slot_index}</span>`;
+                slotDiv.innerHTML = `<span class="empty-slot-text">Hueco ${slot.slot_index}</span>`;
             }
 
             gridEl.appendChild(slotDiv);
@@ -230,10 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         };
 
-        jumpBtn.addEventListener('click', ejecutarSalto);
-        jumpInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') ejecutarSalto();
-        });
+        if (jumpBtn) jumpBtn.addEventListener('click', ejecutarSalto);
+        if (jumpInput) {
+            jumpInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') ejecutarSalto();
+            });
+        }
     }
 
     function crearCardElementoEquilibrado(slot, indexNum) {
@@ -252,7 +286,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span style="position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.8); color: #fff; font-size: 0.6rem; padding: 1px 4px; border-radius: 3px;">#${indexNum}</span>
             `;
             item.title = `${slot.card_name} (Slot #${indexNum})`;
-            
             item.addEventListener('click', () => seleccionarSlotParaGestion(slot));
             wrapper.appendChild(item);
 
@@ -261,7 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
             nameLabel.textContent = slot.card_name;
             nameLabel.title = slot.card_name;
             wrapper.appendChild(nameLabel);
-    
         } else {
             item.className = 'deck-slot-balanced empty-balanced';
             item.style.cssText = "width: 50px; height: 50px; background: rgba(255,255,255,0.02); border: 1px dashed var(--border-color); border-radius: 6px; display: flex; align-items: center; justify-content: center;";
@@ -275,11 +307,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 5. Mostrar carta en el Visor 2.5D al hacer clic en un slot ---
     function seleccionarSlotParaGestion(slot) {
-        selectedSlotData = slot;
-        
-        if (slot.image_uri) {
+        if (slot.image_uri && cardImage) {
             cardImage.src = slot.image_uri;
-        } else {
+        } else if (cardImage) {
             cardImage.src = "public/assets/nocapi.png";
         }
 
@@ -290,67 +320,70 @@ document.addEventListener('DOMContentLoaded', () => {
         if (visorName) visorName.textContent = slot.card_name || "Carta en slot";
         if (visorMana) visorMana.textContent = slot.mana_cost || "";
         if (visorType) visorType.textContent = slot.type_line || `Slot #${slot.slot_index} (${slot.condition || 'NM'})`;
-
-        // Mostrar panel de acciones rápidas
-        if (slotActionPanel) slotActionPanel.style.display = 'block';
     }
 
     // --- 6. Control de la Lupa 2.5D ---
-    toggleBtn.addEventListener('click', () => {
-        isMagnifierEnabled = !isMagnifierEnabled;
-        if (isMagnifierEnabled) {
-            toggleBtn.classList.add('active');
-            modeStatus.textContent = 'ACTIVADO';
-        } else {
-            toggleBtn.classList.remove('active');
-            modeStatus.textContent = 'DESACTIVADO';
-            magnifier.classList.remove('is-visible');
-        }
-    });
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            isMagnifierEnabled = !isMagnifierEnabled;
+            if (isMagnifierEnabled) {
+                toggleBtn.classList.add('active');
+                if (modeStatus) modeStatus.textContent = 'ACTIVADO';
+            } else {
+                toggleBtn.classList.remove('active');
+                if (modeStatus) modeStatus.textContent = 'DESACTIVADO';
+                if (magnifier) magnifier.classList.remove('is-visible');
+            }
+        });
+    }
 
-    cardImage.addEventListener('load', () => {
-        magnifier.style.backgroundSize = `${card.offsetWidth * ZOOM_SCALE}px auto`;
-    });
+    if (cardImage && card && magnifier) {
+        cardImage.addEventListener('load', () => {
+            magnifier.style.backgroundSize = `${card.offsetWidth * ZOOM_SCALE}px auto`;
+        });
+    }
 
-    container.addEventListener('mousemove', (e) => {
-        const rect = container.getBoundingClientRect();
-        const mouseX = e.clientX - rect.left;
-        const mouseY = e.clientY - rect.top;
+    if (container && card && magnifier && cardImage) {
+        container.addEventListener('mousemove', (e) => {
+            const rect = container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
 
-        if (isMagnifierEnabled) {
-            if (!magnifier.classList.contains('is-visible')) {
-                magnifier.classList.add('is-visible');
+            if (isMagnifierEnabled) {
+                if (!magnifier.classList.contains('is-visible')) {
+                    magnifier.classList.add('is-visible');
+                }
+
+                const magX = mouseX - (MAGNIFIER_SIZE / 2);
+                const magY = mouseY - (MAGNIFIER_SIZE / 2);
+                magnifier.style.left = `${magX}px`;
+                magnifier.style.top = `${magY}px`;
+
+                const percentX = mouseX / rect.width;
+                const percentY = mouseY / rect.height;
+
+                const bgPosX = -(percentX * (card.offsetWidth * ZOOM_SCALE)) + (MAGNIFIER_SIZE / 2);
+                const bgPosY = -(percentY * (card.offsetHeight * ZOOM_SCALE)) + (MAGNIFIER_SIZE / 2);
+
+                magnifier.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
+                magnifier.style.backgroundImage = `url(${cardImage.src})`;
+            } else {
+                magnifier.classList.remove('is-visible');
             }
 
-            const magX = mouseX - (MAGNIFIER_SIZE / 2);
-            const magY = mouseY - (MAGNIFIER_SIZE / 2);
-            magnifier.style.left = `${magX}px`;
-            magnifier.style.top = `${magY}px`;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = -((mouseY - centerY) / centerY) * 15;
+            const rotateY = ((mouseX - centerX) / centerX) * 15;
 
-            const percentX = mouseX / rect.width;
-            const percentY = mouseY / rect.height;
+            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+        });
 
-            const bgPosX = -(percentX * (card.offsetWidth * ZOOM_SCALE)) + (MAGNIFIER_SIZE / 2);
-            const bgPosY = -(percentY * (card.offsetHeight * ZOOM_SCALE)) + (MAGNIFIER_SIZE / 2);
-
-            magnifier.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
-            magnifier.style.backgroundImage = `url(${cardImage.src})`;
-        } else {
+        container.addEventListener('mouseleave', () => {
             magnifier.classList.remove('is-visible');
-        }
-
-        const centerX = rect.width / 2;
-        const centerY = rect.height / 2;
-        const rotateX = -((mouseY - centerY) / centerY) * 15;
-        const rotateY = ((mouseX - centerX) / centerX) * 15;
-
-        card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
-    });
-
-    container.addEventListener('mouseleave', () => {
-        magnifier.classList.remove('is-visible');
-        card.style.transform = `rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
-    });
+            card.style.transform = `rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
+        });
+    }
 
     // Inicializar carga de contenedores al arrancar
     cargarContenedores();

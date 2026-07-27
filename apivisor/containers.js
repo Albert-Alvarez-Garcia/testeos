@@ -21,26 +21,37 @@ containerTypeSelect.addEventListener('change', (e) => {
     }
 });
 
-// Enviar datos al backend
+// Enviar datos al backend con las tipologías estrictas
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const name = document.getElementById('containerName').value.trim();
-    const type = containerTypeSelect.value;
+    const baseType = containerTypeSelect.value;
     
+    let type = baseType;
     let max_capacity = null;
-    let slots_per_page = 9; // Valor por defecto para archivadores
-    let total_pages = null;   // Nuevo campo para las páginas
+    let slots_per_page = 9; 
+    let total_pages = null;   
     let sideboard_capacity = null;
 
-    if (type === 'binder') {
+    if (baseType === 'binder') {
+        // Captura directa de la variante exacta seleccionada
+        type = document.getElementById('binderSize').value; // 'binder_s', 'binder_m', 'binder_xl'
         total_pages = parseInt(document.getElementById('binderPages').value) || 40;
-        slots_per_page = parseInt(document.getElementById('binderSlotsPerPage').value) || 9;
-        max_capacity = total_pages * slots_per_page; // Cálculo automático del total
-    } else if (type === 'deck') {
+        
+        if (type === 'binder_s') {
+            slots_per_page = 4;
+        } else if (type === 'binder_xl' || type === 'binder_l') {
+            slots_per_page = 12;
+        } else {
+            slots_per_page = 9; // binder_m por defecto
+        }
+
+        max_capacity = total_pages * slots_per_page;
+    } else if (baseType === 'deck') {
         max_capacity = parseInt(document.getElementById('deckMainCapacity').value) || 60;
         sideboard_capacity = parseInt(document.getElementById('deckSideboardCapacity').value) || 15;
-    } else if (type === 'box') {
+    } else if (baseType === 'box') {
         max_capacity = parseInt(document.getElementById('boxCapacity').value) || 1000;
     }
 
@@ -50,10 +61,10 @@ form.addEventListener('submit', async (e) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 name, 
-                type, 
+                type,             // Se envía directamente 'binder_s', 'binder_m' o 'binder_xl'
                 max_capacity, 
                 slots_per_page,   
-                total_pages,      // Enviamos también el total de páginas
+                total_pages,      
                 sideboard_capacity 
             })
         });
