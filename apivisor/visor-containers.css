@@ -140,8 +140,6 @@
    3. ARCHIVADOR (BINDER) Y REJILLA DINÁMICA
    ========================================== */
 
-
-
 /* Columnas dinámicas optimizadas para evitar deformaciones */
 .binder-page-container[data-columns="2"] {
     grid-template-columns: repeat(2, minmax(140px, 190px));
@@ -243,6 +241,262 @@
     padding: 1rem;
     justify-content: center;
     justify-items: center;
-    overflow: hidden; /* Evita que se desborde o asomen elementos fuera de la página */
-    max-height: 80vh; /* Limita la altura visual de la página del archivador */
+    overflow: hidden;
+    max-height: 80vh;
+}
+
+
+/* ==========================================
+   4. COMPONENTES NUEVOS (MODAL, NAV Y PLACEHOLDER)
+   ========================================= */
+
+/* Modal Flotante */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(5px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.modal-content {
+    background: var(--bg-app, #0f172a);
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 16px;
+    padding: 24px;
+    width: 420px;
+    max-width: 90%;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    color: #f1f5f9;
+    transform: translateY(20px);
+    transition: transform 0.3s ease;
+}
+
+.modal-overlay.active .modal-content {
+    transform: translateY(0);
+}
+
+.modal-header {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.modal-text {
+    font-size: 0.9rem;
+    color: var(--text-muted, #94a3b8);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+
+.modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 280px;
+    overflow-y: auto;
+    margin-bottom: 24px;
+    padding-right: 8px;
+}
+
+.modal-list::-webkit-scrollbar { width: 6px; }
+.modal-list::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); border-radius: 4px; }
+.modal-list::-webkit-scrollbar-thumb { background: var(--border-color, #475569); border-radius: 4px; }
+
+.modal-btn {
+    text-align: left;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color, #334155);
+    border-radius: 10px;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.95rem;
+}
+
+.modal-btn:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--accent-color, #6366f1);
+    transform: translateX(4px);
+}
+
+.modal-btn-cancel {
+    background: transparent;
+    color: var(--text-muted, #94a3b8);
+    border: 1px solid var(--border-color, #475569);
+    padding: 8px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    float: right;
+    transition: all 0.2s;
+    font-weight: 600;
+}
+.modal-btn-cancel:hover {
+    background: rgba(255, 255, 255, 0.06);
+    color: white;
+}
+
+/* Barra de Navegación del Binder */
+.binder-navigation-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 12px 24px;
+    border-radius: 12px;
+    border: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+    margin-bottom: 24px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.nav-btn {
+    background: var(--bg-app, #1e293b);
+    color: #e2e8f0;
+    border: 1px solid var(--border-color, #475569);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.nav-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--text-muted, #94a3b8);
+    color: white;
+}
+
+.nav-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.page-indicator {
+    color: var(--text-muted, #94a3b8);
+    font-size: 0.95rem;
+    min-width: 130px;
+    text-align: center;
+}
+.page-indicator strong {
+    color: #f8fafc;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* Botón rápido para mover carta en el slot */
+.cross-move-btn {
+    background: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid #f59e0b !important;
+    color: #f59e0b !important;
+    border-radius: 6px !important;
+    padding: 4px 10px !important;
+    font-size: 11px !important;
+    font-weight: bold !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease !important;
+    text-transform: uppercase;
+    backdrop-filter: blur(4px);
+}
+.cross-move-btn:hover {
+    background: #f59e0b !important;
+    color: #0f172a !important;
+    transform: scale(1.05);
+}
+
+/* Placeholder para estado vacío (Antes de cargar contenedor) */
+.placeholder-msg {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    background: rgba(255, 255, 255, 0.01);
+    border: 2px dashed var(--border-color, #334155);
+    border-radius: 16px;
+    margin-top: 20px;
+    text-align: center;
+}
+.placeholder-msg p {
+    font-size: 1.1rem;
+    color: var(--text-muted, #64748b);
+}
+
+.binder-viewport-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* Flechas centradas verticalmente a los costados del grid */
+.side-nav-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid var(--border-color, #475569);
+    color: #e2e8f0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    cursor: pointer;
+    z-index: 20;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+}
+
+.side-nav-arrow.left { left: -10px; }
+.side-nav-arrow.right { right: -10px; }
+
+.side-nav-arrow:hover:not(:disabled) {
+    background: var(--accent-color, #3b82f6);
+    border-color: var(--accent-color, #3b82f6);
+    color: white;
+    transform: translateY(-50%) scale(1.08);
+}
+
+.side-nav-arrow:disabled {
+    opacity: 0.2;
+    cursor: not-allowed;
+}
+
+.binder-navigation-controls {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    overflow: visible !important;
+}
+
+#moveContainerHelper {
+    width: 100% !important;
+    box-sizing: border-box;
 }

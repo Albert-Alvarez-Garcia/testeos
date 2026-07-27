@@ -27,12 +27,16 @@ class MoveCardRequest(BaseModel):
     from_slot_id: str
     to_slot_id: str
 
+class MoveCardBetweenContainersRequest(BaseModel):
+    copy_id: str
+    target_container_id: str
+    target_slot_id: Optional[str] = None # Si es null, busca el primer hueco libre automáticamente
+
 @router.post("/")
 def create_container(data: ContainerCreate):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        # 1. Insertar el contenedor maestro respetando estrictamente el esquema SQL
         cursor.execute(
             """
             INSERT INTO containers (name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity)
@@ -51,8 +55,7 @@ def create_container(data: ContainerCreate):
         new_container = cursor.fetchone()
         container_id = new_container["id"]
 
-        # Función auxiliar interna para insertar slots
-        def insert_slots(count: int, section: str, page: int = 1):
+        def insert_slots(count: int, section: str = 'main', page: int = 1):
             for slot_idx in range(1, count + 1):
                 cursor.execute(
                     """
@@ -62,27 +65,30 @@ def create_container(data: ContainerCreate):
                     (container_id, page, slot_idx, section)
                 )
 
-        # 2. Generación automática de slots robusta para 2x2 (4), 3x3 (9) y 4x3 (12)
-        is_binder = data.type == 'binder' or data.type.startswith('binder_')
-        
-        if is_binder and data.total_pages:
-            # Mapeo exacto según la variante enviada o el slots_per_page recibido
+        tipo = data.type.lower()
+        is_binder = 'binder' in tipo
+
+        if is_binder:
             slots_map = {
                 'binder_s': 4,   # Formato 2x2
                 'binder_m': 9,   # Formato 3x3
                 'binder_xl': 12  # Formato 4x3
             }
+            slots_per_page = slots_map.get(tipo, data.slots_per_page if data.slots_per_page in [4, 9, 12] else 9)
+            total_pages = data.total_pages or 40
             
-            slots_per_page = slots_map.get(data.type, data.slots_per_page if data.slots_per_page in [4, 9, 12] else 9)
-            
-            for page in range(1, data.total_pages + 1):
-                insert_slots(slots_per_page, 'main', page=page)
+            for page in range(1, total_pages + 1):
+                insert_slots(slots_per_page, section='main', page=page)
 
-        elif data.type == 'deck':
+        elif tipo == 'deck':
             main_cap = data.max_capacity or 60
             side_cap = data.sideboard_capacity or 15
-            insert_slots(main_cap, 'main')
-            insert_slots(side_cap, 'sideboard')
+            insert_slots(main_cap, section='main')
+            insert_slots(side_cap, section='sideboard')
+
+        else:  # Para cajas u otros tipos libres ('box')
+            box_cap = data.max_capacity or 1000
+            insert_slots(box_cap, section='main')
 
         conn.commit()
         return dict(new_container)
@@ -249,7 +255,6 @@ def update_container_slots_layout(container_id: str, slots_data: list[dict]):
         if not cursor.fetchone():
             raise HTTPException(status_code=404, detail="Contenedor no encontrado.")
 
-        # 1. Desvinculamos temporalmente las copias físicas de este contenedor para evitar conflictos de claves únicas
         cursor.execute(
             """
             UPDATE card_copies 
@@ -259,7 +264,6 @@ def update_container_slots_layout(container_id: str, slots_data: list[dict]):
             (container_id,)
         )
 
-        # 2. Reseteamos la ocupación de todos los slots del contenedor
         cursor.execute(
             """
             UPDATE container_slots 
@@ -269,14 +273,12 @@ def update_container_slots_layout(container_id: str, slots_data: list[dict]):
             (container_id,)
         )
 
-        # 3. Procesamos la nueva distribución mandada por el frontend
         for slot in slots_data:
             slot_index = slot.get("slot_index")
             page_number = slot.get("page_number", 1)
             is_occupied = slot.get("is_occupied", False)
             copy_id = slot.get("copy_id")
 
-            # Buscamos el ID real del slot físico en base a su página e índice dentro del contenedor
             cursor.execute(
                 """
                 SELECT id FROM container_slots 
@@ -290,7 +292,6 @@ def update_container_slots_layout(container_id: str, slots_data: list[dict]):
             if slot_row:
                 target_slot_id = slot_row["id"]
 
-                # Si el slot está ocupado según el array recibido
                 if is_occupied:
                     cursor.execute(
                         """
@@ -301,7 +302,6 @@ def update_container_slots_layout(container_id: str, slots_data: list[dict]):
                         (target_slot_id,)
                     )
 
-                    # Si además viene acompañada de un ID de copia, la reubicamos en este slot
                     if copy_id:
                         cursor.execute(
                             """
@@ -322,6 +322,106 @@ def update_container_slots_layout(container_id: str, slots_data: list[dict]):
         conn.rollback()
         print(f"❌ Error al actualizar los slots del contenedor: {e}")
         raise HTTPException(status_code=500, detail="Error interno al actualizar la distribución.")
+    finally:
+        cursor.close()
+        conn.close()
+
+@router.post("/move-cross-container")
+def move_card_between_containers(data: MoveCardBetweenContainersRequest):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT id, container_id, slot_id 
+            FROM card_copies 
+            WHERE id = %s;
+            """,
+            (data.copy_id,)
+        )
+        copy_row = cursor.fetchone()
+        if not copy_row:
+            raise HTTPException(status_code=404, detail="La copia de la carta especificada no existe.")
+        
+        old_slot_id = copy_row["slot_id"]
+
+        cursor.execute("SELECT id, type FROM containers WHERE id = %s;", (data.target_container_id,))
+        target_container = cursor.fetchone()
+        if not target_container:
+            raise HTTPException(status_code=404, detail="El contenedor de destino no existe.")
+
+        target_slot_id = data.target_slot_id
+        if not target_slot_id:
+            cursor.execute(
+                """
+                SELECT id FROM container_slots 
+                WHERE container_id = %s AND is_occupied = FALSE 
+                ORDER BY 
+                    CASE WHEN section = 'main' THEN 1 ELSE 2 END ASC,
+                    page_number ASC, 
+                    slot_index ASC 
+                LIMIT 1;
+                """,
+                (data.target_container_id,)
+            )
+            free_slot = cursor.fetchone()
+            if not free_slot:
+                raise HTTPException(status_code=400, detail="El contenedor de destino está completamente lleno.")
+            target_slot_id = free_slot["id"]
+        else:
+            cursor.execute(
+                """
+                SELECT is_occupied FROM container_slots 
+                WHERE id = %s AND container_id = %s;
+                """,
+                (target_slot_id, data.target_container_id)
+            )
+            slot_check = cursor.fetchone()
+            if not slot_check:
+                raise HTTPException(status_code=404, detail="El slot de destino no es válido para este contenedor.")
+            if slot_check["is_occupied"]:
+                raise HTTPException(status_code=400, detail="El slot de destino seleccionado ya está ocupado.")
+
+        if old_slot_id:
+            cursor.execute(
+                """
+                UPDATE container_slots 
+                SET is_occupied = FALSE 
+                WHERE id = %s;
+                """,
+                (old_slot_id,)
+            )
+
+        cursor.execute(
+            """
+            UPDATE container_slots 
+            SET is_occupied = TRUE 
+            WHERE id = %s;
+            """,
+            (target_slot_id,)
+        )
+
+        cursor.execute(
+            """
+            UPDATE card_copies 
+            SET container_id = %s, slot_id = %s 
+            WHERE id = %s
+            RETURNING id, container_id, slot_id, condition, language, is_foil;
+            """,
+            (data.target_container_id, target_slot_id, data.copy_id)
+        )
+        updated_copy = cursor.fetchone()
+
+        conn.commit()
+        return {"status": "success", "message": "Carta movida de contenedor con éxito.", "copy": dict(updated_copy)}
+
+    except HTTPException as he:
+        conn.rollback()
+        raise he
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Error al mover carta entre contenedores: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al trasladar la carta.")
     finally:
         cursor.close()
         conn.close()

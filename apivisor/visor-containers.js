@@ -18,6 +18,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let allContainers = [];
     let currentBinderPage = 1;
 
+    // --- ESTADOS GLOBALES DE MOVIMIENTO DE CARTAS ---
+    let isMoveModeActive = false;
+    let slotOrigenIndex = null;
+    let hasUnsavedChanges = false;
+
     const ZOOM_SCALE = 2; 
     const MAGNIFIER_SIZE = 160; 
 
@@ -153,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (containerSelector.value === "") {
             if (containerTitle) containerTitle.textContent = "Selecciona un contenedor";
             if (containerStats) containerStats.textContent = "—";
-            if (visualWorkspace) visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: var(--text-muted);">Elige un archivador o mazo arriba para desplegar sus páginas y huecos...</p></div>`;
+            if (visualWorkspace) visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: var(--text-muted);">Selecciona el mazo o archivador...</p></div>`;
             currentContainerData = null;
         }
     }
@@ -175,12 +180,12 @@ document.addEventListener('DOMContentLoaded', () => {
             currentContainerData = allContainers.find(c => c.id === containerId);
             if (!currentContainerData) return;
             
-            // ¡IMPORTANTE! Reseteamos a la página 1 cada vez que cambiamos de contenedor
-            currentBinderPage = 1;
-
             containerTitle.textContent = currentContainerData.name;
             containerStats.textContent = `Tipo: ${currentContainerData.type.toUpperCase()} | Capacidad Máx: ${currentContainerData.max_capacity || 'N/A'}`;
 
+            slotOrigenIndex = null;
+            hasUnsavedChanges = false;
+            currentBinderPage = 1;
             await cargarSlotsContenedor(containerId);
         });
     }
@@ -205,6 +210,9 @@ document.addEventListener('DOMContentLoaded', () => {
             visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: #ef4444;">Error al cargar los elementos del contenedor.</p></div>`;
         }
     }
+
+// --- ESTADO GLOBAL O COMPARTIDO PARA LOS MODOS DE MOVIMIENTO ---
+let isInterContainerMode = false; // Por defecto apagado: mueve entre huecos del mismo contenedor
 
 function renderizarBinder(slots) {
     let columnas = 3;
@@ -236,81 +244,153 @@ function renderizarBinder(slots) {
     );
 
     const totalPages = Math.ceil(maxCapacity / itemsPerPage);
-    const pagesMap = {};
     
-    for (let i = 1; i <= totalPages; i++) {
-        pagesMap[i] = [];
+    const totalSlotsRequeridos = totalPages * itemsPerPage;
+    while (slots.length < totalSlotsRequeridos) {
+        const nuevoIndex = slots.length + 1;
+        slots.push({
+            id: null,
+            slot_index: ((nuevoIndex - 1) % itemsPerPage) + 1,
+            page_number: Math.floor((nuevoIndex - 1) / itemsPerPage) + 1,
+            is_occupied: false,
+            card_id: null,
+            copy_id: null,
+            card_name: null,
+            mana_cost: null,
+            type_line: null,
+            image_uri: null,
+            condition: 'NM',
+            is_foil: false,
+            notes: null
+        });
     }
-
-    slots.forEach((slot, index) => {
-        let page = Number(slot.page_number || slot.pagina);
-        if (!page || page < 1 || page > totalPages) {
-            page = Math.floor(index / itemsPerPage) + 1;
-        }
-        
-        if (!pagesMap[page]) {
-            pagesMap[page] = [];
-        }
-        pagesMap[page].push(slot);
-    });
 
     if (currentBinderPage > totalPages) currentBinderPage = 1;
 
     visualWorkspace.innerHTML = `
-        <div class="binder-navigation-controls">
-            <button id="prevPageBtn" class="nav-btn" ${currentBinderPage <= 1 ? 'disabled' : ''}>◀ Página Anterior</button>
-            <span class="page-indicator">Página <strong id="currentPageNum">${currentBinderPage}</strong> de ${totalPages}</span>
-            <button id="nextPageBtn" class="nav-btn" ${currentBinderPage >= totalPages ? 'disabled' : ''}>Página Siguiente ▶</button>
+        <div class="binder-navigation-controls" style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; margin-bottom: 10px; flex-wrap: wrap; gap: 10px;">
+            <div></div>
             
-            <!-- BOTÓN DE MODO MOVER -->
-            <button id="toggleMoveModeBtn" class="nav-btn" style="margin-left: auto; border-color: #b39258;">Mover Cartas: OFF</button>
+            <div class="page-indicator" style="position: absolute; left: 50%; transform: translateX(-50%);">
+                Página <strong id="currentPageNum">${currentBinderPage}</strong> de ${totalPages}
+            </div>
+            
+            <div style="display: flex; gap: 8px; margin-left: auto; align-items: center; flex-wrap: wrap;">
+                <!-- Sub-opción que solo aparece cuando Mover Cartas está ON -->
+                ${isMoveModeActive ? `
+                    <button id="toggleInterContainerBtn" class="nav-btn" style="border-color: #f59e0b; color: ${isInterContainerMode ? '#f59e0b' : '#aaa'}; background: ${isInterContainerMode ? '#3d2a1d' : 'transparent'}; font-size: 0.85rem;">
+                        Mover a otro Contenedor: ${isInterContainerMode ? 'ON' : 'OFF'}
+                    </button>
+                ` : ''}
+
+                <button id="toggleMoveModeBtn" class="nav-btn" style="border-color: #b39258;">Mover Cartas: ${isMoveModeActive ? 'ON' : 'OFF'}</button>
+                <button id="saveSlotsBtn" class="nav-btn" style="background: #10b981; color: white; border-color: #059669; display: ${hasUnsavedChanges ? 'inline-block' : 'none'};">💾 Guardar Cambios</button>
+            </div>
         </div>
-        <div class="binder-page-container" id="binderPageGrid"></div>
+
+        <!-- Modal para elegir el contenedor de destino (solo si el submodo está activo) -->
+        <div id="transferModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+            <div style="background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #b39258; width: 400px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                <h3 style="color: #f59e0b; margin-top: 0; margin-bottom: 15px; font-size: 1.2rem;">Mover carta a otro contenedor</h3>
+                <p id="transferCardNameInfo" style="color: #fff; font-size: 0.9rem; margin-bottom: 15px;"></p>
+                
+                <label style="display: block; color: #aaa; font-size: 0.85rem; margin-bottom: 5px;">Selecciona el contenedor de destino:</label>
+                <select id="destinationContainerSelect" style="width: 100%; padding: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; border-radius: 6px; margin-bottom: 20px;">
+                    <option value="">-- Elige destino --</option>
+                </select>
+
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button id="cancelTransferBtn" style="padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
+                    <button id="confirmTransferBtn" style="padding: 8px 16px; background: #b39258; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Mover Carta</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="binder-viewport-wrapper">
+            <button id="prevPageBtn" class="side-nav-arrow left" ${currentBinderPage <= 1 ? 'disabled' : ''} title="Página Anterior">❮</button>
+            
+            <div class="binder-page-container" id="binderPageGrid"></div>
+
+            <button id="nextPageBtn" class="side-nav-arrow right" ${currentBinderPage >= totalPages ? 'disabled' : ''} title="Página Siguiente">❯</button>
+        </div>
     `;
 
     const gridEl = document.getElementById('binderPageGrid');
     gridEl.setAttribute('data-columns', columnas);
 
-    const currentSlots = pagesMap[currentBinderPage] || [];
-
-    // --- VARIABLES DE ESTADO PARA EL MODO MOVER POR CLICS ---
-    let isMoveModeActive = false;
-    let slotOrigenIndex = null;
+    const startIndex = (currentBinderPage - 1) * itemsPerPage;
+    const currentSlots = slots.slice(startIndex, startIndex + itemsPerPage);
 
     const toggleMoveBtn = document.getElementById('toggleMoveModeBtn');
-    toggleMoveBtn.addEventListener('click', () => {
-        isMoveModeActive = !isMoveModeActive;
-        slotOrigenIndex = null; // Reseteamos selección si apagan/encienden
-        
-        if (isMoveModeActive) {
-            toggleMoveBtn.textContent = 'Mover Cartas: ON';
-            toggleMoveBtn.style.background = '#3d2a1d';
-            toggleMoveBtn.style.color = '#f59e0b';
-        } else {
-            toggleMoveBtn.textContent = 'Mover Cartas: OFF';
-            toggleMoveBtn.style.background = '';
-            toggleMoveBtn.style.color = '';
-        }
-        
-        // Volvemos a renderizar la página para aplicar o quitar clases visuales si hiciera falta
-        renderizarBinder(slots);
-    });
-
-    // Mantener el estado visual del botón si se recarga la página interna
+    const toggleInterContainerBtn = document.getElementById('toggleInterContainerBtn');
+    const saveSlotsBtn = document.getElementById('saveSlotsBtn');
+    
     if (isMoveModeActive) {
-        toggleMoveBtn.textContent = 'Mover Cartas: ON';
         toggleMoveBtn.style.background = '#3d2a1d';
         toggleMoveBtn.style.color = '#f59e0b';
     }
 
-    currentSlots.forEach((slot, localIndex) => {
-        // Calculamos el índice absoluto real dentro del array global de slots
-        const absoluteIndex = slots.indexOf(slot);
+    toggleMoveBtn.addEventListener('click', () => {
+        isMoveModeActive = !isMoveModeActive;
+        if (!isMoveModeActive) {
+            isInterContainerMode = false;
+        }
+        slotOrigenIndex = null;
+        renderizarBinder(slots);
+    });
+
+    if (toggleInterContainerBtn) {
+        toggleInterContainerBtn.addEventListener('click', () => {
+            isInterContainerMode = !isInterContainerMode;
+            slotOrigenIndex = null;
+            renderizarBinder(slots);
+        });
+    }
+
+    if (saveSlotsBtn) {
+        saveSlotsBtn.addEventListener('click', async () => {
+            saveSlotsBtn.textContent = 'Guardando...';
+            saveSlotsBtn.disabled = true;
+
+            try {
+                const payload = slots.map((s, idx) => ({
+                    id: s.id || null,
+                    slot_index: (idx % itemsPerPage) + 1,
+                    page_number: Math.floor(idx / itemsPerPage) + 1,
+                    is_occupied: !!s.is_occupied,
+                    card_id: s.card_id || null,
+                    copy_id: s.copy_id || null,
+                    condition: s.condition || 'NM',
+                    is_foil: !!s.is_foil,
+                    notes: s.notes || null
+                }));
+
+                const response = await fetch(`http://localhost:8000/api/containers/${currentContainerData.id}/slots`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('Error al guardar la distribución');
+
+                hasUnsavedChanges = false;
+                alert('¡Distribución guardada correctamente!');
+                await cargarSlotsContenedor(currentContainerData.id);
+            } catch (err) {
+                console.error(err);
+                alert('Hubo un error al guardar los cambios.');
+                saveSlotsBtn.textContent = '💾 Guardar Cambios';
+                saveSlotsBtn.disabled = false;
+            }
+        });
+    }
+
+    currentSlots.forEach((slot, localIdx) => {
+        const absoluteIndex = startIndex + localIdx;
         
         const slotDiv = document.createElement('div');
         slotDiv.className = `binder-slot ${slot.is_occupied ? 'occupied' : 'empty'}`;
         
-        // Si este slot es el que está seleccionado como origen, le ponemos una clase visual distintiva
         if (slotOrigenIndex === absoluteIndex) {
             slotDiv.classList.add('selected-origin');
         }
@@ -324,64 +404,173 @@ function renderizarBinder(slots) {
                 </div>
             `;
             slotDiv.title = `${slot.card_name} (${slot.type_line})`;
-            
-            const img = slotDiv.querySelector('img');
-            img.addEventListener('click', (e) => {
-                // Si el modo mover está activo y hacemos clic en una carta ocupada, seleccionamos origen
-                if (isMoveModeActive) {
-                    e.stopPropagation();
-                    slotOrigenIndex = absoluteIndex;
-                    renderizarBinder(slots); // Actualiza la vista para marcar visualmente el origen
-                    return;
-                }
-
-                // Comportamiento normal (ir a la vista de detalle de la carta)
-                const encodedImg = encodeURIComponent(slot.image_uri || '');
-                const encodedName = encodeURIComponent(slot.card_name || '');
-                const encodedType = encodeURIComponent(slot.type_line || '');
-                const encodedMana = encodeURIComponent(slot.mana_cost || '');
-                
-                window.location.href = `gestor-contenedor.html?card_id=${slot.card_id}&printing_id=${slot.copy_id}&img=${encodedImg}&name=${encodedName}&type=${encodedType}&mana=${encodedMana}`;
-            });
         } else {
-            slotDiv.innerHTML = `<span class="empty-slot-text">Hueco ${slot.slot_index}</span>`;
+            slotDiv.innerHTML = `<span class="empty-slot-text">Hueco ${(absoluteIndex % itemsPerPage) + 1}</span>`;
         }
 
-        // --- GESTIÓN DEL CLIC EN EL SLOT (DESTINO O SELECCIÓN) ---
         slotDiv.addEventListener('click', () => {
-            if (!isMoveModeActive) return;
+            if (!isMoveModeActive) {
+                if (slot.is_occupied && slot.card_id) {
+                    const encodedImg = encodeURIComponent(slot.image_uri || '');
+                    const encodedName = encodeURIComponent(slot.card_name || '');
+                    const encodedType = encodeURIComponent(slot.type_line || '');
+                    const encodedMana = encodeURIComponent(slot.mana_cost || '');
+                    
+                    window.location.href = `gestor-contenedor.html?card_id=${slot.card_id}&printing_id=${slot.copy_id}&img=${encodedImg}&name=${encodedName}&type=${encodedType}&mana=${encodedMana}`;
+                }
+                return;
+            }
 
-            // CASO 1: Si no hay origen seleccionado y hacemos clic en una carta ocupada
-            if (slotOrigenIndex === null && slot.is_occupied) {
-                slotOrigenIndex = absoluteIndex;
-                renderizarBinder(slots);
-            } 
-            // CASO 2: Si ya tenemos un origen seleccionado y hacemos clic en un HUECO VACÍO como destino
-            else if (slotOrigenIndex !== null && !slot.is_occupied) {
-                const destinoIndex = absoluteIndex;
+            if (isInterContainerMode) {
+                if (slot.is_occupied) {
+                    slotOrigenIndex = absoluteIndex;
+                    const modal = document.getElementById('transferModal');
+                    const nameInfo = document.getElementById('transferCardNameInfo');
+                    const destSelect = document.getElementById('destinationContainerSelect');
 
-                // Movemos los datos de la carta al slot vacío destino
-                slots[destinoIndex] = {
-                    ...slots[slotOrigenIndex],
-                    slot_index: slots[destinoIndex].slot_index || (destinoIndex + 1),
-                    page_number: currentBinderPage
-                };
+                    nameInfo.textContent = `Carta seleccionada: "${slot.card_name}"`;
+                    
+                    destSelect.innerHTML = '<option value="">-- Elige contenedor destino --</option>';
+                    if (typeof allContainers !== 'undefined' && Array.isArray(allContainers)) {
+                        allContainers
+                            .filter(c => c.id !== currentContainerData.id)
+                            .forEach(c => {
+                                const opt = document.createElement('option');
+                                opt.value = c.id;
+                                opt.textContent = `${c.name} [${(c.type || 'general').toUpperCase()}]`;
+                                destSelect.appendChild(opt);
+                            });
+                    }
 
-                // Vaciamos el slot de origen original
-                slots[slotOrigenIndex] = {
-                    is_occupied: false,
-                    slot_index: slots[slotOrigenIndex].slot_index || (slotOrigenIndex + 1),
-                    page_number: Math.floor(slotOrigenIndex / itemsPerPage) + 1
-                };
+                    modal.style.display = 'flex';
 
-                // Limpiamos selección y redibujamos el binder actualizado
-                slotOrigenIndex = null;
-                renderizarBinder(slots);
-            } 
-            // CASO 3: Si hacemos clic en el mismo origen u otro sitio inválido, deseleccionamos
-            else if (slotOrigenIndex !== null && slot.is_occupied) {
-                slotOrigenIndex = absoluteIndex; // Cambiamos de origen directamente
-                renderizarBinder(slots);
+                    const cancelBtn = document.getElementById('cancelTransferBtn');
+                    const confirmBtn = document.getElementById('confirmTransferBtn');
+
+                    const newCancel = cancelBtn.cloneNode(true);
+                    cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+                    const newConfirm = confirmBtn.cloneNode(true);
+                    confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+                    newCancel.addEventListener('click', () => {
+                        modal.style.display = 'none';
+                        slotOrigenIndex = null;
+                    });
+
+                    newConfirm.addEventListener('click', async () => {
+                        const destId = destSelect.value;
+                        if (!destId) {
+                            alert('Por favor, selecciona un contenedor de destino.');
+                            return;
+                        }
+
+                        newConfirm.textContent = 'Moviendo...';
+                        newConfirm.disabled = true;
+
+                        try {
+                            const response = await fetch(`http://localhost:8000/api/containers/move-cross-container`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    copy_id: slot.copy_id,
+                                    target_container_id: destId,
+                                    target_slot_id: null
+                                })
+                            });
+
+                            if (!response.ok) throw new Error('Error al mover la carta entre contenedores');
+
+                            slots[slotOrigenIndex] = {
+                                ...slots[slotOrigenIndex],
+                                is_occupied: false,
+                                card_id: null,
+                                copy_id: null,
+                                card_name: null,
+                                mana_cost: null,
+                                type_line: null,
+                                image_uri: null,
+                                condition: 'NM',
+                                is_foil: false,
+                                notes: null
+                            };
+
+                            hasUnsavedChanges = true;
+                            modal.style.display = 'none';
+                            slotOrigenIndex = null;
+                            
+                            renderizarBinder(slots);
+                            document.getElementById('saveSlotsBtn').style.display = 'inline-block';
+                            
+                            alert('¡Carta transferida con éxito al nuevo contenedor! Recuerda guardar cambios.');
+                        } catch (err) {
+                            console.error(err);
+                            alert('Hubo un error al transferir la carta.');
+                            newConfirm.textContent = 'Mover Carta';
+                            newConfirm.disabled = false;
+                        }
+                    });
+                }
+            } else {
+                if (slotOrigenIndex === null) {
+                    if (slot.is_occupied) {
+                        slotOrigenIndex = absoluteIndex;
+                        renderizarBinder(slots);
+                    }
+                } else {
+                    if (slotOrigenIndex === absoluteIndex) {
+                        slotOrigenIndex = null;
+                        renderizarBinder(slots);
+                        return;
+                    }
+
+                    const destinoIndex = absoluteIndex;
+                    
+                    const tempSlotData = {
+                        is_occupied: slots[destinoIndex].is_occupied,
+                        card_id: slots[destinoIndex].card_id || null,
+                        copy_id: slots[destinoIndex].copy_id || null,
+                        card_name: slots[destinoIndex].card_name || null,
+                        mana_cost: slots[destinoIndex].mana_cost || null,
+                        type_line: slots[destinoIndex].type_line || null,
+                        image_uri: slots[destinoIndex].image_uri || null,
+                        condition: slots[destinoIndex].condition || null,
+                        is_foil: !!slots[destinoIndex].is_foil,
+                        notes: slots[destinoIndex].notes || null
+                    };
+
+                    slots[destinoIndex] = {
+                        ...slots[destinoIndex],
+                        is_occupied: !!slots[slotOrigenIndex].is_occupied,
+                        card_id: slots[slotOrigenIndex].card_id || null,
+                        copy_id: slots[slotOrigenIndex].copy_id || null,
+                        card_name: slots[slotOrigenIndex].card_name || null,
+                        mana_cost: slots[slotOrigenIndex].mana_cost || null,
+                        type_line: slots[slotOrigenIndex].type_line || null,
+                        image_uri: slots[slotOrigenIndex].image_uri || null,
+                        condition: slots[slotOrigenIndex].condition || null,
+                        is_foil: !!slots[slotOrigenIndex].is_foil,
+                        notes: slots[slotOrigenIndex].notes || null
+                    };
+
+                    slots[slotOrigenIndex] = {
+                        ...slots[slotOrigenIndex],
+                        is_occupied: tempSlotData.is_occupied,
+                        card_id: tempSlotData.card_id,
+                        copy_id: tempSlotData.copy_id,
+                        card_name: tempSlotData.card_name,
+                        mana_cost: tempSlotData.mana_cost,
+                        type_line: tempSlotData.type_line,
+                        image_uri: tempSlotData.image_uri,
+                        condition: tempSlotData.condition,
+                        is_foil: tempSlotData.is_foil,
+                        notes: tempSlotData.notes
+                    };
+
+                    slotOrigenIndex = null;
+                    hasUnsavedChanges = true;
+                    renderizarBinder(slots);
+                }
             }
         });
 
@@ -469,9 +658,9 @@ function renderizarBinder(slots) {
         wrapper.id = `slot-item-${indexNum}`;
 
         const item = document.createElement('div');
-        item.className = `deck-slot-compact ${slot && slot.is_occupied ? 'occupied' : 'empty-compact'}`;
+        item.className = `deck-slot-compact ${slot.is_occupied ? 'occupied' : 'empty-compact'}`;
 
-        if (slot && slot.is_occupied && slot.image_uri) {
+        if (slot.is_occupied && slot.image_uri) {
             item.innerHTML = `
                 <img src="${slot.image_uri}" alt="${slot.card_name}" loading="lazy">
                 <span class="compact-slot-badge">#${indexNum}</span>
