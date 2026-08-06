@@ -1,0 +1,159 @@
+.
+├── apivisor
+│   ├── index.html
+│   ├── Magicthegathering-logo(1).svg
+│   ├── public
+│   │   ├── assets
+│   │   └── Magicthegathering-logo(1).svg
+│   ├── themes.css
+│   ├── version basica visor
+│   │   ├── index.html
+│   │   ├── Magicthegathering-logo(1).svg
+│   │   ├── public
+│   │   ├── themes.css
+│   │   ├── visor.css
+│   │   ├── visor.html
+│   │   └── visor.js
+│   ├── visor.css
+│   ├── visor.html
+│   └── visor.js
+├── data
+│   └── default-cards.json
+├── database
+│   └── init.sql
+├── docker-compose.yml
+├── index.html
+├── logo.txt
+├── magiclogo.txt
+├── magiclogo.txt~
+├── Magicthegathering-logo(1).svg
+├── Makefile
+├── public
+│   ├── assets
+│   │   ├── 1.webp
+│   │   ├── 2
+│   │   ├── 2webp
+│   │   ├── 3.webp
+│   │   └── Magicthegathering-logo(1).svg
+│   └── Magicthegathering-logo(1).svg
+├── scripts
+│   ├── download_bulk.py
+│   └── import_bulk.py
+├── themes.css
+├── tree.txt
+├── version basica visor
+│   ├── index.html
+│   ├── Magicthegathering-logo(1).svg
+│   ├── public
+│   │   ├── assets
+│   │   └── Magicthegathering-logo(1).svg
+│   ├── themes.css
+│   ├── visor.css
+│   ├── visor.html
+│   └── visor.js
+├── visor.css
+├── visor.html
+└── visor.js
+
+13 directories, 42 files
+.
+├── apivisor
+│   ├── containers.html
+│   ├── containers.js
+│   ├── gestor-contendor.js
+│   ├── gestor-contenedor.html
+│   ├── index_old.html
+│   ├── Magicthegathering-logo(1).svg
+│   ├── public
+│   │   ├── assets
+│   │   └── Magicthegathering-logo(1).svg
+│   ├── themes.css
+│   ├── version basica visor
+│   │   ├── index.html
+│   │   ├── Magicthegathering-logo(1).svg
+│   │   ├── public
+│   │   ├── themes.css
+│   │   ├── visor.css
+│   │   ├── visor.html
+│   │   └── visor.js
+│   ├── visor-admin-25d.css
+│   ├── visor-admin-25d.html
+│   ├── visor-admin-25d.js
+│   ├── visor-containers.css
+│   ├── visor-containers.html
+│   ├── visor-containers.js
+│   ├── visor-crud.html
+│   ├── visor-crud.js
+│   ├── visor.css
+│   ├── visor.html
+│   └── visor.js
+├── backend
+│   ├── database.py
+│   ├── Dockerfile
+│   ├── main.py
+│   ├── pre_services.py
+│   ├── __pycache__
+│   │   ├── database.cpython-311.pyc
+│   │   ├── main.cpython-311.pyc
+│   │   └── services.cpython-311.pyc
+│   ├── requirements.txt
+│   ├── routers
+│   │   ├── cards.py
+│   │   ├── containers.py
+│   │   └── __pycache__
+│   └── services.py
+├── card_types.txt
+├── clean_card_types.json
+├── clean_types.py
+├── data
+│   └── default-cards.json
+├── database
+│   └── init.sql
+├── docker-compose.yml
+├── find.txt
+├── index.html
+├── indexold.html
+├── logo.txt
+├── magiclogo.txt
+├── Magicthegathering-logo(1).svg
+├── MAGIC.TTF
+├── Makefile
+├── parse_types.py
+├── public
+│   ├── assets
+│   │   ├── 1.webp
+│   │   ├── 2
+│   │   ├── 2webp
+│   │   ├── 3.webp
+│   │   ├── azul-removebg-preview.png
+│   │   ├── blanco-removebg-preview.png
+│   │   ├── capicarta.png
+│   │   ├── deco1.png
+│   │   ├── deco2.png
+│   │   ├── deco3.png
+│   │   ├── deco5.png
+│   │   ├── deco6.png
+│   │   ├── deco7.png
+│   │   ├── deco8.png
+│   │   ├── fondomejorado.jpg
+│   │   ├── logomagic.png
+│   │   ├── Magicthegathering-logo(1).svg
+│   │   ├── negro-removebg-preview.png
+│   │   ├── rojo-removebg-preview.png
+│   │   ├── Unconfirmed 866244.crdownload
+│   │   └── verde-removebg-preview.png
+│   ├── logomagic.png
+│   └── Magicthegathering-logo(1).svg
+├── requirements.txt
+├── scripts
+│   ├── download_bulk.py
+│   └── import_bulk.py
+├── styles.css
+├── themes.css
+├── tree.txt
+├── visor-crud.html
+├── visor.css
+├── visor.html
+└── visor.js
+
+15 directories, 84 files

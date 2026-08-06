@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro — Gestión de Contenedores</title>
+    <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="visor-admin-25d.css">
+    <style>
+        .management-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        @media (max-width: 900px) {
+            .management-layout { grid-template-columns: 1fr; }
+        }
+        .container-item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color, #333);
+            transition: background 0.2s;
+        }
+        .container-item-row:hover {
+            background: rgba(179, 146, 88, 0.1);
+        }
+        .container-link {
+            color: var(--text-main, #fff);
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.2s;
+        }
+        .container-link:hover {
+            color: var(--accent, #b39258);
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <a href="index.html" title="Ir al Inicio" style="display: flex; align-items: center; text-decoration: none;">
+                <img src="public/assets/logomagic.png" alt="Logo" style="height: 64px; width: auto;">
+            </a>
+            <span class="app-subtitle">Binder Pro — Gestión de Contenedores</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="management-layout">
+            
+            <!-- Panel Izquierdo: Crear Nuevo Contenedor -->
+            <section class="create-container-panel fantasy-panel" style="padding: 20px; height: fit-content;">
+                <h3 style="color: var(--accent, #b39258); margin-top: 0; margin-bottom: 15px;">Crear Nuevo Contenedor</h3>
+                <form id="createContainerForm">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">NOMBRE DEL CONTENEDOR</label>
+                        <input type="text" id="newContainerName" placeholder="Ej. Binder Principal, Mazo Modern" required style="width: 100%; box-sizing: border-box; padding: 0.65rem; border-radius: 8px; background: var(--bg-app, #121212); color: var(--text-main, #fff); border: 1px solid var(--border-color, #333);">
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">TIPO DE CONTENEDOR</label>
+                        <select id="newContainerType" required style="width: 100%; padding: 0.65rem; border-radius: 8px; background: var(--bg-app, #121212); color: var(--text-main, #fff); border: 1px solid var(--border-color, #333);">
+                            <option value="">Selecciona un tipo...</option>
+                            <option value="binder_s">Binder Pequeño (2x2)</option>
+                            <option value="binder_m">Binder Mediano (3x3)</option>
+                            <option value="binder_xl">Binder Grande (4x3)</option>
+                            <option value="deck">Mazo (Deck)</option>
+                            <option value="box">Caja (Box)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn-fantasy" style="width: 100%; padding: 0.75rem;">Guardar Contenedor</button>
+                </form>
+            </section>
+
+            <!-- Panel Derecho: Listado de Contenedores Existentes -->
+            <section class="containers-list-container fantasy-panel" style="padding: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="color: var(--accent, #b39258); margin: 0;">📦 Contenedores Existentes</h3>
+                    
+                    <select id="filterContainerType" style="padding: 0.5rem; border-radius: 6px; background: var(--bg-app, #121212); color: var(--text-main, #fff); border: 1px solid var(--border-color, #333);">
+                        <option value="all">Todos los tipos</option>
+                        <option value="binder_s">Binder Pequeño (2x2)</option>
+                        <option value="binder_m">Binder Mediano (3x3)</option>
+                        <option value="binder_xl">Binder Grande (4x3)</option>
+                        <option value="deck">Mazo (Deck)</option>
+                        <option value="box">Caja (Box)</option>
+                    </select>
+                </div>
+
+                <div id="containersListWrapper">
+                    <p id="loadingMessage" style="color: var(--text-muted);">Cargando listado de contenedores...</p>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const createContainerForm = document.getElementById('createContainerForm');
+        const containersListWrapper = document.getElementById('containersListWrapper');
+        const filterContainerTypeSelect = document.getElementById('filterContainerType');
+        
+        let allContainers = [];
+
+        if (window.location.search) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+
+        async function cargarContenedores() {
+            try {
+                const response = await fetch('http://localhost:8000/api/containers/');
+                if (!response.ok) throw new Error('Error al listar contenedores');
+                const containersRaw = await response.json();
+
+                // Para cada contenedor, consultamos sus slots para saber los ocupados reales
+                allContainers = await Promise.all(containersRaw.map(async c => {
+                    try {
+                        const slotRes = await fetch(`http://localhost:8000/api/containers/${c.id}/slots`);
+                        if (slotRes.ok) {
+                            const slots = await slotRes.json();
+                            const filled = slots.filter(s => s.is_occupied).length;
+                            const total = slots.length;
+                            return { ...c, filled_slots: filled, max_capacity: total };
+                        }
+                    } catch (e) {
+                        console.error(`No se pudieron cargar slots para el contenedor ${c.id}`);
+                    }
+                    return { ...c, filled_slots: 0, max_capacity: c.max_capacity || 0 };
+                }));
+
+                renderizarListadoContenedores();
+            } catch (err) {
+                console.error("Error al cargar contenedores:", err);
+                containersListWrapper.innerHTML = '<p style="color: #ef4444;">Error al cargar el listado de contenedores.</p>';
+            }
+        }
+
+        function renderizarListadoContenedores() {
+            const selectedType = filterContainerTypeSelect ? filterContainerTypeSelect.value : 'all';
+
+            const filtered = allContainers.filter(c => {
+                const tipoContenedor = (c.type || c.tipo || '').toLowerCase();
+                if (selectedType === 'all') return true;
+                return tipoContenedor.includes(selectedType.toLowerCase());
+            });
+
+            if (filtered.length === 0) {
+                containersListWrapper.innerHTML = '<p style="color: var(--text-muted);">No se encontraron contenedores con este filtro.</p>';
+                return;
+            }
+
+            containersListWrapper.innerHTML = '';
+            
+            filtered.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'container-item-row';
+                
+                const nombre = c.name || 'Sin nombre';
+                const tipo = (c.type || 'general').toUpperCase();
+                
+                // Slots llenos / Capacidad total (ajusta las propiedades según devuelva tu backend)
+                const slotsLlenos = c.filled_slots ?? c.current_cards ?? c.used ?? 0;
+                const capacidadTotal = c.max_capacity || c.capacity || 'N/A';
+
+                row.innerHTML = `
+                    <div>
+                        <a href="visor-containers.html?container_id=${c.id}" class="container-link">${nombre}</a>
+                    </div>
+                    <div>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">[${tipo}] - Slots: ${slotsLlenos} / ${capacidadTotal}</span>
+                    </div>
+                `;
+
+                containersListWrapper.appendChild(row);
+            });
+        }
+
+        if (filterContainerTypeSelect) {
+            filterContainerTypeSelect.addEventListener('change', renderizarListadoContenedores);
+        }
+
+        if (createContainerForm) {
+            createContainerForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newContainerName').value;
+                const type = document.getElementById('newContainerType').value;
+
+                try {
+                    const response = await fetch('http://localhost:8000/api/containers/', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, type })
+                    });
+
+                    if (!response.ok) throw new Error('Error al crear el contenedor');
+
+                    document.getElementById('newContainerName').value = '';
+                    document.getElementById('newContainerType').value = '';
+                    await cargarContenedores();
+                    alert('¡Contenedor creado con éxito!');
+                } catch (err) {
+                    console.error(err);
+                    alert('Hubo un error al crear el contenedor.');
+                }
+            });
+        }
+
+        cargarContenedores();
+      });
+
+      window.addEventListener('DOMContentLoaded', () => {
+        const savedTheme = localStorage.getItem('preferred-mana-theme') || 'default';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+      });
+    </script>
+</body>
+</html>

@@ -1,9 +1,22 @@
 -- Habilitar la extensión para UUIDs si no está activa
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 1. Tabla maestra de contenedores (Actualizada con soporte para slots por página y total de páginas)
+-- 0. Tabla de usuarios (Soporte multiusuario, cuentas locales/42 y sellos nobiliarios)
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(100) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255),               -- Nulo si entra exclusivamente por OAuth de 42
+    intra_id VARCHAR(50) UNIQUE,              -- ID único oficial de la Intra de 42 (si aplica)
+    auth_type VARCHAR(20) DEFAULT 'local',    -- 'local' o '42'
+    badge_type VARCHAR(30) DEFAULT 'civil_homebrewer', -- 'official_42', 'civil_homebrewer', etc.
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 1. Tabla maestra de contenedores (Actualizada con propiedad de usuario)
 CREATE TABLE IF NOT EXISTS containers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE, -- Propietario del contenedor
     name VARCHAR(255) NOT NULL,
     type VARCHAR(50) NOT NULL, -- 'binder', 'box', 'deck'
     max_capacity INTEGER,      -- Límite total o principal
@@ -68,3 +81,4 @@ CREATE INDEX IF NOT EXISTS idx_cards_name_lower ON cards (LOWER(name));
 CREATE INDEX IF NOT EXISTS idx_printings_card_id ON printings (card_id);
 CREATE INDEX IF NOT EXISTS idx_card_copies_container ON card_copies (container_id);
 CREATE INDEX IF NOT EXISTS idx_container_slots_container ON container_slots (container_id);
+CREATE INDEX IF NOT EXISTS idx_containers_user_id ON containers (user_id);

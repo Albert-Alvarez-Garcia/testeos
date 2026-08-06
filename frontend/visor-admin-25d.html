@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro — Workspace y Visor 2.5D</title>
+    <!-- 1. Cargamos primero tu CSS principal con la estética oscura -->
+    <link rel="stylesheet" href="portal.css">
+    <!-- 2. Cargamos el CSS específico de este layout y el visor -->
+    <link rel="stylesheet" href="visor-admin-25d.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <a href="index.html" title="Ir al Inicio" style="display: flex; align-items: center; text-decoration: none;">
+                <img src="public/assets/logomagic.png" alt="Logo" style="height: 64px; width: auto;">
+            </a>
+            <span class="app-subtitle">Binder Pro</span>
+        </div>
+  
+        <div class="header-search-container">
+          <input type="text" id="searchInput" placeholder="Buscar carta...">
+          
+          <select id="macroCategorySelect" style="max-width: 140px;">
+              <option value="">Cualquier tipo...</option>
+          </select>
+  
+          <select id="subtypeSelect" disabled style="max-width: 140px;">
+              <option value="">Cualquier subtipo...</option>
+          </select>
+  
+          <!-- Aprovechamos tu clase btn-fantasy -->
+          <button id="searchBtn" class="btn-fantasy">Buscar</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="workspace-grid">
+            
+            <!-- Columna Izquierda: Le añadimos la clase fantasy-panel de tu portal.css -->
+            <div class="visor-column fantasy-panel">
+                
+                <!-- Aplicamos btn-fantasy -->
+                <button id="toggleMagnifierBtn" class="visor-mode-btn btn-fantasy">
+                    🔍 Modo Lupa: <span id="modeStatus">DESACTIVADO</span>
+                </button>
+
+                <div class="card-perspective-container" id="cardContainer">
+                    <div class="interactive-card" id="interactiveCard">
+                        <img id="dynamicCardImg" src="public/assets/capicarta.png" alt="Vista previa de la carta">
+                    </div>
+                    <div class="card-magnifier" id="cardMagnifier"></div>
+                </div>
+
+                <div class="visor-card-details" id="visorCardDetails" style="padding: 0.85rem 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                        <span id="visorCardName" style="font-weight: 600;">Selecciona una carta</span>
+                        <span id="visorCardMana" style="font-family: monospace; color: var(--accent);"></span>
+                    </div>
+                    <div id="visorCardType" style="font-size: 0.8rem; color: var(--text-muted);">—</div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Le añadimos la clase fantasy-panel -->
+            <div class="details-column fantasy-panel">
+                <h2>📋 Resultados de Búsqueda</h2>
+                <div class="results-list" id="resultsList">
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Realiza una búsqueda arriba para listar cartas...</p>
+                </div>
+
+                <h2>⚙️ Gestión de Inventario y Estado</h2>
+                <div class="inventory-form">
+                    
+                    <div style="display: grid; grid-template-columns: 200px 1fr auto; gap: 1rem; align-items: end;">
+                        <div>
+                            <label for="filterContainerType">Filtrar contenedores</label>
+                            <select id="filterContainerType">
+                                <option value="all">Todos los tipos</option>
+                                <option value="binder">Archivadores</option>
+                                <option value="deck">Mazos</option>
+                                <option value="box">Cajas</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cardLocation">Ubicación / Contenedor</label>
+                            <select id="cardLocation" required>
+                                <option value="">Selecciona un contenedor...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <a href="containers.html" target="_blank" style="display: inline-flex; align-items: center; height: 38px; padding: 0 0.75rem; font-size: 0.85rem; color: var(--accent); text-decoration: none;">
+                                ⚙️ Gestionar
+                            </a>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 130px 90px 1fr; gap: 1rem;">
+                        <div>
+                            <label for="cardOwned">¿En posesión?</label>
+                            <select id="cardOwned">
+                                <option value="true">Sí</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="cardQuantity">Cantidad</label>
+                            <input type="number" id="cardQuantity" value="1" min="0">
+                        </div>
+                        <div>
+                            <label for="cardState">Estado de la Carta</label>
+                            <select id="cardState">
+                                <option value="NM">Near Mint (NM)</option>
+                                <option value="LP">Lightly Played (LP)</option>
+                                <option value="MP">Moderately Played (MP)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Aplicamos btn-fantasy -->
+                    <button class="btn-fantasy" id="saveInventoryBtn" style="width: 100%; margin-top: 0.5rem;">Guardar Cambios de Inventario</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="visor-admin-25d.js"></script>
+</body>
+</html>

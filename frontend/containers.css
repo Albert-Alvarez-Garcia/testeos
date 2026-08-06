@@ -1,0 +1,144 @@
+/* ==========================================================================
+   CONTAINERS LAYOUT (Hereda de portal.css y visor-admin-25d.css)
+   ========================================================================== */
+
+main {
+    max-width: 1300px;
+    margin: 3.5rem auto;
+    padding: 0 2rem;
+}
+
+.workspace-grid {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    gap: 2.5rem;
+    align-items: start;
+}
+
+/* Columnas con el panel fantasy */
+.container-form-column, .container-list-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 1.75rem;
+}
+
+.container-list-column {
+    min-height: 600px;
+}
+
+.container-form-column h2,
+.container-list-column h2 {
+    font-family: 'MagicTheGathering', serif;
+    font-size: 1.15rem;
+    margin: 0;
+    color: var(--accent);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+    letter-spacing: 0.02em;
+}
+
+/* Formulario de Creación */
+.container-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.form-group label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Campos dinámicos para capacidad/detalles según el tipo */
+.dynamic-container-fields {
+    display: none;
+    background: rgba(8, 5, 3, 0.6);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+    margin-top: 0.5krem;
+}
+
+.dynamic-container-fields.active {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Lista vertical con scroll para los contenedores */
+.containers-scroll-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 500px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.containers-scroll-list > p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin: 0;
+    text-align: center;
+    padding: 2rem 0;
+}
+
+/* Elemento de la lista de contenedores en formato fila */
+.container-row-item {
+    background: var(--bg-app);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: var(--transition);
+    text-decoration: none;
+}
+
+.container-row-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.container-row-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.container-row-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-main);
+    font-family: 'MagicTheGathering', serif;
+}
+
+.container-row-meta {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.container-row-capacity {
+    font-family: monospace;
+    font-size: 0.9rem;
+    color: var(--accent);
+    background: rgba(20, 14, 9, 0.8);
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}

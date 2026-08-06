@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro — Visor de Contenedores</title>
+    <link rel="stylesheet" href="themes.css">
+    <link rel="stylesheet" href="visor-containers.css"> <!-- Archivo de estilos específico para el visor -->
+    <style>
+        /* Estilo visual para la carta seleccionada como origen al mover */
+        .binder-slot.selected-origin {
+            border: 2px solid #f59e0b !important;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.6);
+            transform: scale(1.02);
+            transition: all 0.2s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+          <img src="public/assets/Magicthegathering-logo(1).svg" alt="Magic: The Gathering Logo">
+          <span class="app-subtitle">Visor de Contenedores</span>
+        </div>
+  
+        <div class="header-controls" style="display: flex; gap: 10px; align-items: center;">
+          <!-- Filtro por tipo de contenedor -->
+            <select id="filterContainerType" style="padding: 0.65rem; border-radius: 8px; background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-color);">
+                <option value="all">Todos los tipos</option>
+                <option value="binder_s">Binder Pequeño (2x2)</option>
+                <option value="binder_m">Binder Mediano (3x3)</option>
+                <option value="binder_xl">Binder Grande (4x3)</option>
+                <option value="deck">Mazo (Deck)</option>
+                <option value="box">Caja (Box)</option>
+            </select>
+
+          <!-- Selector de contenedor a inspeccionar -->
+          <select id="containerSelector" style="padding: 0.65rem; border-radius: 8px; background: var(--bg-app); color: var(--text-main); border: 1px solid var(--border-color);">
+              <option value="">Selecciona un contenedor para ver...</option>
+          </select>
+        </div>
+    </header>
+
+    <main class="container-viewer-main">
+        <!-- Panel de Información del Contenedor -->
+        <section class="container-info-bar" id="containerInfoBar">
+            <h2 id="containerTitle">Selecciona un contenedor</h2>
+            <div id="containerStats" style="color: var(--text-muted); font-size: 0.9rem;">—</div>
+        </section>
+
+        <!-- Contenedor Dinámico de Visualización (Binder vs Deck) -->
+        <section class="visual-workspace" id="visualWorkspace">
+            <div class="placeholder-msg">
+                <p style="color: var(--text-muted);">Elige un archivador o mazo arriba para desplegar sus páginas y huecos...</p>
+            </div>
+        </section>
+    </main>
+
+<script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const containerSelector = document.getElementById('containerSelector');
+        const containerTitle = document.getElementById('containerTitle');
+        const containerStats = document.getElementById('containerStats');
+        const visualWorkspace = document.getElementById('visualWorkspace');
+        const filterContainerTypeSelect = document.getElementById('filterContainerType');
+
+        const container = document.getElementById('cardContainer');
+        const card = document.getElementById('interactiveCard');
+        const cardImage = document.getElementById('dynamicCardImg');
+        const magnifier = document.getElementById('cardMagnifier');
+        const toggleBtn = document.getElementById('toggleMagnifierBtn');
+        const modeStatus = document.getElementById('modeStatus');
+
+        let isMagnifierEnabled = false;
+        let currentContainerData = null;
+        let allContainers = [];
+        let currentBinderPage = 1;
+
+        let isMoveModeActive = false;
+        let slotOrigenIndex = null;
+        let hasUnsavedChanges = false;
+        let isInterContainerMode = false;
+
+        const ZOOM_SCALE = 2; 
+        const MAGNIFIER_SIZE = 160; 
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const paramImg = urlParams.get('img');
+        const paramName = urlParams.get('name');
+        const paramType = urlParams.get('type');
+        const paramMana = urlParams.get('mana');
+
+        if (paramImg && cardImage) {
+            cardImage.src = decodeURIComponent(paramImg);
+            cardImage.style.maxWidth = "100%";
+            cardImage.style.maxHeight = "100%";
+            cardImage.style.objectFit = "contain";
+        }
+
+        // --- CARGA DE CONTENEDORES ---
+        async function cargarContenedores() {
+            try {
+                const response = await fetch('http://localhost:8000/api/containers/');
+                if (!response.ok) throw new Error('Error al listar contenedores');
+                allContainers = await response.json();
+                actualizarDesplegableVisorGrafico();
+            } catch (err) {
+                console.error("Error al cargar contenedores:", err);
+                if (containerSelector) containerSelector.innerHTML = '<option value="">Error al cargar contenedores</option>';
+            }
+        }
+
+        function actualizarDesplegableVisorGrafico() {
+            if (!containerSelector) return;
+            
+            const valorPrevio = containerSelector.value;
+            const selectedType = filterContainerTypeSelect ? filterContainerTypeSelect.value : 'all';
+
+            containerSelector.innerHTML = '<option value="">Selecciona un contenedor para ver...</option>';
+            
+            const containersFiltered = allContainers.filter(c => {
+                const tipoContenedor = (c.type || c.tipo || '').toLowerCase();
+                if (selectedType === 'all') return true;
+                return tipoContenedor.includes(selectedType.toLowerCase());
+            });
+
+            containersFiltered.forEach(c => {
+                const option = document.createElement('option');
+                option.value = c.id;
+                const nombre = c.name || 'Sin nombre';
+                const tipo = (c.type || 'general').toUpperCase();
+                option.textContent = `${nombre} [${tipo}]`;
+                containerSelector.appendChild(option);
+            });
+
+            if (valorPrevio) containerSelector.value = valorPrevio;
+
+            if (containerSelector.value === "") {
+                if (containerTitle) containerTitle.textContent = "Selecciona un contenedor";
+                if (containerStats) containerStats.textContent = "—";
+                if (visualWorkspace) visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: var(--text-muted);">Selecciona el mazo o archivador...</p></div>`;
+                currentContainerData = null;
+            }
+        }
+
+        if (filterContainerTypeSelect) {
+            filterContainerTypeSelect.addEventListener('change', actualizarDesplegableVisorGrafico);
+        }
+
+        if (containerSelector) {
+            containerSelector.addEventListener('change', async (e) => {
+                const containerId = e.target.value;
+                if (!containerId) {
+                    containerTitle.textContent = "Selecciona un contenedor";
+                    containerStats.textContent = "—";
+                    visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: var(--text-muted);">Elige un archivador o mazo arriba...</p></div>`;
+                    return;
+                }
+
+                currentContainerData = allContainers.find(c => c.id === containerId);
+                if (!currentContainerData) return;
+                
+                containerTitle.textContent = currentContainerData.name;
+                containerStats.textContent = `Tipo: ${currentContainerData.type.toUpperCase()} | Capacidad Máx: ${currentContainerData.max_capacity || 'N/A'}`;
+
+                slotOrigenIndex = null;
+                hasUnsavedChanges = false;
+                currentBinderPage = 1;
+                await cargarSlotsContenedor(containerId);
+            });
+        }
+
+        async function cargarSlotsContenedor(containerId) {
+            visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: var(--text-muted);">Cargando estructura física...</p></div>`;
+            
+            try {
+                const response = await fetch(`http://localhost:8000/api/containers/${containerId}/slots`);
+                if (!response.ok) throw new Error('Error al obtener los slots');
+                
+                const slots = await response.json();
+                const tipo = currentContainerData.type.toLowerCase();
+                
+                if (tipo.includes('binder')) {
+                    renderizarBinder(slots);
+                } else {
+                    renderizarDeckBox(slots);
+                }
+            } catch (err) {
+                console.error("Error:", err);
+                visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: #ef4444;">Error al cargar los elementos.</p></div>`;
+            }
+        }
+
+        // --- RENDERIZADO DE BINDER ---
+        function renderizarDeckBox(slots) {
+        const allMainSlots = slots.filter(s => s.section === 'main' || !s.section);
+        const allSideSlots = slots.filter(s => s.section === 'sideboard');
+
+        visualWorkspace.innerHTML = `
+            <div class="deck-controls-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                <div class="position-search-wrapper">
+                    <label for="jumpToSlotInput">Ir al slot:</label>
+                    <input type="number" id="jumpToSlotInput" min="1" max="${slots.length}" placeholder="Ej: 4">
+                    <button id="jumpBtn" class="nav-btn">Buscar</button>
+                </div>
+
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    ${isMoveModeActive ? `
+                        <button id="toggleInterContainerBtn" class="nav-btn" style="border-color: #f59e0b; color: ${isInterContainerMode ? '#f59e0b' : '#aaa'}; background: ${isInterContainerMode ? '#3d2a1d' : 'transparent'}; font-size: 0.85rem;">
+                            Mover a otro Contenedor: ${isInterContainerMode ? 'ON' : 'OFF'}
+                        </button>
+                    ` : ''}
+
+                    <button id="toggleMoveModeBtn" class="nav-btn" style="border-color: #b39258;">Mover Cartas: ${isMoveModeActive ? 'ON' : 'OFF'}</button>
+                    <button id="saveSlotsBtn" class="nav-btn" style="background: #10b981; color: white; border-color: #059669; display: ${hasUnsavedChanges ? 'inline-block' : 'none'};">💾 Guardar Cambios</button>
+                </div>
+
+                <div class="deck-counters">
+                    <span>Mainboard: ${allMainSlots.filter(s => s.is_occupied).length}/${allMainSlots.length}</span>
+                    ${allSideSlots.length > 0 ? `<span>Sideboard: ${allSideSlots.filter(s => s.is_occupied).length}/${allSideSlots.length}</span>` : ''}
+                </div>
+            </div>
+
+            <!-- Modal para elegir el contenedor de destino -->
+            <div id="transferModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                <div style="background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #b39258; width: 400px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                    <h3 style="color: #f59e0b; margin-top: 0; margin-bottom: 15px; font-size: 1.2rem;">Mover carta a otro contenedor</h3>
+                    <p id="transferCardNameInfo" style="color: #fff; font-size: 0.9rem; margin-bottom: 15px;"></p>
+                    
+                    <label style="display: block; color: #aaa; font-size: 0.85rem; margin-bottom: 5px;">Selecciona el contenedor de destino:</label>
+                    <select id="destinationContainerSelect" style="width: 100%; padding: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; border-radius: 6px; margin-bottom: 20px;">
+                        <option value="">-- Elige destino --</option>
+                    </select>
+
+                    <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                        <button id="cancelTransferBtn" style="padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
+                        <button id="confirmTransferBtn" style="padding: 8px 16px; background: #b39258; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Mover Carta</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="deck-scroll-container" id="deckScrollContainer">
+                <div class="deck-section-title">Mainboard</div>
+                <div class="deck-compact-row" id="mainGrid"></div>
+                ${allSideSlots.length > 0 ? `
+                    <div class="deck-section-title" style="margin-top: 2rem;">Sideboard / Reserva</div>
+                    <div class="deck-compact-row" id="sideGrid"></div>
+                ` : ''}
+            </div>
+        `;
+
+        const toggleMoveBtn = document.getElementById('toggleMoveModeBtn');
+        const toggleInterContainerBtn = document.getElementById('toggleInterContainerBtn');
+        const saveSlotsBtn = document.getElementById('saveSlotsBtn');
+        
+        if (isMoveModeActive) {
+            toggleMoveBtn.style.background = '#3d2a1d';
+            toggleMoveBtn.style.color = '#f59e0b';
+        }
+
+        toggleMoveBtn.addEventListener('click', () => {
+            isMoveModeActive = !isMoveModeActive;
+            if (!isMoveModeActive) {
+                isInterContainerMode = false;
+            }
+            slotOrigenIndex = null;
+            renderizarDeckBox(slots);
+        });
+
+        if (toggleInterContainerBtn) {
+            toggleInterContainerBtn.addEventListener('click', () => {
+                isInterContainerMode = !isInterContainerMode;
+                slotOrigenIndex = null;
+                renderizarDeckBox(slots);
+            });
+        }
+
+        if (saveSlotsBtn) {
+            saveSlotsBtn.addEventListener('click', async () => {
+                saveSlotsBtn.textContent = 'Guardando...';
+                saveSlotsBtn.disabled = true;
+
+                try {
+                    const payload = slots.map((s, idx) => ({
+                        id: s.id || null,
+                        slot_index: s.slot_index || (idx + 1),
+                        section: s.section || 'main',
+                        is_occupied: !!s.is_occupied,
+                        card_id: s.card_id || null,
+                        copy_id: s.copy_id || null,
+                        condition: s.condition || 'NM',
+                        is_foil: !!s.is_foil,
+                        notes: s.notes || null
+                    }));
+
+                    const response = await fetch(`http://localhost:8000/api/containers/${currentContainerData.id}/slots`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) throw new Error('Error al guardar la distribución del mazo');
+
+                    hasUnsavedChanges = false;
+                    alert('¡Distribución guardada correctamente!');
+                    await cargarSlotsContenedor(currentContainerData.id);
+                } catch (err) {
+                    console.error(err);
+                    alert('Hubo un error al guardar los cambios.');
+                    saveSlotsBtn.textContent = '💾 Guardar Cambios';
+                    saveSlotsBtn.disabled = false;
+                }
+            });
+        }
+
+        const renderSlotItem = (slot, absoluteIndex) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'deck-slot-wrapper';
+            wrapper.id = `slot-item-${absoluteIndex + 1}`;
+
+            const item = document.createElement('div');
+            item.className = `deck-slot-compact ${slot.is_occupied ? 'occupied' : 'empty-compact'}`;
+
+            if (slotOrigenIndex === absoluteIndex) {
+                item.classList.add('selected-origin');
+            }
+
+            if (slot.is_occupied && slot.image_uri) {
+                item.innerHTML = `
+                    <img src="${slot.image_uri}" alt="${slot.card_name}" loading="lazy">
+                    <span class="compact-slot-badge">#${absoluteIndex + 1}</span>
+                    <div class="slot-overlay-info">
+                        <span class="slot-badge">${slot.condition || 'NM'}</span>
+                        ${slot.is_foil ? '<span class="foil-badge">Foil</span>' : ''}
+                    </div>
+                `;
+                item.title = `${slot.card_name} (Slot #${absoluteIndex + 1})`;
+            } else {
+                item.innerHTML = `<span class="empty-slot-mini">${absoluteIndex + 1}</span>`;
+                item.title = `Slot #${absoluteIndex + 1} (Vacío)`;
+            }
+
+            item.addEventListener('click', () => {
+                if (!isMoveModeActive) {
+                    if (slot.is_occupied && slot.card_id) {
+                        const encodedImg = encodeURIComponent(slot.image_uri || '');
+                        const encodedName = encodeURIComponent(slot.card_name || '');
+                        const encodedType = encodeURIComponent(slot.type_line || '');
+                        const encodedMana = encodeURIComponent(slot.mana_cost || '');
+                        
+                        window.location.href = `gestor-contenedor.html?card_id=${slot.card_id}&printing_id=${slot.copy_id}&img=${encodedImg}&name=${encodedName}&type=${encodedType}&mana=${encodedMana}`;
+                    }
+                    return;
+                }
+
+                if (isInterContainerMode) {
+                    if (slot.is_occupied) {
+                        slotOrigenIndex = absoluteIndex;
+                        const modal = document.getElementById('transferModal');
+                        const nameInfo = document.getElementById('transferCardNameInfo');
+                        const destSelect = document.getElementById('destinationContainerSelect');
+
+                        nameInfo.textContent = `Carta seleccionada: "${slot.card_name}"`;
+                        
+                        destSelect.innerHTML = '<option value="">-- Elige contenedor destino --</option>';
+                        if (typeof allContainers !== 'undefined' && Array.isArray(allContainers)) {
+                            allContainers
+                                .filter(c => c.id !== currentContainerData.id)
+                                .forEach(c => {
+                                    const opt = document.createElement('option');
+                                    opt.value = c.id;
+                                    opt.textContent = `${c.name} [${(c.type || 'general').toUpperCase()}]`;
+                                    destSelect.appendChild(opt);
+                                });
+                        }
+
+                        modal.style.display = 'flex';
+
+                        const cancelBtn = document.getElementById('cancelTransferBtn');
+                        const confirmBtn = document.getElementById('confirmTransferBtn');
+
+                        const newCancel = cancelBtn.cloneNode(true);
+                        cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+
+                        const newConfirm = confirmBtn.cloneNode(true);
+                        confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+                        newCancel.addEventListener('click', () => {
+                            modal.style.display = 'none';
+                            slotOrigenIndex = null;
+                        });
+
+                        newConfirm.addEventListener('click', async () => {
+                            const destId = destSelect.value;
+                            if (!destId) {
+                                alert('Por favor, selecciona un contenedor de destino.');
+                                return;
+                            }
+
+                            newConfirm.textContent = 'Moviendo...';
+                            newConfirm.disabled = true;
+
+                            try {
+                                const response = await fetch(`http://localhost:8000/api/containers/move-cross-container`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        copy_id: slot.copy_id,
+                                        target_container_id: destId,
+                                        target_slot_id: null
+                                    })
+                                });
+
+                                if (!response.ok) {
+                                    const errorData = await response.json().catch(() => ({}));
+                                    if (response.status === 400 && (errorData.detail?.includes('lleno') || errorData.error?.includes('lleno'))) {
+                                        throw new Error('El contenedor de destino está lleno.');
+                                    }
+                                    throw new Error(errorData.detail || errorData.error || 'Error al añadir la carta al contenedor destino');
+                                }
+
+                                slots[slotOrigenIndex] = {
+                                    ...slots[slotOrigenIndex],
+                                    is_occupied: false,
+                                    card_id: null,
+                                    copy_id: null,
+                                    card_name: null,
+                                    mana_cost: null,
+                                    type_line: null,
+                                    image_uri: null,
+                                    condition: 'NM',
+                                    is_foil: false,
+                                    notes: null
+                                };
+
+                                hasUnsavedChanges = true;
+                                modal.style.display = 'none';
+                                slotOrigenIndex = null;
+                                
+                                renderizarDeckBox(slots);
+                                document.getElementById('saveSlotsBtn').style.display = 'inline-block';
+                                
+                                alert('¡Carta transferida con éxito al nuevo contenedor! Recuerda guardar cambios.');
+                            } catch (err) {
+                                console.error(err);
+                                alert(err.message === 'El contenedor de destino está lleno.' ? err.message : 'Hubo un error al transferir la carta.');
+                                newConfirm.textContent = 'Mover Carta';
+                                newConfirm.disabled = false;
+                            }
+                        });
+                    }
+                } else {
+                    if (slotOrigenIndex === null) {
+                        if (slot.is_occupied) {
+                            slotOrigenIndex = absoluteIndex;
+                            renderizarDeckBox(slots);
+                        }
+                    } else {
+                        if (slotOrigenIndex === absoluteIndex) {
+                            slotOrigenIndex = null;
+                            renderizarDeckBox(slots);
+                            return;
+                        }
+
+                        const destinoIndex = absoluteIndex;
+                        
+                        const tempSlotData = {
+                            is_occupied: slots[destinoIndex].is_occupied,
+                            card_id: slots[destinoIndex].card_id || null,
+                            copy_id: slots[destinoIndex].copy_id || null,
+                            card_name: slots[destinoIndex].card_name || null,
+                            mana_cost: slots[destinoIndex].mana_cost || null,
+                            type_line: slots[destinoIndex].type_line || null,
+                            image_uri: slots[destinoIndex].image_uri || null,
+                            condition: slots[destinoIndex].condition || null,
+                            is_foil: !!slots[destinoIndex].is_foil,
+                            notes: slots[destinoIndex].notes || null
+                        };
+
+                        slots[destinoIndex] = {
+                            ...slots[destinoIndex],
+                            is_occupied: !!slots[slotOrigenIndex].is_occupied,
+                            card_id: slots[slotOrigenIndex].card_id || null,
+                            copy_id: slots[slotOrigenIndex].copy_id || null,
+                            card_name: slots[slotOrigenIndex].card_name || null,
+                            mana_cost: slots[slotOrigenIndex].mana_cost || null,
+                            type_line: slots[slotOrigenIndex].type_line || null,
+                            image_uri: slots[slotOrigenIndex].image_uri || null,
+                            condition: slots[slotOrigenIndex].condition || null,
+                            is_foil: !!slots[slotOrigenIndex].is_foil,
+                            notes: slots[slotOrigenIndex].notes || null
+                        };
+
+                        slots[slotOrigenIndex] = {
+                            ...slots[slotOrigenIndex],
+                            is_occupied: tempSlotData.is_occupied,
+                            card_id: tempSlotData.card_id,
+                            copy_id: tempSlotData.copy_id,
+                            card_name: tempSlotData.card_name,
+                            mana_cost: tempSlotData.mana_cost,
+                            type_line: tempSlotData.type_line,
+                            image_uri: tempSlotData.image_uri,
+                            condition: tempSlotData.condition,
+                            is_foil: tempSlotData.is_foil,
+                            notes: tempSlotData.notes
+                        };
+
+                        slotOrigenIndex = null;
+                        hasUnsavedChanges = true;
+                        renderizarDeckBox(slots);
+                    }
+                }
+            });
+
+            wrapper.appendChild(item);
+
+            const nameLabel = document.createElement('span');
+            nameLabel.className = 'deck-card-name-label';
+            nameLabel.textContent = slot.card_name || 'Vacío';
+            nameLabel.title = slot.card_name || '';
+            wrapper.appendChild(nameLabel);
+
+            return wrapper;
+        };
+
+        const mainGrid = document.getElementById('mainGrid');
+        slots.forEach((slot, index) => {
+            const isSide = slot.section === 'sideboard';
+            if (!isSide) {
+                mainGrid.appendChild(renderSlotItem(slot, index));
+            }
+        });
+
+        if (allSideSlots.length > 0) {
+            const sideGrid = document.getElementById('sideGrid');
+            slots.forEach((slot, index) => {
+                if (slot.section === 'sideboard') {
+                    sideGrid.appendChild(renderSlotItem(slot, index));
+                }
+            });
+        }
+
+        const jumpInput = document.getElementById('jumpToSlotInput');
+        const jumpBtn = document.getElementById('jumpBtn');
+        
+        const ejecutarSalto = () => {
+            const targetIndex = parseInt(jumpInput.value);
+            if (!targetIndex) return;
+            const targetCard = document.getElementById(`slot-item-${targetIndex}`);
+            if (targetCard) {
+                targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                targetCard.classList.add('highlight-slot');
+                setTimeout(() => targetCard.classList.remove('highlight-slot'), 1500);
+            }
+        };
+
+        if (jumpBtn) jumpBtn.addEventListener('click', ejecutarSalto);
+        if (jumpInput) {
+            jumpInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') ejecutarSalto();
+            });
+        }
+    }
+
+        // --- RENDERIZADO UNIFICADO DE DECK / BOX ---
+        function renderizarDeckBox(slots) {
+            const isDeck = currentContainerData && currentContainerData.type.toLowerCase().includes('deck');
+            
+            let allMainSlots = [];
+            let allSideSlots = [];
+
+            if (isDeck) {
+                slots.forEach(slot => {
+                    const seccion = (slot.section || 'main').toLowerCase();
+                    if (seccion === 'sideboard' || seccion === 'side') {
+                        slot.section = 'sideboard';
+                        allSideSlots.push(slot);
+                    } else {
+                        slot.section = 'main';
+                        allMainSlots.push(slot);
+                    }
+                });
+
+                allMainSlots.forEach((slot, index) => {
+                    slot.slot_index = index + 1;
+                });
+
+                const nMain = allMainSlots.length;
+                allSideSlots.forEach((slot, index) => {
+                    slot.slot_index = nMain + index + 1;
+                });
+
+            } else {
+                allMainSlots = slots;
+                allMainSlots.forEach((slot, index) => {
+                    slot.slot_index = index + 1;
+                });
+            }
+
+            slots = [...allMainSlots, ...allSideSlots];
+            slots.sort((a, b) => (a.slot_index || 0) - (b.slot_index || 0));
+
+            visualWorkspace.innerHTML = `
+                <div class="deck-controls-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+                    <div class="position-search-wrapper">
+                        <label for="jumpToSlotInput">Ir al slot:</label>
+                        <input type="number" id="jumpToSlotInput" min="1" max="${slots.length}" placeholder="Ej: 4">
+                        <button id="jumpBtn" class="nav-btn">Buscar</button>
+                    </div>
+
+                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                        ${isMoveModeActive ? `
+                            <button id="toggleInterContainerBtn" class="nav-btn" style="border-color: #f59e0b; color: ${isInterContainerMode ? '#f59e0b' : '#aaa'}; background: ${isInterContainerMode ? '#3d2a1d' : 'transparent'}; font-size: 0.85rem;">
+                                Mover a otro Contenedor: ${isInterContainerMode ? 'ON' : 'OFF'}
+                            </button>
+                        ` : ''}
+
+                        <button id="toggleMoveModeBtn" class="nav-btn" style="border-color: #b39258;">Mover Cartas: ${isMoveModeActive ? 'ON' : 'OFF'}</button>
+                        <button id="saveSlotsBtn" class="nav-btn" style="background: #10b981; color: white; border-color: #059669; display: ${hasUnsavedChanges ? 'inline-block' : 'none'};">💾 Guardar Cambios</button>
+                    </div>
+
+                    <div class="deck-counters">
+                        <span>Ocupados: ${slots.filter(s => s.is_occupied).length}/${slots.length}</span>
+                    </div>
+                </div>
+
+                <div id="transferModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;">
+                    <div style="background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #b39258; width: 400px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+                        <h3 style="color: #f59e0b; margin-top: 0; margin-bottom: 15px; font-size: 1.2rem;">Mover carta a otro contenedor</h3>
+                        <p id="transferCardNameInfo" style="color: #fff; font-size: 0.9rem; margin-bottom: 15px;"></p>
+                        
+                        <label style="display: block; color: #aaa; font-size: 0.85rem; margin-bottom: 5px;">Selecciona el contenedor de destino:</label>
+                        <select id="destinationContainerSelect" style="width: 100%; padding: 10px; background: #2a2a2a; color: #fff; border: 1px solid #444; border-radius: 6px; margin-bottom: 20px;">
+                            <option value="">-- Elige destino --</option>
+                        </select>
+
+                        <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                            <button id="cancelTransferBtn" style="padding: 8px 16px; background: #333; color: #fff; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
+                            <button id="confirmTransferBtn" style="padding: 8px 16px; background: #b39258; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">Mover Carta</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="deck-scroll-container" id="deckScrollContainer">
+                    ${isDeck ? '<div class="deck-section-title">Mainboard</div>' : ''}
+                    <div class="deck-compact-row" id="mainGrid"></div>
+                    ${allSideSlots.length > 0 ? `
+                        <div class="deck-section-title" style="margin-top: 2rem;">Sideboard / Reserva</div>
+                        <div class="deck-compact-row" id="sideGrid"></div>
+                    ` : ''}
+                </div>
+            `;
+
+            const toggleMoveBtn = document.getElementById('toggleMoveModeBtn');
+            const toggleInterContainerBtn = document.getElementById('toggleInterContainerBtn');
+            const saveSlotsBtn = document.getElementById('saveSlotsBtn');
+            
+            if (isMoveModeActive) {
+                toggleMoveBtn.style.background = '#3d2a1d';
+                toggleMoveBtn.style.color = '#f59e0b';
+            }
+
+            toggleMoveBtn.addEventListener('click', () => {
+                isMoveModeActive = !isMoveModeActive;
+                if (!isMoveModeActive) isInterContainerMode = false;
+                slotOrigenIndex = null;
+                renderizarDeckBox(slots);
+            });
+
+            if (toggleInterContainerBtn) {
+                toggleInterContainerBtn.addEventListener('click', () => {
+                    isInterContainerMode = !isInterContainerMode;
+                    slotOrigenIndex = null;
+                    renderizarDeckBox(slots);
+                });
+            }
+
+            if (saveSlotsBtn) {
+                saveSlotsBtn.addEventListener('click', async () => {
+                    saveSlotsBtn.textContent = 'Guardando...';
+                    saveSlotsBtn.disabled = true;
+
+                    try {
+                        const payload = slots.map((s, idx) => ({
+                            id: s.id || null,
+                            slot_index: s.slot_index || (idx + 1),
+                            section: s.section || 'main',
+                            is_occupied: !!s.is_occupied,
+                            card_id: s.card_id || null,
+                            copy_id: s.copy_id || null,
+                            condition: s.condition || 'NM',
+                            is_foil: !!s.is_foil,
+                            notes: s.notes || null
+                        }));
+
+                        const response = await fetch(`http://localhost:8000/api/containers/${currentContainerData.id}/slots`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(payload)
+                        });
+
+                        if (!response.ok) throw new Error('Error al guardar');
+
+                        hasUnsavedChanges = false;
+                        alert('¡Distribución guardada correctamente!');
+                        await cargarSlotsContenedor(currentContainerData.id);
+                    } catch (err) {
+                        console.error(err);
+                        alert('Hubo un error al guardar los cambios.');
+                        saveSlotsBtn.textContent = '💾 Guardar Cambios';
+                        saveSlotsBtn.disabled = false;
+                    }
+                });
+            }
+
+            const renderSlotItem = (slot, absoluteIndex) => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'deck-slot-wrapper';
+                wrapper.id = `slot-item-${slot.slot_index}`;
+
+                const item = document.createElement('div');
+                item.className = `deck-slot-compact ${slot.is_occupied ? 'occupied' : 'empty-compact'}`;
+
+                if (slotOrigenIndex === absoluteIndex) {
+                    item.classList.add('selected-origin');
+                }
+
+                const indexNum = slot.slot_index;
+
+                if (slot.is_occupied && slot.image_uri) {
+                    item.innerHTML = `
+                        <img src="${slot.image_uri}" alt="${slot.card_name}" loading="lazy">
+                        <span class="compact-slot-badge">#${indexNum}</span>
+                        <div class="slot-overlay-info">
+                            <span class="slot-badge">${slot.condition || 'NM'}</span>
+                            ${slot.is_foil ? '<span class="foil-badge">Foil</span>' : ''}
+                        </div>
+                    `;
+                    item.title = `${slot.card_name} (Slot #${indexNum})`;
+                } else {
+                    item.innerHTML = `<span class="empty-slot-mini">${indexNum}</span>`;
+                    item.title = `Slot #${indexNum} (Vacío)`;
+                }
+
+                item.addEventListener('click', () => {
+                    if (!isMoveModeActive) {
+                        if (slot.is_occupied && slot.card_id) {
+                            const encodedImg = encodeURIComponent(slot.image_uri || '');
+                            const encodedName = encodeURIComponent(slot.card_name || '');
+                            const encodedType = encodeURIComponent(slot.type_line || '');
+                            const encodedMana = encodeURIComponent(slot.mana_cost || '');
+                            
+                            window.location.href = `gestor-contenedor.html?card_id=${slot.card_id}&printing_id=${slot.copy_id}&img=${encodedImg}&name=${encodedName}&type=${encodedType}&mana=${encodedMana}`;
+                        }
+                        return;
+                    }
+
+                    if (isInterContainerMode) {
+                        if (slot.is_occupied) {
+                            slotOrigenIndex = absoluteIndex;
+                            const modal = document.getElementById('transferModal');
+                            const nameInfo = document.getElementById('transferCardNameInfo');
+                            const destSelect = document.getElementById('destinationContainerSelect');
+
+                            nameInfo.textContent = `Carta seleccionada: "${slot.card_name}"`;
+                            destSelect.innerHTML = '<option value="">-- Elige destino --</option>';
+                            
+                            allContainers
+                                .filter(c => c.id !== currentContainerData.id)
+                                .forEach(c => {
+                                    const opt = document.createElement('option');
+                                    opt.value = c.id;
+                                    opt.textContent = `${c.name} [${(c.type || 'general').toUpperCase()}]`;
+                                    destSelect.appendChild(opt);
+                                });
+
+                            modal.style.display = 'flex';
+
+                            const cancelBtn = document.getElementById('cancelTransferBtn');
+                            const confirmBtn = document.getElementById('confirmTransferBtn');
+
+                            const newCancel = cancelBtn.cloneNode(true);
+                            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+                            const newConfirm = confirmBtn.cloneNode(true);
+                            confirmBtn.parentNode.replaceChild(newConfirm, confirmBtn);
+
+                            newCancel.addEventListener('click', () => {
+                                modal.style.display = 'none';
+                                slotOrigenIndex = null;
+                            });
+
+                            newConfirm.addEventListener('click', async () => {
+                                const destId = destSelect.value;
+                                if (!destId) {
+                                    alert('Selecciona un contenedor de destino.');
+                                    return;
+                                }
+
+                                newConfirm.textContent = 'Moviendo...';
+                                newConfirm.disabled = true;
+
+                                try {
+                                    const response = await fetch(`http://localhost:8000/api/containers/move-cross-container`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                            copy_id: slot.copy_id,
+                                            target_container_id: destId,
+                                            target_slot_id: null
+                                        })
+                                    });
+
+                                    if (!response.ok) throw new Error('Error al transferir');
+
+                                    slots[slotOrigenIndex] = {
+                                        ...slots[slotOrigenIndex],
+                                        is_occupied: false,
+                                        card_id: null,
+                                        copy_id: null,
+                                        card_name: null,
+                                        image_uri: null
+                                    };
+
+                                    hasUnsavedChanges = true;
+                                    modal.style.display = 'none';
+                                    slotOrigenIndex = null;
+                                    
+                                    renderizarDeckBox(slots);
+                                    document.getElementById('saveSlotsBtn').style.display = 'inline-block';
+                                    alert('¡Carta transferida con éxito!');
+                                } catch (err) {
+                                    console.error(err);
+                                    alert('Hubo un error al transferir la carta.');
+                                    newConfirm.textContent = 'Mover Carta';
+                                    newConfirm.disabled = false;
+                                }
+                            });
+                        }
+                    } else {
+                        if (slotOrigenIndex === null) {
+                            if (slot.is_occupied) {
+                                slotOrigenIndex = absoluteIndex;
+                                renderizarDeckBox(slots);
+                            }
+                        } else {
+                            if (slotOrigenIndex === absoluteIndex) {
+                                slotOrigenIndex = null;
+                                renderizarDeckBox(slots);
+                                return;
+                            }
+
+                            const destinoIndex = absoluteIndex;
+                            const temp = { ...slots[destinoIndex] };
+                            
+                            slots[destinoIndex] = {
+                                ...slots[destinoIndex],
+                                is_occupied: slots[slotOrigenIndex].is_occupied,
+                                card_id: slots[slotOrigenIndex].card_id,
+                                copy_id: slots[slotOrigenIndex].copy_id,
+                                card_name: slots[slotOrigenIndex].card_name,
+                                image_uri: slots[slotOrigenIndex].image_uri,
+                                condition: slots[slotOrigenIndex].condition,
+                                is_foil: slots[slotOrigenIndex].is_foil
+                            };
+
+                            slots[slotOrigenIndex] = {
+                                ...slots[slotOrigenIndex],
+                                is_occupied: temp.is_occupied,
+                                card_id: temp.card_id,
+                                copy_id: temp.copy_id,
+                                card_name: temp.card_name,
+                                image_uri: temp.image_uri,
+                                condition: temp.condition,
+                                is_foil: temp.is_foil
+                            };
+
+                            slotOrigenIndex = null;
+                            hasUnsavedChanges = true;
+                            renderizarDeckBox(slots);
+                        }
+                    }
+                });
+
+                wrapper.appendChild(item);
+
+                const nameLabel = document.createElement('span');
+                nameLabel.className = 'deck-card-name-label';
+                nameLabel.textContent = slot.card_name || 'Vacío';
+                nameLabel.title = slot.card_name || '';
+                wrapper.appendChild(nameLabel);
+
+                return wrapper;
+            };
+
+            const mainGrid = document.getElementById('mainGrid');
+            allMainSlots.forEach((slot, index) => {
+                mainGrid.appendChild(renderSlotItem(slot, index));
+            });
+
+            if (allSideSlots.length > 0) {
+                const sideGrid = document.getElementById('sideGrid');
+                allSideSlots.forEach((slot, index) => {
+                    sideGrid.appendChild(renderSlotItem(slot, allMainSlots.length + index));
+                });
+            }
+
+            const jumpInput = document.getElementById('jumpToSlotInput');
+            const jumpBtn = document.getElementById('jumpBtn');
+            
+            const ejecutarSalto = () => {
+                const targetIndex = parseInt(jumpInput.value);
+                if (!targetIndex) return;
+                const targetCard = document.getElementById(`slot-item-${targetIndex}`);
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetCard.classList.add('highlight-slot');
+                    setTimeout(() => targetCard.classList.remove('highlight-slot'), 1500);
+                }
+            };
+
+            if (jumpBtn) jumpBtn.addEventListener('click', ejecutarSalto);
+            if (jumpInput) {
+                jumpInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') ejecutarSalto();
+                });
+            }
+        }
+
+        cargarContenedores();
+      });
+    </script>
+</body>
+</html>

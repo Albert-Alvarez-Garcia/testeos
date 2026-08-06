@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder - Home</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Enlace a la hoja de estilos externa -->
+    <link rel="stylesheet" href="portal.css">
+</head>
+<body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-hidden">
+
+    <!-- ILUSTRACIÓN CENTRAL DECORATIVA (DECO1) -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
+        <img src="public/assets/deco1.png" alt="Decorative Character" class="hero-illustration h-full max-h-[90vh] w-auto object-contain">
+    </div>
+
+    <!-- HEADER / ICONOS DE MANÁ CON TOOLTIPS FUNCIONALES -->
+    <div class="w-full flex justify-center items-center z-30 pt-2">
+        <div class="flex items-center space-x-4">
+            
+            <!-- MANÁ BLANCO: Buscador de cartas -->
+            <div class="relative group">
+                <a href="visor-admin-25d.html" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Blanco">
+                    <img src="public/assets/blanco-removebg-preview.png" alt="White Mana" class="w-full h-full object-contain drop-shadow-md">
+                </a>
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                    Acceder al buscador de cartas.
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                </div>
+            </div>
+            
+            <!-- MANÁ AZUL: Crear contenedores -->
+            <div class="relative group">
+                <a href="containers.html" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Azul">
+                    <img src="public/assets/azul-removebg-preview.png" alt="Blue Mana" class="w-full h-full object-contain drop-shadow-md">
+                </a>
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                    Crear contenedores.
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                </div>
+            </div>
+
+            <!-- MANÁ NEGRO: Acceder a los contenedores -->
+            <div class="relative group">
+                <a href="visor-containers.html" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Negro">
+                    <img src="public/assets/negro-removebg-preview.png" alt="Black Mana" class="w-full h-full object-contain drop-shadow-md">
+                </a>
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                    Acceder a los contenedores.
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                </div>
+            </div>
+            
+            <!-- MANÁ ROJO: Evaluar mazo -->
+            <div class="relative group">
+                <button class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Rojo">
+                    <img src="public/assets/rojo-removebg-preview.png" alt="Red Mana" class="w-full h-full object-contain drop-shadow-md">
+                </button>
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                    Evaluar mazo.
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                </div>
+            </div>
+            
+            <!-- MANÁ VERDE: Parte social de la web -->
+            <div class="relative group">
+                <button class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Verde">
+                    <img src="public/assets/verde-removebg-preview.png" alt="Green Mana" class="w-full h-full object-contain drop-shadow-md">
+                </button>
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                    Parte social de la web.
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- CENTRO: Logo grande y Buscador -->
+    <div class="my-auto text-center relative z-25 flex flex-col items-center">
+        <!-- Logo central -->
+        <div class="px-6 py-2 relative flex items-center justify-center mb-6">
+            <img src="public/assets/logomagic.png" alt="Card Binder Logo" class="relative z-25 max-h-56 w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]">
+        </div>
+
+        <!-- Barra de búsqueda -->
+        <div class="w-full max-w-xl">
+            <div class="search-bar-fantasy rounded-full px-6 py-3.5 flex items-center justify-between">
+                <input type="text" placeholder="Search for cards, decks, or brewers..." class="bg-transparent border-none outline-none w-full text-amber-100 text-base font-medium font-sans">
+                <button class="text-amber-400 hover:text-amber-200 transition-colors ml-2 cursor-pointer">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ESPACIADOR INFERIOR -->
+    <div class="h-10"></div>
+
+</body>
+</html>

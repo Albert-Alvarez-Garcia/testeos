@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder - Acceso de Usuario</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Enlace a la hoja de estilos externa -->
+    <link rel="stylesheet" href="portal.css">
+    <style>
+        /* Estilos específicos para unificar con la temática fantasía / index */
+        .auth-card {
+            background-color: rgba(20, 14, 9, 0.92);
+            border: 2px solid #b39258;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 15px rgba(179, 146, 88, 0.2);
+            backdrop-filter: blur(8px);
+        }
+        .fantasy-input {
+            background: rgba(30, 20, 15, 0.8);
+            border: 1px solid #5a4528;
+            color: #fef3c7;
+        }
+        .fantasy-input:focus {
+            border-color: #b39258;
+            outline: none;
+            box-shadow: 0 0 8px rgba(179, 146, 88, 0.4);
+        }
+        .fantasy-btn-primary {
+            background: linear-gradient(to bottom, #b39258, #8c6f3d);
+            border: 1px solid #d4af37;
+            color: #140e09;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        .fantasy-btn-primary:hover {
+            background: linear-gradient(to bottom, #c5a268, #9f8049);
+            box-shadow: 0 0 12px rgba(179, 146, 88, 0.6);
+            transform: translateY(-1px);
+        }
+        .fantasy-btn-42 {
+            background: #00babc;
+            border: 1px solid #00dfdf;
+            color: #ffffff;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+        .fantasy-btn-42:hover {
+            background: #00989a;
+            box-shadow: 0 0 12px rgba(0, 186, 188, 0.6);
+            transform: translateY(-1px);
+        }
+        .tab-btn.active {
+            border-bottom: 2px solid #b39258;
+            color: #fef3c7;
+        }
+    </style>
+</head>
+<body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-hidden">
+
+    <!-- ILUSTRACIÓN CENTRAL DECORATIVA (DECO1) -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden opacity-40">
+        <img src="public/assets/deco1.png" alt="Decorative Character" class="hero-illustration h-full max-h-[90vh] w-auto object-contain">
+    </div>
+
+    <!-- HEADER / LOGO PEQUEÑO CON ENLACE A INDEX -->
+    <div class="w-full flex justify-center items-center z-30 pt-2">
+        <a href="index.html" class="flex items-center space-x-3 cursor-pointer group">
+            <img src="public/assets/logomagic.png" alt="Card Binder Logo" class="h-12 w-auto object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105">
+        </a>
+    </div>
+
+    <!-- CENTRO: Formulario de Autenticación / Registro -->
+    <div class="my-auto text-center relative z-25 flex flex-col items-center">
+        
+        <div class="w-full max-w-md auth-card rounded-2xl p-8 text-left relative">
+            
+            <!-- PESTAÑAS DE NAVEGACIÓN (LOGIN / REGISTRO) -->
+            <div class="flex border-b border-[#5a4528] mb-6">
+                <button id="tabLoginBtn" onclick="switchTab('login')" class="tab-btn active flex-1 pb-3 text-center text-sm font-semibold text-amber-200 transition-colors cursor-pointer">
+                    Iniciar Sesión
+                </button>
+                <button id="tabRegisterBtn" onclick="switchTab('register')" class="tab-btn flex-1 pb-3 text-center text-sm font-semibold text-amber-500/60 hover:text-amber-200 transition-colors cursor-pointer">
+                    Registrarse
+                </button>
+            </div>
+
+            <!-- FORMULARIO DE INICIO DE SESIÓN -->
+            <div id="loginFormContainer" class="space-y-4">
+                <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
+                    <div>
+                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Usuario / Email</label>
+                        <input type="text" id="loginUser" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="Introduce tu usuario...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Contraseña</label>
+                        <input type="password" id="loginPass" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-lg fantasy-btn-primary text-sm uppercase tracking-wider cursor-pointer">
+                        Entrar al Grimorio
+                    </button>
+                </form>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="flex-grow border-t border-[#5a4528]"></div>
+                    <span class="flex-shrink mx-4 text-amber-500/60 text-xs uppercase tracking-widest">o</span>
+                    <div class="flex-grow border-t border-[#5a4528]"></div>
+                </div>
+
+                <!-- BOTÓN DE INTRANET 42 -->
+                <button onclick="loginWith42()" class="w-full py-3 rounded-lg fantasy-btn-42 text-sm uppercase tracking-wider flex items-center justify-center space-x-2 cursor-pointer shadow-lg">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    <span>Identificarse con 42</span>
+                </button>
+            </div>
+
+            <!-- FORMULARIO DE REGISTRO (CIVIL / LOCAL) -->
+            <div id="registerFormContainer" class="space-y-4 hidden">
+                <form id="registerForm" class="space-y-3" onsubmit="handleRegister(event)">
+                    <div>
+                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Nombre de Usuario (Alias)</label>
+                        <input type="text" id="regUser" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="Tu alias único...">
+                        <p class="text-[10px] text-amber-400/50 mt-1">Si coincide con un shortlog oficial de 42, se aplicará el título nobiliario correspondiente.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Correo Electrónico</label>
+                        <input type="email" id="regEmail" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="tu@correo.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Contraseña</label>
+                        <input type="password" id="regPass" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-lg fantasy-btn-primary text-sm uppercase tracking-wider cursor-pointer mt-2">
+                        Crear Cuenta Civil
+                    </button>
+                </form>
+
+                <div class="text-center pt-2">
+                    <span class="text-xs text-amber-200/60">¿Eres alumno de 42? </span>
+                    <a href="#" onclick="loginWith42()" class="text-xs text-[#00babc] hover:underline font-bold">Conéctate directamente aquí</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ESPACIADOR INFERIOR -->
+    <div class="h-10"></div>
+
+    <!-- SCRIPT DE CONTROL DE PESTAÑAS -->
+<!-- SCRIPT DE CONTROL DE PESTAÑAS Y AUTENTICACIÓN -->
+    <script>
+        function switchTab(tab) {
+            const loginBtn = document.getElementById('tabLoginBtn');
+            const registerBtn = document.getElementById('tabRegisterBtn');
+            const loginContainer = document.getElementById('loginFormContainer');
+            const registerContainer = document.getElementById('registerFormContainer');
+
+            if (tab === 'login') {
+                loginBtn.classList.add('active', 'text-amber-200');
+                loginBtn.classList.remove('text-amber-500/60');
+                registerBtn.classList.remove('active', 'text-amber-200');
+                registerBtn.classList.add('text-amber-500/60');
+
+                loginContainer.classList.remove('hidden');
+                registerContainer.classList.add('hidden');
+            } else {
+                registerBtn.classList.add('active', 'text-amber-200');
+                registerBtn.classList.remove('text-amber-500/60');
+                loginBtn.classList.remove('active', 'text-amber-200');
+                loginBtn.classList.add('text-amber-500/60');
+
+                registerContainer.classList.remove('hidden');
+                loginContainer.classList.add('hidden');
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const identifier = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username_or_email: identifier, password: password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Credenciales inválidas');
+                }
+
+                // 🔑 GUARDAR SESIÓN EN LOCALSTORAGE
+                localStorage.setItem('cardbinder_user', JSON.stringify({
+                    username: data.username || identifier,
+                    badge: data.badge || 'Homebrewer'
+                }));
+
+                // Redirigir al index principal
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                alert('Error al entrar al Grimorio: ' + error.message);
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('regUser').value;
+            const email = document.getElementById('regEmail').value;
+            const password = document.getElementById('regPass').value;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'No se pudo completar el registro');
+                }
+
+                // 🔑 GUARDAR SESIÓN TRAS REGISTRO
+                localStorage.setItem('cardbinder_user', JSON.stringify({
+                    username: data.username || username,
+                    badge: data.badge || 'Homebrewer'
+                }));
+
+                alert('¡Cuenta civil creada con éxito!');
+                window.location.href = 'index.html';
+
+            } catch (error) {
+                alert('Error en el registro: ' + error.message);
+            }
+        }
+
+        function loginWith42() {
+            // Redirección al endpoint de OAuth de FastAPI para la Intra de 42
+            window.location.href = 'http://localhost:8000/api/auth/42/login';
+        }
+    </script>    
+</body>
+</html>

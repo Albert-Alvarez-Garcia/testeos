@@ -115,3 +115,43 @@ def search_cards_by_substring(name: str, card_type: str = None):
     finally:
         cursor.close()
         conn.close()
+
+def register_new_user(username: str, email: str, password_hash: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO users (username, email, password_hash, auth_type, badge_type)
+            VALUES (%s, %s, %s, 'local', 'civil_homebrewer')
+            RETURNING id, username, email, badge_type;
+        """, (username.strip(), email.strip().lower(), password_hash))
+        
+        new_user = cursor.dict_fetch() if hasattr(cursor, 'dict_fetch') else cursor.fetchone()
+        conn.commit()
+        return {"success": True, "user": dict(new_user) if new_user else None}
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Error al registrar usuario en BBDD: {e}")
+        return {"success": False, "error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+def get_user_by_username_or_email(identifier: str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        query = """
+            SELECT id, username, email, password_hash, badge_type, auth_type
+            FROM users
+            WHERE LOWER(username) = LOWER(%s) OR LOWER(email) = LOWER(%s);
+        """
+        cursor.execute(query, (identifier.strip(), identifier.strip()))
+        user = cursor.dict_fetch() if hasattr(cursor, 'dict_fetch') else cursor.fetchone()
+        return dict(user) if user else None
+    except Exception as e:
+        print(f"❌ Error al buscar usuario para login: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()

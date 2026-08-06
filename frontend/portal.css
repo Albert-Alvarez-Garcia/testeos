@@ -1,0 +1,119 @@
+/* --- 1. IMPORTACIÓN Y CONFIGURACIÓN BASE --- */
+@font-face {
+    font-family: 'MagicTheGathering';
+    src: url('public/assets/MAGIC.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    --bg-app: #080503;
+    --bg-card: rgba(20, 14, 9, 0.92);
+    --border-color: #8c6d36;
+    --border-hover: #ffd700;
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --accent: #d4af37;
+    --accent-glow: rgba(212, 175, 55, 0.4);
+    --transition: all 0.2s ease-in-out;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-app);
+    background-image: url('public/assets/fondomejorado.jpg');
+    background-size: cover;       
+    background-position: center;  
+    background-repeat: no-repeat; 
+    background-attachment: fixed; 
+    font-family: 'MagicTheGathering', serif;
+    color: var(--text-main);
+}
+
+.font-magic {
+    font-family: 'MagicTheGathering', serif;
+    letter-spacing: 1px;
+}
+
+/* --- 2. ELEMENTOS DECORATIVOS Y NAVEGACIÓN --- */
+.metal-orb {
+    background: radial-gradient(circle at 30% 30%, #5c4323 0%, #1c130a 70%);
+    border: 2px solid #b39258;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.2);
+    transition: var(--transition);
+}
+
+.metal-orb:hover {
+    transform: scale(1.08);
+    border-color: var(--border-hover);
+    box-shadow: 0 0 15px var(--accent-glow), inset 0 2px 6px rgba(255,255,255,0.4);
+}
+
+.search-bar-fantasy {
+    background: radial-gradient(circle, #22180f 0%, #0f0a06 100%);
+    border: 2px solid var(--border-color);
+    box-shadow: inset 0 4px 10px rgba(0,0,0,0.85), 0 4px 12px rgba(0,0,0,0.6);
+}
+
+.search-bar-fantasy input {
+    color: var(--text-main);
+}
+
+.search-bar-fantasy input::placeholder {
+    color: var(--text-muted);
+}
+
+/* --- 3. COMPONENTES COMUNES DE PANEL (Paneles, Inputs y Botones) --- */
+/* Paneles de administración / contenedores con la misma textura oscura */
+.fantasy-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+}
+
+/* Inputs y Selects unificados bajo la estética de fantasía oscura */
+input[type="text"],
+input[type="number"],
+select {
+    background: rgba(15, 10, 6, 0.9);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: var(--transition);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Botones de acción principales */
+.btn-fantasy {
+    background: linear-gradient(135deg, #5c4323 0%, #2c1d0f 100%);
+    border: 1px solid var(--border-color);
+    color: var(--accent);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+}
+
+.btn-fantasy:hover {
+    border-color: var(--border-hover);
+    color: #fff;
+    box-shadow: 0 4px 12px var(--accent-glow);
+    transform: translateY(-1px);
+}

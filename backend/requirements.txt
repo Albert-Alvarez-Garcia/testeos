@@ -1,4 +1,6 @@
 fastapi
 uvicorn
-requests
 psycopg2-binary
+pydantic[email]
+python-jose
+bcrypt==4.0.1
