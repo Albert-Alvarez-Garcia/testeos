@@ -1,9 +1,26 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends, Header
 from pydantic import BaseModel
 from typing import Optional
 from backend.database import get_db_connection
+from backend.services import get_user_by_username_or_email
 
 router = APIRouter(prefix="/api/containers", tags=["Containers"])
+
+# Dependencia para obtener el usuario actual mediante la cabecera X-Username
+async def get_current_user(x_username: str = Header(None)):
+    if not x_username:
+        raise HTTPException(
+            status_code=401, 
+            detail="No se ha proporcionado el usuario en la cabecera (Falta X-Username)."
+        )
+    
+    user = get_user_by_username_or_email(x_username)
+    if not user:
+        raise HTTPException(
+            status_code=401, 
+            detail="Usuario no encontrado en la base de datos."
+        )
+    return user
 
 class ContainerCreate(BaseModel):
     name: str
@@ -33,17 +50,20 @@ class MoveCardBetweenContainersRequest(BaseModel):
     target_slot_id: Optional[str] = None # Si es null, busca el primer hueco libre automáticamente
 
 @router.post("/")
-def create_container(data: ContainerCreate):
+def create_container(data: ContainerCreate, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+
         cursor.execute(
             """
-            INSERT INTO containers (name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity)
-            VALUES (%s, %s, %s, %s, %s, %s)
-            RETURNING id, name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity, created_at;
+            INSERT INTO containers (user_id, name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity)
+            VALUES (%s, %s, %s, %s, %s, %s, %s)
+            RETURNING id, user_id, name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity, created_at;
             """,
             (
+                user_id,
                 data.name, 
                 data.type, 
                 data.max_capacity, 
@@ -102,11 +122,22 @@ def create_container(data: ContainerCreate):
         conn.close()
 
 @router.get("/")
-def list_containers():
+def list_containers(current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT id, name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity, created_at FROM containers ORDER BY created_at DESC;")
+        user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+        
+        # Filtramos estrictamente por el user_id del usuario autenticado
+        cursor.execute(
+            """
+            SELECT id, user_id, name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity, created_at 
+            FROM containers 
+            WHERE user_id = %s 
+            ORDER BY created_at DESC;
+            """,
+            (user_id,)
+        )
         containers = cursor.fetchall()
         return [dict(c) for c in containers]
     finally:
@@ -114,10 +145,15 @@ def list_containers():
         conn.close()
 
 @router.post("/items")
-def add_card_to_container(data: AddCardToContainerRequest):
+def add_card_to_container(data: AddCardToContainerRequest, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+        cursor.execute("SELECT id FROM containers WHERE id = %s AND user_id = %s;", (data.container_id, user_id))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=403, detail="No tienes permisos sobre este contenedor o no existe.")
+
         cursor.execute(
             """
             SELECT p.id 
@@ -204,10 +240,15 @@ def add_card_to_container(data: AddCardToContainerRequest):
         conn.close()
 
 @router.get("/{container_id}/slots")
-def get_container_slots_with_cards(container_id: str):
+def get_container_slots_with_cards(container_id: str, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+        cursor.execute("SELECT id FROM containers WHERE id = %s AND user_id = %s;", (container_id, user_id))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=403, detail="No tienes permisos para ver este contenedor.")
+
         cursor.execute(
             """
             SELECT 
@@ -239,6 +280,8 @@ def get_container_slots_with_cards(container_id: str):
         slots = cursor.fetchall()
         return [dict(slot) for slot in slots]
 
+    except HTTPException as he:
+        raise he
     except Exception as e:
         print(f"❌ Error al obtener los slots del contenedor: {e}")
         raise HTTPException(status_code=500, detail="Error interno al cargar la estructura del contenedor.")
@@ -247,13 +290,14 @@ def get_container_slots_with_cards(container_id: str):
         conn.close()
 
 @router.put("/{container_id}/slots")
-def update_container_slots_layout(container_id: str, slots_data: list[dict]):
+def update_container_slots_layout(container_id: str, slots_data: list[dict], current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
-        cursor.execute("SELECT id FROM containers WHERE id = %s;", (container_id,))
+        user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+        cursor.execute("SELECT id FROM containers WHERE id = %s AND user_id = %s;", (container_id, user_id))
         if not cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Contenedor no encontrado.")
+            raise HTTPException(status_code=404, detail="Contenedor no encontrado o sin permisos.")
 
         cursor.execute(
             """
@@ -327,10 +371,12 @@ def update_container_slots_layout(container_id: str, slots_data: list[dict]):
         conn.close()
 
 @router.post("/move-cross-container")
-def move_card_between_containers(data: MoveCardBetweenContainersRequest):
+def move_card_between_containers(data: MoveCardBetweenContainersRequest, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
+        user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+
         cursor.execute(
             """
             SELECT id, container_id, slot_id 
@@ -345,10 +391,10 @@ def move_card_between_containers(data: MoveCardBetweenContainersRequest):
         
         old_slot_id = copy_row["slot_id"]
 
-        cursor.execute("SELECT id, type FROM containers WHERE id = %s;", (data.target_container_id,))
+        cursor.execute("SELECT id, type FROM containers WHERE id = %s AND user_id = %s;", (data.target_container_id, user_id))
         target_container = cursor.fetchone()
         if not target_container:
-            raise HTTPException(status_code=404, detail="El contenedor de destino no existe.")
+            raise HTTPException(status_code=404, detail="El contenedor de destino no existe o no te pertenece.")
 
         target_slot_id = data.target_slot_id
         if not target_slot_id:

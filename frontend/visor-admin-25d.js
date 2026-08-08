@@ -4,12 +4,9 @@
  * ============================================================================
  */
 
-// ============================================================================
-// 1. CONFIGURACIÓN Y CONSTANTES GLOBALES
-// ============================================================================
 const API_BASE_URL = 'http://localhost:8000/api';
 
-const searchInput = document.getElementById('searchInput');
+
 const macroCategorySelect = document.getElementById('macroCategorySelect');
 const subtypeSelect = document.getElementById('subtypeSelect');
 const searchBtn = document.getElementById('searchBtn');
@@ -23,9 +20,8 @@ const magnifier = document.getElementById('cardMagnifier');
 const toggleBtn = document.getElementById('toggleMagnifierBtn');
 const modeStatus = document.getElementById('modeStatus');
 
-// Campos e inputs de inventario
 const cardQuantity = document.getElementById('cardQuantity');
-const cardLocation = document.getElementById('cardLocation');
+
 const cardState = document.getElementById('cardState');
 const cardOwned = document.getElementById('cardOwned');
 const saveInventoryBtn = document.getElementById('saveInventoryBtn');
@@ -39,12 +35,10 @@ let allContainersList = [];
 const ZOOM_SCALE = 2; 
 const MAGNIFIER_SIZE = 160; 
 
-
-// ============================================================================
-// 2. INICIALIZACIÓN (DOM CONTENT LOADED)
-// ============================================================================
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Cargar taxonomía de tipos
+    const searchInput = document.getElementById('searchInput');
+    const cardLocation = document.getElementById('cardLocation');
     try {
         const response = await fetch(`${API_BASE_URL}/cards/types-taxonomy`);
         globalTaxonomy = await response.json();
@@ -64,24 +58,33 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 2. Cargar contenedores en el desplegable de inventario
     await cargarContenedores();
     
-    // Auto-recargar contenedores si el usuario hace foco en el desplegable
     if (cardLocation) {
         cardLocation.addEventListener('focus', cargarContenedores);
     }
 
-    // 3. Escuchar cambios en el filtro de tipos de contenedor
     if (filterContainerTypeSelect) {
         filterContainerTypeSelect.addEventListener('change', actualizarDesplegableContenedores);
     }
 });
 
-
 // ============================================================================
 // 3. GESTIÓN DE CONTENEDORES Y UBICACIONES (API)
 // ============================================================================
+
+
 async function cargarContenedores() {
+    // Llama directamente a la función global definida en el HTML
+    const authHeader = typeof getAuthHeader === 'function' ? getAuthHeader() : { 'X-Username': 'admin' };
+
     try {
-        const response = await fetch(`${API_BASE_URL}/containers/`);
+        const response = await fetch(`${API_BASE_URL}/containers/`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                ...authHeader
+            }
+        });
+        
         if (!response.ok) {
             console.error("Error al obtener contenedores, status:", response.status);
             return;
@@ -101,42 +104,32 @@ async function cargarContenedores() {
 function actualizarDesplegableContenedores() {
     if (!cardLocation) return;
 
-    const valorActual = cardLocation.value;
-    const selectedType = filterContainerTypeSelect ? filterContainerTypeSelect.value : 'all';
+    // Recuperamos el valor guardado previamente si existe
+    const lastSelected = localStorage.getItem('last_selected_container');
     
     cardLocation.innerHTML = '<option value="">Selecciona un contenedor...</option>';
     
-    const containersFiltered = allContainersList.filter(c => {
-        const tipoContenedor = (c.type || c.tipo || '').toLowerCase();
-        if (selectedType === 'all') return true;
-        return tipoContenedor === selectedType.toLowerCase();
-    });
-
-    containersFiltered.forEach(c => {
+    allContainersList.forEach(c => {
         const option = document.createElement('option');
-        option.value = c.id || c._id || c.container_id; 
-        const nombre = c.name || c.nombre || 'Contenedor sin nombre';
-        const tipo = c.type || c.tipo || 'GENERAL';
-        
-        option.textContent = `${nombre} (${tipo.toUpperCase()})`;
+        option.value = c.id; 
+        option.textContent = `${c.name || 'Sin nombre'} (${(c.type || 'GENERAL').toUpperCase()})`;
         cardLocation.appendChild(option);
     });
     
-    if (valorActual) {
-        cardLocation.value = valorActual;
+    // Si teníamos uno guardado, lo volvemos a seleccionar
+    if (lastSelected) {
+        cardLocation.value = lastSelected;
     }
 }
 
+// Escuchar cambios para persistir la selección automáticamente
 if (cardLocation) {
     cardLocation.addEventListener('change', (e) => {
-        const selectedVal = e.target.value;
-        if (selectedVal) {
-            localStorage.setItem('last_selected_container', selectedVal);
-            if (cardOwned) cardOwned.value = 'true';
+        if (e.target.value) {
+            localStorage.setItem('last_selected_container', e.target.value);
         }
     });
 }
-
 
 // ============================================================================
 // 4. TAXONOMÍA Y FILTROS DE BÚSQUEDA
@@ -144,7 +137,6 @@ if (cardLocation) {
 if (macroCategorySelect) {
     macroCategorySelect.addEventListener('change', (e) => {
         const selectedCategory = e.target.value;
-        
         subtypeSelect.innerHTML = '<option value="">Cualquier subtipo...</option>';
         
         if (!selectedCategory || !globalTaxonomy[selectedCategory] || globalTaxonomy[selectedCategory].length === 0) {
@@ -178,19 +170,13 @@ async function realizarBusqueda() {
 
     try {
         let url = `${API_BASE_URL}/cards/filter?`;
-        
         if (hasValidText) {
             url += `name=${encodeURIComponent(query)}`;
         } else {
             url += `name=`;
         }
-
-        if (macroCategory) {
-            url += `&type_line=${encodeURIComponent(macroCategory)}`;
-        }
-        if (subtype) {
-            url += `&subtype=${encodeURIComponent(subtype)}`;
-        }
+        if (macroCategory) url += `&type_line=${encodeURIComponent(macroCategory)}`;
+        if (subtype) url += `&subtype=${encodeURIComponent(subtype)}`;
 
         const response = await fetch(url);        
         if (!response.ok) {
@@ -245,16 +231,11 @@ function manejarSinResultados() {
 
 searchBtn.addEventListener('click', realizarBusqueda);
 searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') realizarBusqueda(); });
-if (macroCategorySelect) macroCategorySelect.addEventListener('keypress', (e) => { if (e.key === 'Enter') realizarBusqueda(); });
-if (subtypeSelect) subtypeSelect.addEventListener('keypress', (e) => { if (e.key === 'Enter') realizarBusqueda(); });
-
 
 // ============================================================================
-// 5. SELECCIÓN DE CARTA Y VISOR INTERactivo
+// 5. SELECCIÓN DE CARTA Y VISOR INTERACTIVO
 // ============================================================================
 function seleccionarCarta(cardData) {
-    console.log("🔍 OBJETO ENTERO DEVUELTO POR EL BUSCADOR:", cardData);
-    
     currentSelectedCard = cardData;
     detailsColumn.classList.add('has-selection');
     
@@ -285,7 +266,6 @@ function seleccionarCarta(cardData) {
         cardLocation.value = '';
     }
 }
-
 
 // ============================================================================
 // 6. CONTROL DE LA LUPA Y ANIMACIÓN 3D
@@ -350,7 +330,6 @@ container.addEventListener('mouseleave', () => {
     card.style.transform = `rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)`;
 });
 
-
 // ============================================================================
 // 7. GESTIÓN DE INVENTARIO Y NOTIFICACIONES (TOAST)
 // ============================================================================
@@ -405,6 +384,7 @@ saveInventoryBtn.addEventListener('click', async () => {
         return;
     }
 
+    const authHeader = getAuthHeader();
     const payload = {
         printing_id: printingId,
         container_id: containerId,
@@ -418,7 +398,8 @@ saveInventoryBtn.addEventListener('click', async () => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'accept': 'application/json'
+                'accept': 'application/json',
+                ...authHeader
             },
             body: JSON.stringify(payload)
         });
@@ -432,13 +413,7 @@ saveInventoryBtn.addEventListener('click', async () => {
                     ? data.detail.map(err => err.msg).join(', ') 
                     : String(data.detail);
             }
-
-            const errorLower = errorMsg.toLowerCase();
-            if (errorLower.includes('espacio') || errorLower.includes('capacity') || response.status === 400) {
-                alert("⚠️ ¡Contenedor lleno! No hay espacio libre disponible en este contenedor.");
-            } else {
-                alert(`Error / Validación: ${errorMsg}`);
-            }
+            alert(`Error / Validación: ${errorMsg}`);
             return;
         }
 

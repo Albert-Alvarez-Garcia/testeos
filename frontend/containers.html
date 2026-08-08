@@ -9,7 +9,7 @@
     <style>
         .management-layout {
             display: grid;
-            grid-template-columns: 350px 1fr;
+            grid-template-columns: 380px 1fr;
             gap: 20px;
             padding: 20px;
             max-width: 1400px;
@@ -39,6 +39,34 @@
             color: var(--accent, #b39258);
             text-decoration: underline;
         }
+        /* Estilos para campos dinámicos */
+        .dynamic-fields {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed var(--border-color, #444);
+        }
+        .dynamic-fields.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .form-group select, .form-group input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 0.6rem;
+            border-radius: 6px;
+            background: var(--bg-app, #121212);
+            color: var(--text-main, #fff);
+            border: 1px solid var(--border-color, #333);
+        }
     </style>
 </head>
 <body>
@@ -55,28 +83,62 @@
     <main>
         <div class="management-layout">
             
-            <!-- Panel Izquierdo: Crear Nuevo Contenedor -->
+            <!-- Panel Izquierdo: Crear Nuevo Contenedor con Subcampos -->
             <section class="create-container-panel fantasy-panel" style="padding: 20px; height: fit-content;">
                 <h3 style="color: var(--accent, #b39258); margin-top: 0; margin-bottom: 15px;">Crear Nuevo Contenedor</h3>
                 <form id="createContainerForm">
-                    <div style="margin-bottom: 15px;">
-                        <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">NOMBRE DEL CONTENEDOR</label>
-                        <input type="text" id="newContainerName" placeholder="Ej. Binder Principal, Mazo Modern" required style="width: 100%; box-sizing: border-box; padding: 0.65rem; border-radius: 8px; background: var(--bg-app, #121212); color: var(--text-main, #fff); border: 1px solid var(--border-color, #333);">
+                    <div class="form-group">
+                        <label>NOMBRE DEL CONTENEDOR</label>
+                        <input type="text" id="containerName" placeholder="Ej. Binder Principal, Mazo Modern" required>
                     </div>
 
-                    <div style="margin-bottom: 20px;">
-                        <label style="display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 5px;">TIPO DE CONTENEDOR</label>
-                        <select id="newContainerType" required style="width: 100%; padding: 0.65rem; border-radius: 8px; background: var(--bg-app, #121212); color: var(--text-main, #fff); border: 1px solid var(--border-color, #333);">
+                    <div class="form-group">
+                        <label>TIPO DE CONTENEDOR</label>
+                        <select id="containerType" required>
                             <option value="">Selecciona un tipo...</option>
-                            <option value="binder_s">Binder Pequeño (2x2)</option>
-                            <option value="binder_m">Binder Mediano (3x3)</option>
-                            <option value="binder_xl">Binder Grande (4x3)</option>
+                            <option value="binder">Binder / Archivador</option>
                             <option value="deck">Mazo (Deck)</option>
                             <option value="box">Caja (Box)</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="btn-fantasy" style="width: 100%; padding: 0.75rem;">Guardar Contenedor</button>
+                    <!-- Subcampos para Binder -->
+                    <div id="binderFields" class="dynamic-fields">
+                        <div class="form-group">
+                            <label>TAMAÑO DEL BINDER</label>
+                            <select id="binderSize">
+                                <option value="binder_s">Binder Pequeño (2x2 - 4 slots/pág)</option>
+                                <option value="binder_m" selected>Binder Mediano (3x3 - 9 slots/pág)</option>
+                                <option value="binder_xl">Binder Grande (4x3 - 12 slots/pág)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>NÚMERO DE PÁGINAS</label>
+                            <input type="number" id="binderPages" value="40" min="1" max="200">
+                        </div>
+                    </div>
+
+                    <!-- Subcampos para Deck (Mazo) -->
+                    <div id="deckFields" class="dynamic-fields">
+                        <div class="form-group">
+                            <label>CAPACIDAD MAZO PRINCIPAL</label>
+                            <input type="number" id="deckMainCapacity" value="60" min="1" max="250">
+                        </div>
+                        <div class="form-group">
+                            <label>CAPACIDAD RESERVA (SIDEBOARD)</label>
+                            <input type="number" id="deckSideboardCapacity" value="15" min="0" max="50">
+                        </div>
+                    </div>
+
+                    <!-- Subcampos para Box (Caja) -->
+                    <div id="boxFields" class="dynamic-fields">
+                        <div class="form-group">
+                            <label>CAPACIDAD MÁXIMA DE CARTAS</label>
+                            <input type="number" id="boxCapacity" value="1000" min="1" max="5000">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn-fantasy" style="width: 100%; padding: 0.75rem; margin-top: 15px;">Guardar Contenedor</button>
                 </form>
             </section>
 
@@ -87,11 +149,9 @@
                     
                     <select id="filterContainerType" style="padding: 0.5rem; border-radius: 6px; background: var(--bg-app, #121212); color: var(--text-main, #fff); border: 1px solid var(--border-color, #333);">
                         <option value="all">Todos los tipos</option>
-                        <option value="binder_s">Binder Pequeño (2x2)</option>
-                        <option value="binder_m">Binder Mediano (3x3)</option>
-                        <option value="binder_xl">Binder Grande (4x3)</option>
-                        <option value="deck">Mazo (Deck)</option>
-                        <option value="box">Caja (Box)</option>
+                        <option value="binder">Binders</option>
+                        <option value="deck">Mazos (Decks)</option>
+                        <option value="box">Cajas (Boxes)</option>
                     </select>
                 </div>
 
@@ -105,7 +165,12 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
-        const createContainerForm = document.getElementById('createContainerForm');
+        const containerTypeSelect = document.getElementById('containerType');
+        const binderFields = document.getElementById('binderFields');
+        const deckFields = document.getElementById('deckFields');
+        const boxFields = document.getElementById('boxFields');
+        const form = document.getElementById('createContainerForm');
+        
         const containersListWrapper = document.getElementById('containersListWrapper');
         const filterContainerTypeSelect = document.getElementById('filterContainerType');
         
@@ -115,16 +180,65 @@
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
+        // Obtener cabecera de usuario desde localStorage
+        function getAuthHeader() {
+            const userData = JSON.parse(localStorage.getItem('cardbinder_user'));
+            if (!userData || !userData.username) {
+                alert('Tu sesión ha expirado o no estás autenticado.');
+                window.location.href = 'login.html';
+                return {};
+            }
+            return { 'X-Username': userData.username };
+        }
+
+        // Mostrar u ocultar campos dinámicos según el tipo seleccionado
+        containerTypeSelect.addEventListener('change', (e) => {
+            const type = e.target.value;
+            
+            binderFields.classList.remove('active');
+            deckFields.classList.remove('active');
+            boxFields.classList.remove('active');
+
+            if (type === 'binder') {
+                binderFields.classList.add('active');
+            } else if (type === 'deck') {
+                deckFields.classList.add('active');
+            } else if (type === 'box') {
+                boxFields.classList.add('active');
+            }
+        });
+
         async function cargarContenedores() {
+            const authHeader = getAuthHeader();
+            if (!authHeader['X-Username']) return;
+
             try {
-                const response = await fetch('http://localhost:8000/api/containers/');
-                if (!response.ok) throw new Error('Error al listar contenedores');
+                const response = await fetch('http://localhost:8000/api/containers/', {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...authHeader
+                    }
+                });
+                
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        alert('Tu sesión no es válida.');
+                        window.location.href = 'login.html';
+                        return;
+                    }
+                    throw new Error('Error al listar contenedores');
+                }
                 const containersRaw = await response.json();
 
-                // Para cada contenedor, consultamos sus slots para saber los ocupados reales
+                // Consultar slots para saber los ocupados reales
                 allContainers = await Promise.all(containersRaw.map(async c => {
                     try {
-                        const slotRes = await fetch(`http://localhost:8000/api/containers/${c.id}/slots`);
+                        const slotRes = await fetch(`http://localhost:8000/api/containers/${c.id}/slots`, {
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                ...authHeader 
+                            }
+                        });
                         if (slotRes.ok) {
                             const slots = await slotRes.json();
                             const filled = slots.filter(s => s.is_occupied).length;
@@ -167,7 +281,6 @@
                 const nombre = c.name || 'Sin nombre';
                 const tipo = (c.type || 'general').toUpperCase();
                 
-                // Slots llenos / Capacidad total (ajusta las propiedades según devuelva tu backend)
                 const slotsLlenos = c.filled_slots ?? c.current_cards ?? c.used ?? 0;
                 const capacidadTotal = c.max_capacity || c.capacity || 'N/A';
 
@@ -188,31 +301,76 @@
             filterContainerTypeSelect.addEventListener('change', renderizarListadoContenedores);
         }
 
-        if (createContainerForm) {
-            createContainerForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const name = document.getElementById('newContainerName').value;
-                const type = document.getElementById('newContainerType').value;
+        // Envío estructurado de datos con subcampos y autenticación
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-                try {
-                    const response = await fetch('http://localhost:8000/api/containers/', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ name, type })
-                    });
+            const name = document.getElementById('containerName').value.trim();
+            const baseType = containerTypeSelect.value;
+            const authHeader = getAuthHeader();
+            if (!authHeader['X-Username']) return;
+            
+            let type = baseType;
+            let max_capacity = null;
+            let slots_per_page = 9; 
+            let total_pages = null;   
+            let sideboard_capacity = null;
 
-                    if (!response.ok) throw new Error('Error al crear el contenedor');
-
-                    document.getElementById('newContainerName').value = '';
-                    document.getElementById('newContainerType').value = '';
-                    await cargarContenedores();
-                    alert('¡Contenedor creado con éxito!');
-                } catch (err) {
-                    console.error(err);
-                    alert('Hubo un error al crear el contenedor.');
+            if (baseType === 'binder') {
+                type = document.getElementById('binderSize').value; // 'binder_s', 'binder_m', 'binder_xl'
+                total_pages = parseInt(document.getElementById('binderPages').value) || 40;
+                
+                if (type === 'binder_s') {
+                    slots_per_page = 4;
+                } else if (type === 'binder_xl') {
+                    slots_per_page = 12;
+                } else {
+                    slots_per_page = 9; 
                 }
-            });
-        }
+
+                max_capacity = total_pages * slots_per_page;
+            } else if (baseType === 'deck') {
+                max_capacity = parseInt(document.getElementById('deckMainCapacity').value) || 60;
+                sideboard_capacity = parseInt(document.getElementById('deckSideboardCapacity').value) || 15;
+            } else if (baseType === 'box') {
+                max_capacity = parseInt(document.getElementById('boxCapacity').value) || 1000;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/containers/', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        ...authHeader
+                    },
+                    body: JSON.stringify({ 
+                        name, 
+                        type, 
+                        max_capacity, 
+                        slots_per_page,   
+                        total_pages,      
+                        sideboard_capacity 
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Error al registrar el contenedor');
+                }
+
+                const result = await response.json();
+                alert(`¡Contenedor "${result.name}" creado con éxito!`);
+                form.reset();
+                binderFields.classList.remove('active');
+                deckFields.classList.remove('active');
+                boxFields.classList.remove('active');
+                
+                await cargarContenedores();
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Hubo un error al crear el contenedor en el servidor.");
+            }
+        });
 
         cargarContenedores();
       });

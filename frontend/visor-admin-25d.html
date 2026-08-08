@@ -9,6 +9,21 @@
     <!-- 2. Cargamos el CSS específico de este layout y el visor -->
     <link rel="stylesheet" href="visor-admin-25d.css">
 </head>
+<script>
+        function getAuthHeader() {
+            let username = 'admin';
+            try {
+                const userData = JSON.parse(localStorage.getItem('cardbinder_user'));
+                if (userData && userData.username) {
+                    username = userData.username;
+                }
+            } catch (e) {
+                console.error("Error leyendo cardbinder_user:", e);
+            }
+            return { 'X-Username': username };
+        }
+    </script>
+
 <body>
 
     <header>

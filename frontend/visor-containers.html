@@ -95,6 +95,22 @@
 
     <script>
       document.addEventListener('DOMContentLoaded', () => {
+
+        // --- AUTENTICACIÓN DEL USUARIO LOGUEADO ---
+        // Misma lógica utilizada en visor-admin-25d.
+        function getAuthHeader() {
+            let username = 'admin';
+            try {
+                const userData = JSON.parse(localStorage.getItem('cardbinder_user'));
+                if (userData && userData.username) {
+                    username = userData.username;
+                }
+            } catch (e) {
+                console.error('Error leyendo cardbinder_user:', e);
+            }
+            return { 'X-Username': username };
+        }
+
         const containerSelector = document.getElementById('containerSelector');
         const containerTitle = document.getElementById('containerTitle');
         const containerStats = document.getElementById('containerStats');
@@ -214,7 +230,13 @@
         // --- 3. CARGA DE CONTENEDORES ---
         async function cargarContenedores() {
             try {
-                const response = await fetch('http://localhost:8000/api/containers/');
+                const response = await fetch('http://localhost:8000/api/containers/', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...getAuthHeader()
+                    }
+                });
                 if (!response.ok) throw new Error('Error al listar contenedores');
                 allContainers = await response.json();
                 actualizarDesplegableVisorGrafico();
@@ -304,7 +326,13 @@
             visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: var(--text-muted);">Cargando estructura física...</p></div>`;
             
             try {
-                const response = await fetch(`http://localhost:8000/api/containers/${containerId}/slots`);
+                const response = await fetch(`http://localhost:8000/api/containers/${containerId}/slots`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...getAuthHeader()
+                }
+            });
                 if (!response.ok) throw new Error('Error al obtener los slots del contenedor');
                 
                 const slots = await response.json();
@@ -477,7 +505,10 @@
 
                     const response = await fetch(`http://localhost:8000/api/containers/${currentContainerData.id}/slots`, {
                         method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...getAuthHeader()
+                        },
                         body: JSON.stringify(payload)
                     });
 
@@ -585,7 +616,10 @@ newConfirm.addEventListener('click', async () => {
                                     try {
                                         const response = await fetch(`http://localhost:8000/api/containers/move-cross-container`, {
                                             method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
+                                            headers: {
+                                                'Content-Type': 'application/json',
+                                                ...getAuthHeader()
+                                            },
                                             body: JSON.stringify({
                                                 copy_id: slot.copy_id,
                                                 target_container_id: destId,
@@ -845,7 +879,10 @@ newConfirm.addEventListener('click', async () => {
 
                         const response = await fetch(`http://localhost:8000/api/containers/${currentContainerData.id}/slots`, {
                             method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: {
+                                'Content-Type': 'application/json',
+                                ...getAuthHeader()
+                            },
                             body: JSON.stringify(payload)
                         });
 
@@ -952,7 +989,10 @@ newConfirm.addEventListener('click', async () => {
                                 try {
                                     const response = await fetch(`http://localhost:8000/api/containers/move-cross-container`, {
                                         method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            ...getAuthHeader()
+                                        },
                                         body: JSON.stringify({
                                             copy_id: slot.copy_id,
                                             target_container_id: destId,
