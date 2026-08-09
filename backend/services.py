@@ -155,3 +155,64 @@ def get_user_by_username_or_email(identifier: str):
     finally:
         cursor.close()
         conn.close()
+
+def get_user_by_username(username: str):
+    """Busca un usuario exclusivamente por username."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            SELECT id, username, email, password_hash, badge_type, auth_type
+            FROM users
+            WHERE LOWER(username) = LOWER(%s);
+        """, (username.strip(),))
+        user = cursor.dict_fetch() if hasattr(cursor, 'dict_fetch') else cursor.fetchone()
+        return dict(user) if user else None
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def create_42_user(username: str, email: str, password_hash: str):
+    """Crea un usuario autenticado mediante 42."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO users (username, email, password_hash, auth_type, badge_type)
+            VALUES (%s, %s, %s, '42', '42_student')
+            RETURNING id, username, email, badge_type, auth_type;
+        """, (username.strip(), email.strip().lower(), password_hash))
+        new_user = cursor.dict_fetch() if hasattr(cursor, 'dict_fetch') else cursor.fetchone()
+        conn.commit()
+        return {"success": True, "user": dict(new_user) if new_user else None}
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Error al crear usuario 42 en BBDD: {e}")
+        return {"success": False, "error": str(e)}
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_user_auth_type_to_42(username: str):
+    """Vincula una cuenta local existente con 42."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE users
+            SET auth_type = '42', badge_type = '42_student'
+            WHERE LOWER(username) = LOWER(%s)
+            RETURNING id, username, email, badge_type, auth_type;
+        """, (username.strip(),))
+        user = cursor.dict_fetch() if hasattr(cursor, 'dict_fetch') else cursor.fetchone()
+        conn.commit()
+        return dict(user) if user else None
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Error al vincular usuario 42: {e}")
+        return None
+    finally:
+        cursor.close()
+        conn.close()

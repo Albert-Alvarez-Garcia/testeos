@@ -30,6 +30,8 @@ services:
       - DB_PASSWORD=binder_password
     depends_on:
       - postgres_db
+    env_file:
+      - .env
 
   frontend:
     build:

@@ -107,42 +107,175 @@
     <div class="h-10"></div>
 
     <!-- SCRIPT DE GESTIÓN DE SESIÓN -->
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const userData = JSON.parse(localStorage.getItem('cardbinder_user'));
-            const userMenuContainer = document.getElementById('user-menu');
+<script>
+document.addEventListener('DOMContentLoaded', () => {
 
-            if (!userData) {
-                // Si no hay sesión iniciada, redirigir al login
+    let userData = null;
+
+    // ==========================================
+    // LOGIN MEDIANTE 42
+    // ==========================================
+
+    const params = new URLSearchParams(window.location.search);
+    const auth42 = params.get('auth42');
+
+    if (auth42) {
+        try {
+            const decodedUser = decodeURIComponent(
+                escape(atob(auth42))
+            );
+
+            userData = JSON.parse(decodedUser);
+
+            // Guardar la sesión en el localStorage
+            // del frontend (localhost:80)
+            localStorage.setItem(
+                'cardbinder_user',
+                JSON.stringify(userData)
+            );
+
+            // Limpiar el parámetro auth42 de la URL
+            window.history.replaceState(
+                {},
+                document.title,
+                window.location.pathname
+            );
+
+        } catch (error) {
+
+            console.error(
+                'Error procesando la autenticación de 42:',
+                error
+            );
+
+            localStorage.removeItem('cardbinder_user');
+
+            window.location.href = 'login.html';
+
+            return;
+        }
+    }
+
+    // ==========================================
+    // SESIÓN NORMAL
+    // ==========================================
+
+    if (!userData) {
+
+        const storedUser =
+            localStorage.getItem('cardbinder_user');
+
+        if (storedUser) {
+
+            try {
+
+                userData = JSON.parse(storedUser);
+
+            } catch (error) {
+
+                console.error(
+                    'Error leyendo la sesión:',
+                    error
+                );
+
+                localStorage.removeItem('cardbinder_user');
+            }
+        }
+    }
+
+    // ==========================================
+    // COMPROBAR SESIÓN
+    // ==========================================
+
+    const userMenuContainer =
+        document.getElementById('user-menu');
+
+    if (!userData) {
+
+        window.location.href = 'login.html';
+
+        return;
+    }
+
+    // ==========================================
+    // PINTAR USUARIO
+    // ==========================================
+
+    if (userMenuContainer) {
+
+        userMenuContainer.innerHTML = `
+            <div class="flex items-center space-x-2 text-amber-100 text-sm font-sans">
+
+                <span class="font-semibold text-amber-400">
+                    👤 ${userData.username}
+                </span>
+
+                <span class="text-xs px-2 py-0.5 rounded
+                    bg-[#b39258]/20
+                    border border-[#b39258]/40
+                    text-amber-300">
+                    (${userData.badge})
+                </span>
+
+            </div>
+
+            <div class="flex items-center space-x-2 pl-2 border-l border-[#b39258]/40">
+
+                <button
+                    id="profile-btn"
+                    class="px-2.5 py-1 text-xs font-medium rounded
+                    bg-[#b39258]/30
+                    hover:bg-[#b39258]/50
+                    text-amber-200
+                    transition-colors
+                    cursor-pointer">
+                    Perfil
+                </button>
+
+                <button
+                    id="logout-btn"
+                    class="px-2.5 py-1 text-xs font-medium rounded
+                    bg-red-950/60
+                    hover:bg-red-900
+                    text-red-200
+                    border border-red-800/50
+                    transition-colors
+                    cursor-pointer">
+                    Salir
+                </button>
+
+            </div>
+        `;
+
+        // ==========================================
+        // CERRAR SESIÓN
+        // ==========================================
+
+        document
+            .getElementById('logout-btn')
+            .addEventListener('click', () => {
+
+                localStorage.removeItem('cardbinder_user');
+
                 window.location.href = 'login.html';
-                return;
-            }
+            });
 
-            // Pintar la información del usuario y acciones en la esquina superior
-            if (userMenuContainer) {
-                userMenuContainer.innerHTML = `
-                    <div class="flex items-center space-x-2 text-amber-100 text-sm font-sans">
-                        <span class="font-semibold text-amber-400">👤 ${userData.username}</span>
-                        <span class="text-xs px-2 py-0.5 rounded bg-[#b39258]/20 border border-[#b39258]/40 text-amber-300">(${userData.badge})</span>
-                    </div>
-                    <div class="flex items-center space-x-2 pl-2 border-l border-[#b39258]/40">
-                        <button id="profile-btn" class="px-2.5 py-1 text-xs font-medium rounded bg-[#b39258]/30 hover:bg-[#b39258]/50 text-amber-200 transition-colors cursor-pointer">Perfil</button>
-                        <button id="logout-btn" class="px-2.5 py-1 text-xs font-medium rounded bg-red-950/60 hover:bg-red-900 text-red-200 border border-red-800/50 transition-colors cursor-pointer">Salir</button>
-                    </div>
-                `;
+        // ==========================================
+        // PERFIL
+        // ==========================================
 
-                // Botón Cerrar Sesión
-                document.getElementById('logout-btn').addEventListener('click', () => {
-                    localStorage.removeItem('cardbinder_user');
-                    window.location.href = 'login.html';
-                });
+        document
+            .getElementById('profile-btn')
+            .addEventListener('click', () => {
 
-                // Botón Completar Perfil (Placeholder para el siguiente paso)
-                document.getElementById('profile-btn').addEventListener('click', () => {
-                    alert('Próximamente: Vista para completar el perfil y rango.');
-                });
-            }
-        });
-    </script>
+                alert(
+                    'Próximamente: Vista para completar el perfil y rango.'
+                );
+
+            });
+    }
+
+});
+</script>
 </body>
 </html>
