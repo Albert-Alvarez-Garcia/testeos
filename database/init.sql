@@ -82,3 +82,16 @@ CREATE INDEX IF NOT EXISTS idx_printings_card_id ON printings (card_id);
 CREATE INDEX IF NOT EXISTS idx_card_copies_container ON card_copies (container_id);
 CREATE INDEX IF NOT EXISTS idx_container_slots_container ON container_slots (container_id);
 CREATE INDEX IF NOT EXISTS idx_containers_user_id ON containers (user_id);
+
+-- 7. Tabla para el historial de la sala de chat global
+CREATE TABLE IF NOT EXISTS chat_messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    username VARCHAR(100) NOT NULL,
+    user_login VARCHAR(100) NOT NULL,
+    badge_type VARCHAR(30) DEFAULT 'civil_homebrewer',
+    message TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Índice para ordenar y recuperar rápidamente los últimos mensajes cronológicamente
+CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages (created_at DESC);

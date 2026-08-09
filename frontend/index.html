@@ -69,13 +69,13 @@
                 </div>
             </div>
             
-            <!-- MANÁ VERDE: Parte social de la web -->
+            <!-- MANÁ VERDE: Parte social de la web (Sala de Chat Global) -->
             <div class="relative group">
-                <button class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Verde">
+                <button id="chat-toggle-btn" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Sala Global de Chat">
                     <img src="public/assets/verde-removebg-preview.png" alt="Green Mana" class="w-full h-full object-contain drop-shadow-md">
                 </button>
                 <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
-                    Parte social de la web.
+                    Abrir Sala de Chat Global.
                     <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
                 </div>
             </div>
@@ -106,176 +106,280 @@
     <!-- ESPACIADOR INFERIOR -->
     <div class="h-10"></div>
 
-    <!-- SCRIPT DE GESTIÓN DE SESIÓN -->
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+    <!-- 💬 COMPONENTE DE SALA DE CHAT GLOBAL (OCULTO POR DEFECTO) -->
+    <div id="chat-box" class="fixed bottom-24 right-6 w-80 md:w-96 h-[450px] bg-[#140e09]/95 border-2 border-[#b39258] rounded-2xl shadow-2xl backdrop-blur-md hidden flex-col z-50 overflow-hidden font-sans">
+        <!-- Cabecera del Chat -->
+        <div class="bg-[#1a120b] border-b border-[#b39258]/40 px-4 py-3 flex justify-between items-center text-amber-100">
+            <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
+                <span class="font-bold tracking-wide text-sm">Sala Global de Conjuradores 🌐</span>
+            </div>
+            <button id="chat-close-btn" class="text-amber-400 hover:text-white transition-colors cursor-pointer text-lg font-bold px-1">✕</button>
+        </div>
 
-    let userData = null;
+        <!-- Contenedor de Mensajes -->
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col space-y-3 bg-[#0d0906]/60 text-sm">
+            <!-- Los mensajes se inyectarán dinámicamente aquí -->
+        </div>
 
-    // ==========================================
-    // LOGIN MEDIANTE 42
-    // ==========================================
+        <!-- Formulario de Entrada -->
+        <form id="chat-form" class="bg-[#1a120b] border-t border-[#b39258]/40 p-3 flex items-center space-x-2">
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje a la comunidad..." autocomplete="off" class="flex-1 bg-[#140e09] border border-[#b39258]/60 rounded-xl px-3 py-2 text-amber-100 text-xs focus:outline-none focus:border-amber-400" required />
+            <button type="submit" class="bg-[#b39258]/30 hover:bg-[#b39258]/60 border border-[#b39258] text-amber-200 px-4 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer">
+                Enviar
+            </button>
+        </form>
+    </div>
 
-    const params = new URLSearchParams(window.location.search);
-    const auth42 = params.get('auth42');
+    <!-- SCRIPT DE GESTIÓN DE SESIÓN Y CHAT -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
 
-    if (auth42) {
-        try {
-            const decodedUser = decodeURIComponent(
-                escape(atob(auth42))
-            );
+        let userData = null;
 
-            userData = JSON.parse(decodedUser);
+        // ==========================================
+        // LOGIN MEDIANTE 42
+        // ==========================================
 
-            // Guardar la sesión en el localStorage
-            // del frontend (localhost:80)
-            localStorage.setItem(
-                'cardbinder_user',
-                JSON.stringify(userData)
-            );
+        const params = new URLSearchParams(window.location.search);
+        const auth42 = params.get('auth42');
 
-            // Limpiar el parámetro auth42 de la URL
-            window.history.replaceState(
-                {},
-                document.title,
-                window.location.pathname
-            );
-
-        } catch (error) {
-
-            console.error(
-                'Error procesando la autenticación de 42:',
-                error
-            );
-
-            localStorage.removeItem('cardbinder_user');
-
-            window.location.href = 'login.html';
-
-            return;
-        }
-    }
-
-    // ==========================================
-    // SESIÓN NORMAL
-    // ==========================================
-
-    if (!userData) {
-
-        const storedUser =
-            localStorage.getItem('cardbinder_user');
-
-        if (storedUser) {
-
+        if (auth42) {
             try {
-
-                userData = JSON.parse(storedUser);
-
-            } catch (error) {
-
-                console.error(
-                    'Error leyendo la sesión:',
-                    error
+                const decodedUser = decodeURIComponent(
+                    escape(atob(auth42))
                 );
 
+                userData = JSON.parse(decodedUser);
+
+                localStorage.setItem(
+                    'cardbinder_user',
+                    JSON.stringify(userData)
+                );
+
+                window.history.replaceState(
+                    {},
+                    document.title,
+                    window.location.pathname
+                );
+
+            } catch (error) {
+                console.error('Error procesando la autenticación de 42:', error);
                 localStorage.removeItem('cardbinder_user');
+                window.location.href = 'login.html';
+                return;
             }
         }
-    }
-
-    // ==========================================
-    // COMPROBAR SESIÓN
-    // ==========================================
-
-    const userMenuContainer =
-        document.getElementById('user-menu');
-
-    if (!userData) {
-
-        window.location.href = 'login.html';
-
-        return;
-    }
-
-    // ==========================================
-    // PINTAR USUARIO
-    // ==========================================
-
-    if (userMenuContainer) {
-
-        userMenuContainer.innerHTML = `
-            <div class="flex items-center space-x-2 text-amber-100 text-sm font-sans">
-
-                <span class="font-semibold text-amber-400">
-                    👤 ${userData.username}
-                </span>
-
-                <span class="text-xs px-2 py-0.5 rounded
-                    bg-[#b39258]/20
-                    border border-[#b39258]/40
-                    text-amber-300">
-                    (${userData.badge})
-                </span>
-
-            </div>
-
-            <div class="flex items-center space-x-2 pl-2 border-l border-[#b39258]/40">
-
-                <button
-                    id="profile-btn"
-                    class="px-2.5 py-1 text-xs font-medium rounded
-                    bg-[#b39258]/30
-                    hover:bg-[#b39258]/50
-                    text-amber-200
-                    transition-colors
-                    cursor-pointer">
-                    Perfil
-                </button>
-
-                <button
-                    id="logout-btn"
-                    class="px-2.5 py-1 text-xs font-medium rounded
-                    bg-red-950/60
-                    hover:bg-red-900
-                    text-red-200
-                    border border-red-800/50
-                    transition-colors
-                    cursor-pointer">
-                    Salir
-                </button>
-
-            </div>
-        `;
 
         // ==========================================
-        // CERRAR SESIÓN
+        // SESIÓN NORMAL
         // ==========================================
 
-        document
-            .getElementById('logout-btn')
-            .addEventListener('click', () => {
+        if (!userData) {
+            const storedUser = localStorage.getItem('cardbinder_user');
+            if (storedUser) {
+                try {
+                    userData = JSON.parse(storedUser);
+                } catch (error) {
+                    console.error('Error leyendo la sesión:', error);
+                    localStorage.removeItem('cardbinder_user');
+                }
+            }
+        }
 
+        // ==========================================
+        // COMPROBAR SESIÓN
+        // ==========================================
+
+        const userMenuContainer = document.getElementById('user-menu');
+
+        if (!userData) {
+            window.location.href = 'login.html';
+            return;
+        }
+
+        // ==========================================
+        // PINTAR USUARIO
+        // ==========================================
+
+        if (userMenuContainer) {
+            userMenuContainer.innerHTML = `
+                <div class="flex items-center space-x-2 text-amber-100 text-sm font-sans">
+                    <span class="font-semibold text-amber-400">
+                        👤 ${userData.username}
+                    </span>
+                    <span class="text-xs px-2 py-0.5 rounded
+                        bg-[#b39258]/20
+                        border border-[#b39258]/40
+                        text-amber-300">
+                        (${userData.badge})
+                    </span>
+                </div>
+                <div class="flex items-center space-x-2 pl-2 border-l border-[#b39258]/40">
+                    <button
+                        id="profile-btn"
+                        class="px-2.5 py-1 text-xs font-medium rounded
+                        bg-[#b39258]/30
+                        hover:bg-[#b39258]/50
+                        text-amber-200
+                        transition-colors
+                        cursor-pointer">
+                        Perfil
+                    </button>
+                    <button
+                        id="logout-btn"
+                        class="px-2.5 py-1 text-xs font-medium rounded
+                        bg-red-950/60
+                        hover:bg-red-900
+                        text-red-200
+                        border border-red-800/50
+                        transition-colors
+                        cursor-pointer">
+                        Salir
+                    </button>
+                </div>
+            `;
+
+            document.getElementById('logout-btn').addEventListener('click', () => {
                 localStorage.removeItem('cardbinder_user');
-
                 window.location.href = 'login.html';
             });
 
-        // ==========================================
-        // PERFIL
-        // ==========================================
-
-        document
-            .getElementById('profile-btn')
-            .addEventListener('click', () => {
-
-                alert(
-                    'Próximamente: Vista para completar el perfil y rango.'
-                );
-
+            document.getElementById('profile-btn').addEventListener('click', () => {
+                alert('Próximamente: Vista para completar el perfil y rango.');
             });
-    }
+        }
 
-});
-</script>
+    });
+
+    // ==========================================
+    // SALA DE CHAT GLOBAL (WEBSOCKET)
+    // ==========================================
+    document.addEventListener('DOMContentLoaded', () => {
+        const chatToggleBtn = document.getElementById('chat-toggle-btn');
+        const chatBox = document.getElementById('chat-box');
+        const chatCloseBtn = document.getElementById('chat-close-btn');
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const messagesContainer = document.getElementById('chat-messages');
+
+        let ws = null;
+        let historyLoaded = false;
+
+        if (!chatToggleBtn || !chatBox) return;
+
+        chatToggleBtn.addEventListener('click', () => {
+            const isHidden = chatBox.classList.contains('hidden');
+            if (isHidden) {
+                chatBox.classList.remove('hidden');
+                chatBox.classList.add('flex');
+                if (!historyLoaded) {
+                    loadChatHistory();
+                    historyLoaded = true;
+                }
+                connectChatWebSocket();
+                scrollToBottom();
+            } else {
+                chatBox.classList.remove('flex');
+                chatBox.classList.add('hidden');
+            }
+        });
+
+        chatCloseBtn.addEventListener('click', () => {
+            chatBox.classList.remove('flex');
+            chatBox.classList.add('hidden');
+        });
+
+        async function loadChatHistory() {
+            try {
+                const response = await fetch('http://localhost:8000/api/chat/history');
+                if (!response.ok) throw new Error('Error al cargar historial');
+                const messages = await response.json();
+                messages.forEach(msg => appendChatMessage(msg));
+            } catch (error) {
+                console.error('❌ Error cargando historial del chat:', error);
+            }
+        }
+
+        function connectChatWebSocket() {
+            if (ws && ws.readyState === WebSocket.OPEN) return;
+
+            ws = new WebSocket('ws://localhost:8000/api/chat/ws/chat');
+
+            ws.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                appendChatMessage(data);
+            };
+
+            ws.onclose = () => {
+                console.log('🔌 Desconectado del chat global. Reintentando en 3s...');
+                setTimeout(connectChatWebSocket, 3000);
+            };
+
+            ws.onerror = (error) => {
+                console.error('❌ Error en WebSocket de chat:', error);
+            };
+        }
+
+        chatForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            const storedUser = localStorage.getItem('cardbinder_user');
+            let currentUser = { username: 'Conjurador', user_login: 'guest', badge: 'civil_homebrewer' };
+
+            if (storedUser) {
+                try {
+                    currentUser = JSON.parse(storedUser);
+                } catch (err) {
+                    console.error('Error leyendo usuario para el chat', err);
+                }
+            }
+
+            const payload = {
+                username: currentUser.username || 'Conjurador',
+                user_login: currentUser.user_login || currentUser.username || 'guest',
+                badge_type: currentUser.badge || 'civil_homebrewer',
+                message: text
+            };
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(payload));
+                chatInput.value = '';
+            } else {
+                alert('No hay conexión activa con el servidor de chat.');
+            }
+        });
+
+        function appendChatMessage(data) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'bg-[#140e09] border border-[#b39258]/30 rounded-xl p-2.5 shadow-sm';
+
+            const timeStr = new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            msgDiv.innerHTML = `
+                <div class="flex justify-between items-center text-[11px] text-amber-400 mb-1">
+                    <span class="font-bold">👤 ${escapeHtml(data.username)}</span>
+                    <span class="text-amber-200/50">${timeStr}</span>
+                </div>
+                <div class="text-amber-100 text-xs break-words font-sans">${escapeHtml(data.message)}</div>
+            `;
+
+            messagesContainer.appendChild(msgDiv);
+            scrollToBottom();
+        }
+
+        function scrollToBottom() {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    });
+    </script>
 </body>
 </html>

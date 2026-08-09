@@ -172,7 +172,6 @@ def get_user_by_username(username: str):
         cursor.close()
         conn.close()
 
-
 def create_42_user(username: str, email: str, password_hash: str):
     """Crea un usuario autenticado mediante 42."""
     conn = get_db_connection()
@@ -193,7 +192,6 @@ def create_42_user(username: str, email: str, password_hash: str):
     finally:
         cursor.close()
         conn.close()
-
 
 def update_user_auth_type_to_42(username: str):
     """Vincula una cuenta local existente con 42."""

@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+uvicorn[standard]
 psycopg2-binary
 pydantic[email]
 python-jose
@@ -8,3 +9,4 @@ passlib
 bcrypt
 httpx
 requests
+websockets
