@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder - Gacha de Conjuradores</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="portal.css">
+</head>
+<body class="min-h-screen w-full bg-[#0d0906] flex flex-col justify-between py-6 px-6 relative select-none overflow-hidden font-sans">
+
+    <!-- 🔙 BOTÓN DE RETORNO AL PORTAL -->
+    <div class="absolute top-6 left-6 z-40">
+        <a href="index.html" class="bg-[#140e09]/90 border border-[#b39258]/60 px-4 py-2 rounded-xl text-amber-200 text-xs font-semibold hover:bg-[#b39258]/30 transition-colors shadow-2xl backdrop-blur-md flex items-center space-x-2">
+            <span>← Volver al Portal</span>
+        </a>
+    </div>
+
+    <!-- 🏆 TÍTULO SUPERIOR -->
+    <div class="w-full text-center z-30 pt-2">
+        <h1 class="text-2xl font-bold text-amber-300 tracking-wider drop-shadow-md">✨ Invocación Arcana de Sobres ✨</h1>
+        <p class="text-xs text-amber-200/60 mt-1">Abre sobres infinitos y descubre qué criaturas emergen del vacío</p>
+    </div>
+
+    <!-- 🎬 CONTENEDOR CENTRAL -->
+    <div class="flex-1 flex flex-col items-center justify-center relative z-20 my-auto">
+        
+        <!-- Botón inicial para abrir sobre -->
+        <div id="initial-action" class="flex flex-col items-center space-y-4">
+            <div class="w-56 h-80 border-2 border-dashed border-[#b39258]/40 rounded-2xl flex items-center justify-center bg-[#140e09]/50 shadow-2xl relative group cursor-pointer hover:border-amber-400 transition-all">
+                <span class="text-amber-200/75 text-base font-bold group-hover:scale-105 transition-transform">Sobre Mágico #1</span>
+            </div>
+            <button id="open-pack-btn" class="bg-[#b39258]/30 hover:bg-[#b39258]/60 border-2 border-[#b39258] text-amber-100 px-6 py-3 rounded-2xl text-sm font-bold shadow-2xl transition-all cursor-pointer hover:scale-105">
+                🔮 ¡Abrir Sobre Gratis!
+            </button>
+        </div>
+
+        <!-- ZONA 1 CON MARCO (Contenedor del vídeo + marco2.png por encima) -->
+        <div id="video-container" class="hidden relative w-full max-w-2xl h-[580px] flex items-center justify-center p-8">
+            
+            
+
+            <!-- Vídeo cinemático limpio (dentro de la Zona 1) -->
+            <video id="gacha-video" class="w-full h-full object-contain rounded-2xl shadow-2xl pointer-events-none relative z-10" muted playsinline>
+                <source src="public/assets/carta.mp4" type="video/mp4">
+                Tu navegador no soporta vídeo.
+            </video>
+
+            <!-- ZONA 2 (La Carta) y ZONA 3 (El GIF sin marcos extra) -->
+            <div id="card-result" class="absolute hidden w-[256px] h-[378px] z-30 animate-fade-in pointer-events-none">
+                
+                <!-- Zona 3: Ilustración / GIF limpio -->
+                <div id="card-gif-container" class="absolute top-[65px] left-[32px] right-[32px] h-[155px] rounded-sm overflow-hidden flex items-center justify-center bg-black">
+                    <!-- GIF inyectado por JS -->
+                </div>
+
+                <!-- Placa de texto inferior -->
+                <div class="absolute bottom-[66px] left-[40px] right-[40px] h-[48px] flex flex-col items-center justify-center text-center px-1">
+                    <span class="text-xs font-black text-amber-950 tracking-wider uppercase truncate w-full drop-shadow-[0_1px_1px_rgba(255,255,255,0.4)]" id="card-title">Criatura Legendaria</span>
+                    <span class="text-[9px] text-amber-900 font-mono font-bold tracking-widest mt-0.5 uppercase" id="card-rarity">✨ Leyenda</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Botones de acción tras abrir la carta -->
+        <div id="post-open-actions" class="hidden mt-6 flex space-x-3 z-30">
+            <button id="open-another-btn" class="bg-[#b39258]/30 hover:bg-[#b39258]/60 border border-[#b39258] text-amber-100 px-5 py-2.5 rounded-xl text-xs font-semibold shadow-xl transition-all cursor-pointer">
+                ✨ Abrir Otro Sobre
+            </button>
+        </div>
+
+    </div>
+
+    <!-- SCRIPT DE LÓGICA DEL GACHA -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const openBtn = document.getElementById('open-pack-btn');
+        const initialAction = document.getElementById('initial-action');
+        const videoContainer = document.getElementById('video-container');
+        const gachaVideo = document.getElementById('gacha-video');
+        const cardResult = document.getElementById('card-result');
+        const cardGifContainer = document.getElementById('card-gif-container');
+        const cardTitle = document.getElementById('card-title');
+        const cardRarity = document.getElementById('card-rarity');
+        const postOpenActions = document.getElementById('post-open-actions');
+        const openAnotherBtn = document.getElementById('open-another-btn');
+
+        const searchKeywords = [
+            "wizard cat", "epic warrior", "magic dragon", "cyberpunk samurai", 
+            "funny monster", "cute wizard", "space alien", "dark knight", "golden beast"
+        ];
+
+        const titlesPool = [
+            "Capibara Suprema Mágica", "Orco Albañil Nivel 99", "Gatete Archimago",
+            "Guerrero de la Niebla", "Señor de los Servidores", "Dragón de C++ Compilado",
+            "Hechicero Bugged", "Caballero del Stack Overflow", "Espectro de la Base de Datos"
+        ];
+
+        openBtn.addEventListener('click', async () => {
+            initialAction.classList.add('hidden');
+            videoContainer.classList.remove('hidden');
+            postOpenActions.classList.add('hidden');
+            cardResult.classList.add('hidden');
+
+            gachaVideo.currentTime = 0;
+            gachaVideo.play();
+
+            const randomKeyword = searchKeywords[Math.floor(Math.random() * searchKeywords.length)];
+            const randomTitle = titlesPool[Math.floor(Math.random() * titlesPool.length)];
+            
+            let fetchedGifUrl = "";
+            try {
+                const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=uYe3zQDwYQ8ZaDrzjdbgSr5Uwm3TOZ6O&q=${encodeURIComponent(randomKeyword)}&limit=15&lang=es`);
+                const data = await res.json();
+                if (data.data && data.data.length > 0) {
+                    const randomGif = data.data[Math.floor(Math.random() * data.data.length)];
+                    fetchedGifUrl = randomGif.images.fixed_height.url;
+                }
+            } catch (err) {
+                console.error("Error obteniendo GIF:", err);
+                fetchedGifUrl = "https://media.giphy.com/media/3o7TKSjRrfIPjeiDiM/giphy.gif";
+            }
+
+            cardTitle.textContent = randomTitle;
+            cardGifContainer.innerHTML = `<img src="${fetchedGifUrl}" class="w-full h-full object-cover" alt="Carta Art"/>`;
+            cardRarity.textContent = `✨ ${randomKeyword.toUpperCase()}`;
+
+            // Sincronizado en el segundo 5.5 para clavar la revelación estática perfecta
+            gachaVideo.ontimeupdate = () => {
+                if (gachaVideo.currentTime >= 9.5 && cardResult.classList.contains('hidden')) {
+                    cardResult.classList.remove('hidden');
+                    cardResult.classList.add('flex');
+                }
+            };
+
+            gachaVideo.onended = () => {
+                postOpenActions.classList.remove('hidden');
+                postOpenActions.classList.add('flex');
+            };
+        });
+
+        openAnotherBtn.addEventListener('click', () => {
+            postOpenActions.classList.add('hidden');
+            cardResult.classList.add('hidden');
+            videoContainer.classList.add('hidden');
+            initialAction.classList.remove('hidden');
+        });
+    });
+    </script>
+</body>
+</html>
