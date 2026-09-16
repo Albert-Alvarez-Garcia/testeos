@@ -2,6 +2,7 @@ import requests
 from urllib.parse import quote
 from backend.database import get_db_connection
 
+
 # Definimos HEADERS aquí arriba para que no vuelva a fallar por "not defined"
 HEADERS = {
     "User-Agent": "CardBinderPro/1.0",

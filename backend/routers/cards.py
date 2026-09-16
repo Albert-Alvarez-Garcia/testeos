@@ -1,8 +1,9 @@
 import json
 import os
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Header
 from typing import Optional
-from backend.services import search_cards_by_substring
+from backend.services import search_cards_by_substring, get_user_by_username_or_email
+from backend.database import get_db_connection
 
 router = APIRouter(prefix="/api/cards", tags=["cards"])
 
@@ -50,3 +51,83 @@ def get_types_taxonomy():
 
     with open(json_path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+@router.get("/ownership/{scryfall_id}")
+def get_card_ownership(
+    scryfall_id: str,
+    x_username: str = Header(None)
+):
+    """
+    Comprueba si el usuario posee copias de una carta y en qué contenedores.
+    """
+
+    if not x_username:
+        raise HTTPException(
+            status_code=401,
+            detail="No se ha proporcionado el usuario en la cabecera X-Username."
+        )
+
+    user = get_user_by_username_or_email(x_username)
+
+    if not user:
+        raise HTTPException(
+            status_code=401,
+            detail="Usuario no encontrado en la base de datos."
+        )
+
+    user_id = user["id"]
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute("""
+            SELECT
+                COUNT(cc.id) AS quantity,
+                COUNT(DISTINCT cc.container_id) AS container_count
+            FROM card_copies cc
+            JOIN printings p ON cc.printing_id = p.id
+            JOIN cards c ON p.card_id = c.id
+            JOIN containers co ON cc.container_id = co.id
+            WHERE c.scryfall_id::text = %s
+              AND co.user_id = %s;
+        """, (scryfall_id, user_id))
+
+        ownership = cursor.fetchone()
+
+        quantity = int(ownership["quantity"]) if ownership else 0
+
+        cursor.execute("""
+            SELECT
+                co.id AS container_id,
+                co.name AS container_name,
+                COUNT(cc.id) AS quantity
+            FROM card_copies cc
+            JOIN printings p ON cc.printing_id = p.id
+            JOIN cards c ON p.card_id = c.id
+            JOIN containers co ON cc.container_id = co.id
+            WHERE c.scryfall_id::text = %s
+              AND co.user_id = %s
+            GROUP BY co.id, co.name
+            ORDER BY co.name ASC;
+        """, (scryfall_id, user_id))
+
+        containers = cursor.fetchall()
+
+        return {
+            "owned": quantity > 0,
+            "quantity": quantity,
+            "containers": [dict(container) for container in containers]
+        }
+
+    except Exception as e:
+        print(f"❌ Error comprobando propiedad de carta: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="Error interno al comprobar la propiedad de la carta."
+        )
+
+    finally:
+        cursor.close()
+        conn.close()

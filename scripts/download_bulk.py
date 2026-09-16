@@ -7,7 +7,8 @@ HEADERS = {
     "Accept": "application/json;q=0.9,*/*;q=0.8"
 }
 DATA_DIR = "data"
-OUTPUT_FILE = os.path.join(DATA_DIR, "default-cards.json")
+# Cambiamos la extensión a .jsonl.gz ya que Scryfall sirve este formato optimizado
+OUTPUT_FILE = os.path.join(DATA_DIR, "default-cards.jsonl.gz")
 
 def download_bulk_json():
     os.makedirs(DATA_DIR, exist_ok=True)
@@ -19,11 +20,12 @@ def download_bulk_json():
     download_uri = None
     for bulk_object in data.get("data", []):
         if bulk_object.get("type") == "default_cards":
-            download_uri = bulk_object.get("download_uri")
+            # Buscamos primero 'jsonl_download_uri' y como alternativa 'download_uri'
+            download_uri = bulk_object.get("jsonl_download_uri") or bulk_object.get("download_uri")
             break
 
     if not download_uri:
-        raise Exception("No se encontró el tipo de bulk 'default_cards'.")
+        raise Exception("No se encontró el enlace de descarga para 'default_cards'.")
 
     print(f"📥 Descargando archivo masivo a {OUTPUT_FILE} ... (Esto puede tardar unos segundos)")
     with requests.get(download_uri, stream=True, headers=HEADERS) as r:

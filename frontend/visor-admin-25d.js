@@ -30,7 +30,8 @@ const filterContainerTypeSelect = document.getElementById('filterContainerType')
 let isMagnifierEnabled = false;
 let currentSelectedCard = null;
 let globalTaxonomy = {};
-let allContainersList = []; 
+let allContainersList = [];
+let currentCardOwnership = null;
 
 const ZOOM_SCALE = 2; 
 const MAGNIFIER_SIZE = 160; 
@@ -112,7 +113,11 @@ function actualizarDesplegableContenedores() {
     allContainersList.forEach(c => {
         const option = document.createElement('option');
         option.value = c.id; 
-        option.textContent = `${c.name || 'Sin nombre'} (${(c.type || 'GENERAL').toUpperCase()})`;
+        const contieneCarta = currentCardOwnership?.containers?.some(
+    container => container.container_id === c.id
+);
+
+    option.textContent = `${c.name || 'Sin nombre'} (${(c.type || 'GENERAL').toUpperCase()})${contieneCarta ? ' ★' : ''}`;
         cardLocation.appendChild(option);
     });
     
@@ -235,6 +240,60 @@ searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') realiza
 // ============================================================================
 // 5. SELECCIÓN DE CARTA Y VISOR INTERACTIVO
 // ============================================================================
+async function comprobarPropiedadCarta(cardData) {
+    if (!cardData || !cardData.scryfall_id) {
+        currentCardOwnership = null;
+        return;
+    }
+
+    const authHeader = typeof getAuthHeader === 'function'
+        ? getAuthHeader()
+        : { 'X-Username': 'admin' };
+
+    try {
+        const response = await fetch(
+            `${API_BASE_URL}/cards/ownership/${encodeURIComponent(cardData.scryfall_id)}`,
+            {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...authHeader
+                }
+            }
+        );
+
+        if (!response.ok) {
+            console.error(
+                'Error comprobando propiedad de carta:',
+                response.status
+            );
+            currentCardOwnership = null;
+            return;
+        }
+
+        currentCardOwnership = await response.json();
+        console.log('📦 Propiedad de carta:', currentCardOwnership);
+
+        if (cardOwned) {
+            cardOwned.value = currentCardOwnership.owned ? 'true' : 'false';
+        }
+
+        if (cardQuantity) {
+            cardQuantity.value = currentCardOwnership.quantity > 0
+                ? currentCardOwnership.quantity
+                : 1;
+        }
+
+        actualizarDesplegableContenedores();
+
+    } catch (error) {
+        console.error('Error de conexión comprobando propiedad:', error);
+        currentCardOwnership = null;
+    }
+}
+
+
+
 function seleccionarCarta(cardData) {
     currentSelectedCard = cardData;
     detailsColumn.classList.add('has-selection');
@@ -257,14 +316,14 @@ function seleccionarCarta(cardData) {
     cardState.value = cardData.state ?? 'NM';
     
     const lastContainer = localStorage.getItem('last_selected_container');
-    let targetContainer = cardData.container_id || cardData.location || lastContainer || '';
-    
-    if (targetContainer) {
-        cardLocation.value = targetContainer;
-        if (cardOwned) cardOwned.value = 'true';
-    } else {
-        cardLocation.value = '';
+
+    if (cardOwned) {
+        cardOwned.value = 'false';
     }
+
+    cardLocation.value = lastContainer || '';
+
+    comprobarPropiedadCarta(cardData);
 }
 
 // ============================================================================
