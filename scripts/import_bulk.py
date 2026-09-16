@@ -1,5 +1,6 @@
 import os
 import json
+import gzip
 import psycopg2
 from psycopg2.extras import execute_values
 
@@ -9,18 +10,15 @@ DB_NAME = os.getenv("DB_NAME", "card_binder_db")
 DB_USER = os.getenv("DB_USER", "binder_user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "binder_password")
 
-DATA_FILE = os.path.join("data", "default-cards.json")
+# Apuntamos al nuevo archivo comprimido en formato JSONL
+DATA_FILE = os.path.join("data", "default-cards.jsonl.gz")
 
 def import_from_local_json():
     if not os.path.exists(DATA_FILE):
-        print(f"❌ No se encuentra el archivo local {DATA_FILE}. Ejecuta primero la descarga.")
+        print(f"❌ No se encuentra el archivo local {DATA_FILE}. Ejecuta primero la descarga con 'make download'.")
         return
 
-    print(f"📂 Leyendo el archivo local {DATA_FILE}...")
-    with open(DATA_FILE, "r", encoding="utf-8") as f:
-        cards_data = json.load(f)
-
-    print(f"⚙️ Procesando cartas y todas sus impresiones usando Oracle ID...")
+    print(f"📂 Leyendo y descomprimiendo el archivo local {DATA_FILE}...")
 
     conn = psycopg2.connect(
         host=DB_HOST,
@@ -35,57 +33,68 @@ def import_from_local_json():
     printings_batch = []
     seen_printings = set()
 
-    for card in cards_data:
-        if card.get("layout") in ["token", "card_back"]:
-            continue
+    print(f"⚙️ Procesando cartas línea por línea...")
 
-        # Usamos el oracle_id para agrupar todas las impresiones de una misma carta lógica
-        oracle_id = card.get("oracle_id")
-        scryfall_id = card.get("id") # Este pasa a ser el identificador único de esta impresión específica
-        
-        if not oracle_id:
-            # Fallback por si alguna carta antigua no viniera con oracle_id
-            oracle_id = scryfall_id
+    # Abrimos el archivo comprimido con gzip y leemos línea a línea (formato JSONL)
+    with gzip.open(DATA_FILE, "rt", encoding="utf-8") as f:
+        for line in f:
+            if not line.strip():
+                continue
+            
+            try:
+                card = json.loads(line)
+            except json.JSONDecodeError:
+                continue
 
-        name = card.get("name")
-        mana_cost = card.get("mana_cost", "")
-        oracle_text = card.get("oracle_text", "")
-        type_line = card.get("type_line", "")
+            if card.get("layout") in ["token", "card_back"]:
+                continue
 
-        # Guardamos la carta lógica única basada en su oracle_id
-        if oracle_id not in cards_map:
-            cards_map[oracle_id] = (oracle_id, name, mana_cost, oracle_text, type_line)
+            # Usamos el oracle_id para agrupar todas las impresiones de una misma carta lógica
+            oracle_id = card.get("oracle_id")
+            scryfall_id = card.get("id") # Identificador único de esta impresión específica
+            
+            if not oracle_id:
+                oracle_id = scryfall_id
 
-        # Datos de la impresión actual
-        set_code = card.get("set", "")
-        set_name = card.get("set_name", "")
-        collector_number = card.get("collector_number", "")
-        rarity = card.get("rarity", "")
-        
-        image_uri = ""
-        if "image_uris" in card:
-            image_uri = card["image_uris"].get("normal", "")
-        elif "card_faces" in card and "image_uris" in card["card_faces"][0]:
-            image_uri = card["card_faces"][0]["image_uris"].get("normal", "")
+            name = card.get("name")
+            mana_cost = card.get("mana_cost", "")
+            oracle_text = card.get("oracle_text", "")
+            type_line = card.get("type_line", "")
 
-        foil = card.get("foil", False)
-        nonfoil = card.get("nonfoil", True)
+            # Guardamos la carta lógica única basada en su oracle_id
+            if oracle_id not in cards_map:
+                cards_map[oracle_id] = (oracle_id, name, mana_cost, oracle_text, type_line)
 
-        printing_unique_id = scryfall_id
+            # Datos de la impresión actual
+            set_code = card.get("set", "")
+            set_name = card.get("set_name", "")
+            collector_number = card.get("collector_number", "")
+            rarity = card.get("rarity", "")
+            
+            image_uri = ""
+            if "image_uris" in card:
+                image_uri = card["image_uris"].get("normal", "")
+            elif "card_faces" in card and "image_uris" in card["card_faces"][0]:
+                image_uri = card["card_faces"][0]["image_uris"].get("normal", "")
 
-        if printing_unique_id not in seen_printings:
-            printings_batch.append((
-                oracle_id, # Referencia temporal a la carta lógica
-                printing_unique_id,
-                set_code,
-                set_name,
-                collector_number,
-                rarity,
-                image_uri,
-                foil,
-                nonfoil
-            ))
-            seen_printings.add(printing_unique_id)
+            foil = card.get("foil", False)
+            nonfoil = card.get("nonfoil", True)
+
+            printing_unique_id = scryfall_id
+
+            if printing_unique_id not in seen_printings:
+                printings_batch.append((
+                    oracle_id, # Referencia temporal a la carta lógica
+                    printing_unique_id,
+                    set_code,
+                    set_name,
+                    collector_number,
+                    rarity,
+                    image_uri,
+                    foil,
+                    nonfoil
+                ))
+                seen_printings.add(printing_unique_id)
 
     cards_batch = list(cards_map.values())
 
