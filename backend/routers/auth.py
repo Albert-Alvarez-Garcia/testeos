@@ -34,7 +34,7 @@ FORTYTWO_CLIENT_ID = os.getenv("FORTYTWO_CLIENT_ID")
 FORTYTWO_CLIENT_SECRET = os.getenv("FORTYTWO_CLIENT_SECRET")
 FORTYTWO_REDIRECT_URI = os.getenv(
     "FORTYTWO_REDIRECT_URI",
-    "http://localhost:8000/api/auth/42/callback"
+    "http://localhost:8080/api/auth/42/callback"
 )
 
 
@@ -256,7 +256,7 @@ async def callback_42(
     const params = new URLSearchParams();
     params.set('auth42', btoa(unescape(encodeURIComponent(JSON.stringify(user)))));
 
-    window.location.replace('http://localhost/index.html?' + params.toString());
+    window.location.replace('http://localhost:8080/index.html?' + params.toString());
     </script>
 
     <p>Autenticación correcta. Redirigiendo...</p>
