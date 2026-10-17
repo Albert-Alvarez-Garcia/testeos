@@ -2,7 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import json
-from backend.routers import cards, containers, auth, chat
+from backend.routers import cards, containers, auth, chat, game
 
 app = FastAPI(title="Card Binder Pro API", version="1.0")
 
@@ -66,3 +66,4 @@ app.include_router(cards.router)
 app.include_router(containers.router)
 app.include_router(auth.router)
 app.include_router(chat.router)
+app.include_router(game.router)

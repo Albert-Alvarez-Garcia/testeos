@@ -55,17 +55,17 @@ download:
 
 # Ejecuta el script de importación desde el JSON local
 import:
-	docker-compose exec backend python3 scripts/import_bulk.py
+	docker compose exec backend python3 scripts/import_bulk.py
 	@echo "✨ Importación a base de datos finalizada."
 
 # Levanta todos los contenedores en segundo plano (con build automático)
 up:
-	docker-compose up --build -d
+	docker compose up --build -d
 	@echo "🚀 Entorno desacoplado levantado correctamente (Base de datos + API FastAPI + Frontend Nginx)."
 
 # Para y apaga los contenedores
 down:
-	docker-compose down --remove-orphans
+	docker compose down --remove-orphans
 	@echo "🛑 Contenedores detenidos."
 
 # Limpieza profunda de contenedores detenidos, redes y caché de Docker sin usar
@@ -75,17 +75,17 @@ prune:
 
 # Reinicia los contenedores
 restart:
-	docker-compose down --remove-orphans
+	docker compose down --remove-orphans
 	docker rm -f card_binder_db card_binder_api card_binder_web 2>/dev/null || true
 	docker system prune -f
-	docker-compose up --build -d
+	docker compose up --build -d
 	@echo "🔄 Contenedores reiniciados."
 
 # Muestra los logs en tiempo real de todos los servicios
 logs:
-	docker-compose logs -f
+	docker compose logs -f
 
 # Limpia contenedores y borra el volumen de datos
 clean:
-	docker-compose down -v
+	docker compose down -v
 	@echo "⚠️ Contenedores y volumen de datos eliminados."

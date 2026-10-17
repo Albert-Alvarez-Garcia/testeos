@@ -1,0 +1,71 @@
+.
+├── arbol
+├── backend
+│   ├── database.py
+│   ├── Dockerfile
+│   ├── main.py
+│   ├── pre_services.py
+│   ├── __pycache__
+│   ├── requirements copy.txt
+│   ├── requirements.txt
+│   ├── routers
+│   └── services.py
+├── card_types.txt
+├── clean_card_types.json
+├── data
+│   ├── card_types.txt
+│   ├── clean_card_types.json
+│   ├── default-cards.json
+│   ├── default-cards.jsonl.gz
+│   ├── find.txt
+│   ├── logo.txt
+│   ├── magiclogo.txt
+│   └── tree.txt
+├── database
+│   └── init.sql
+├── docker-compose.yml
+├── 📚 DOCUMENTO MAESTRO_ CARD BINDER PRO.md
+├── estonoesunenv.txt
+├── frontend
+│   ├── chat.js
+│   ├── components
+│   ├── containers.css
+│   ├── containers.html
+│   ├── containers.js
+│   ├── dockerfile
+│   ├── gacha.html
+│   ├── gestor-contendor.js
+│   ├── gestor-contenedor.html
+│   ├── index.html
+│   ├── index_old.html
+│   ├── indexold.html
+│   ├── login.html
+│   ├── nginx.conf
+│   ├── portal.css
+│   ├── preindex.html
+│   ├── preportal.css
+│   ├── themes.css
+│   ├── visor-admin-25d.css
+│   ├── visor-admin-25d.html
+│   ├── visor-admin-25d.js
+│   ├── visor-containers actual el que falla.html
+│   ├── visor-containers.css
+│   ├── visor-containers.html
+│   ├── visor-containers.js
+│   ├── visor-crud.html
+│   ├── visor-crud.js
+│   ├── visor.css
+│   ├── visor.html
+│   └── visor.js
+├── Makefile
+├── public
+│   ├── assets
+│   └── MAGIC.TTF
+├── requirements.txt
+└── scripts
+    ├── clean_types.py
+    ├── download_bulk.py
+    ├── import_bulk.py
+    └── parse_types.py
+
+11 directories, 58 files
