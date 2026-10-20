@@ -9,23 +9,21 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0b0705; color: #fef3c7; }
         .magic-title { font-family: 'Cinzel', serif; }
-        
-        /* Contenedor exacto de la carta */
+
         .card-wrapper {
             position: relative;
-            width: 224px;  /* w-56 de Tailwind */
-            height: 320px; /* h-80 de Tailwind */
+            width: 224px;  /* w-56 */
+            height: 320px; /* h-80 */
         }
 
-        /* Imagen con blur inicial por defecto */
         #game-card-img {
             width: 100%;
             height: 100%;
             object-fit: cover;
             filter: blur(6px) brightness(0.8);
+            transition: filter 0.15s linear;
         }
 
-        /* Franja negra superior fija para tapa exacta del nombre */
         .title-black-box {
             position: absolute;
             top: 10px;
@@ -41,11 +39,12 @@
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
-    <!-- Cabecera y Marcador -->
-    <div class="w-full max-w-xl flex justify-between items-center mb-6 bg-[#140e09] border border-[#b39258]/30 p-4 rounded-xl shadow-lg">
+    <!-- Cabecera y Marcador propio -->
+    <div class="w-full max-w-xl flex justify-between items-center mb-4 bg-[#140e09] border border-[#b39258]/30 p-4 rounded-xl shadow-lg">
         <div>
             <h1 class="magic-title text-xl text-amber-400 font-bold">🔮 Adivina la Carta</h1>
             <p id="room-status" class="text-xs text-amber-200/60">Conectando a la sala...</p>
+            <p class="text-[10px] text-amber-200/50">Ronda <span id="round-number">–</span></p>
         </div>
         <div class="text-right">
             <span class="text-xs text-amber-200/70">Puntuación:</span>
@@ -54,32 +53,50 @@
         </div>
     </div>
 
+    <!-- Marcador de todos los jugadores -->
+    <div class="w-full max-w-xl mb-4 bg-[#140e09] border border-[#b39258]/30 p-4 rounded-xl shadow-lg">
+        <h2 class="magic-title text-xs font-bold text-amber-400 mb-2 uppercase tracking-wider">
+            🏆 Marcador <span class="text-amber-200/50 normal-case font-normal">(meta: <span id="win-score">10</span> pts)</span>
+        </h2>
+        <ul id="scoreboard" class="space-y-2">
+            <li class="text-xs text-amber-200/40 italic">Esperando jugadores...</li>
+        </ul>
+    </div>
+
     <!-- Contenedor del Juego -->
     <div class="w-full max-w-xl bg-[#140e09] border border-[#b39258]/40 rounded-2xl p-6 shadow-2xl flex flex-col items-center">
-        
-        <!-- Temporizador y Barra -->
+
         <div class="w-full flex justify-between text-xs text-amber-200 mb-2">
             <span>⏱️ Tiempo restante:</span>
             <span id="timer" class="font-bold text-amber-400 text-sm">15s</span>
         </div>
         <div class="w-full bg-[#0b0705] h-2 rounded-full mb-6 overflow-hidden border border-[#b39258]/20">
-            <div id="timer-bar" class="bg-amber-500 h-full w-full transition-all duration-1000"></div>
+            <div id="timer-bar" class="bg-emerald-500 h-full w-full"></div>
         </div>
 
-        <!-- Marcos de Carta con Contenedor Relativo -->
-        <div class="card-wrapper rounded-lg overflow-hidden border-2 border-[#b39258]/50 shadow-md mb-6 bg-black">
-            <!-- Rectángulo negro sólido forzado -->
+        <div class="card-wrapper rounded-lg overflow-hidden border-2 border-[#b39258]/50 shadow-md mb-4 bg-black">
             <div id="title-mask" class="title-black-box"></div>
-            
             <img id="game-card-img" src="public/assets/nocapi.png" alt="Carta oculta">
         </div>
 
-        <!-- Opciones de Respuesta -->
+        <!-- Mensaje de resultado de la ronda -->
+        <p id="round-banner" class="min-h-[1.25rem] text-sm text-amber-200 text-center mb-4"></p>
+
         <div id="options-container" class="w-full grid grid-cols-1 gap-3">
             <button class="option-btn bg-[#1e140d] border border-[#b39258]/30 py-3 px-4 rounded-lg text-sm font-medium text-amber-100">Cargando opciones...</button>
         </div>
     </div>
 
-    <script src="game.js"></script>
+    <!-- Fin de partida -->
+    <div id="end-overlay" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
+        <div class="bg-[#140e09] border border-[#b39258]/50 rounded-2xl p-8 text-center max-w-sm w-full shadow-2xl">
+            <h2 class="magic-title text-2xl text-amber-400 mb-2">🏆 ¡Fin de la partida!</h2>
+            <p id="end-winner" class="text-amber-100 mb-4"></p>
+            <ol id="end-ranking" class="mb-4 text-left"></ol>
+            <p class="text-xs text-amber-200/60">Volviendo al vestíbulo en <span id="end-countdown">6</span>s…</p>
+        </div>
+    </div>
+
+    <script src="game.js?v=2"></script>
 </body>
 </html>

@@ -1,0 +1,538 @@
+docker compose logs -f
+card_binder_db  | 
+card_binder_db  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+card_binder_db  | 
+card_binder_db  | 2026-10-18 16:53:46.552 UTC [1] LOG:  starting PostgreSQL 15.18 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+card_binder_db  | 2026-10-18 16:53:46.552 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+card_binder_db  | 2026-10-18 16:53:46.552 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+card_binder_db  | 2026-10-18 16:53:46.560 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+card_binder_db  | 2026-10-18 16:53:46.571 UTC [29] LOG:  database system was shut down at 2026-10-18 16:53:31 UTC
+card_binder_db  | 2026-10-18 16:53:46.579 UTC [1] LOG:  database system is ready to accept connections
+card_binder_web  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+card_binder_web  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+card_binder_web  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+card_binder_api  | INFO:     Will watch for changes in these directories: ['/app']
+card_binder_api  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+card_binder_api  | INFO:     Started reloader process [1] using WatchFiles
+card_binder_api  | INFO:     Started server process [8]
+card_binder_api  | INFO:     Waiting for application startup.
+card_binder_api  | INFO:     Application startup complete.
+card_binder_api  | 🔌 [Chat] Inicializando ConnectionManager...
+card_binder_api  | INFO:     172.19.0.1:59962 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:59962 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:59972 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:45826 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:59962 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:59972 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:45830 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:59962 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:59972 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_web  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+card_binder_web  | 10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf differs from the packaged version
+card_binder_web  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+card_binder_web  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+card_binder_web  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+card_binder_web  | /docker-entrypoint.sh: Configuration complete; ready for start up
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: using the "epoll" event method
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: nginx/1.31.7
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: OS: Linux 6.17.0-35-generic
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1024:524288
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker processes
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker process 29
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker process 30
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker process 31
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker process 32
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker process 33
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker process 34
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/lobby/duelotesteo?username=albealva HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker process 35
+card_binder_web  | 2026/10/18 16:53:46 [notice] 1#1: start worker process 36
+card_binder_web  | 172.19.0.1 - - [18/Oct/2026:16:54:08 +0000] "GET /lobby.html?room=duelotesteo HTTP/1.1" 200 11812 "http://localhost:8080/rooms.html" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36" "-"
+card_binder_web  | 172.19.0.1 - - [18/Oct/2026:16:54:12 +0000] "GET /lobby.html?room=duelotesteo HTTP/1.1" 200 11812 "http://localhost:8080/rooms.html" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0" "-"
+card_binder_web  | 172.19.0.1 - - [18/Oct/2026:16:54:13 +0000] "GET /lobby.html?room=duelotesteo HTTP/1.1" 200 11812 "http://localhost:8080/rooms.html" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36" "-"
+card_binder_web  | 172.19.0.1 - - [18/Oct/2026:16:54:58 +0000] "GET /game.html HTTP/1.1" 304 0 "http://localhost:8080/lobby.html?room=duelotesteo" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36" "-"
+card_binder_web  | 172.19.0.1 - - [18/Oct/2026:16:56:16 +0000] "GET /game.html HTTP/1.1" 304 0 "http://localhost:8080/lobby.html?room=duelotesteo" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36" "-"
+card_binder_web  | 172.19.0.1 - - [18/Oct/2026:16:56:19 +0000] "GET /game.html HTTP/1.1" 304 0 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36" "-"
+card_binder_web  | 172.19.0.1 - - [18/Oct/2026:16:56:21 +0000] "GET /game.html HTTP/1.1" 304 0 "-" "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0" "-"
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9,es;q=0.8
+card_binder_api  | DEBUG:    < cookie: wp-settings-time-1=1778781268
+card_binder_api  | DEBUG:    < sec-websocket-key: 2D23qiCnPmfL8F59moXZzw==
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate; client_max_window_bits
+card_binder_api  | INFO:     172.19.0.1:45844 - "WebSocket /api/game/ws/lobby/duelotesteo?username=albealva" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: YEG22/u4FcQ/W2CnFBbgAmYI8aU=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:54:07 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...true}],"max_players":4}' [89 bytes]
+card_binder_api  | INFO:     172.19.0.1:45830 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | INFO:     172.19.0.1:59972 - "GET /api/game/rooms HTTP/1.1" 200 OK
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/lobby/duelotesteo?username=berto2 HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0
+card_binder_api  | DEBUG:    < accept: */*
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate
+card_binder_api  | DEBUG:    < sec-websocket-key: LIUnW9fzQtv7JlvNIUmFvA==
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < cookie: wp-settings-time-1=1778781461
+card_binder_api  | DEBUG:    < sec-fetch-dest: empty
+card_binder_api  | DEBUG:    < sec-fetch-mode: websocket
+card_binder_api  | DEBUG:    < sec-fetch-site: same-site
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | INFO:     172.19.0.1:57786 - "WebSocket /api/game/ws/lobby/duelotesteo?username=berto2" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: a0ZbYbYJltGDjymJN/hYt84nKhA=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:54:11 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...alse}],"max_players":4}' [127 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...alse}],"max_players":4}' [127 bytes]
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/lobby/duelotesteo?username=anabohueles HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9
+card_binder_api  | DEBUG:    < sec-websocket-key: XKxIgEJsSIEdbS01WJ59gA==
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate; client_max_window_bits
+card_binder_api  | INFO:     172.19.0.1:57798 - "WebSocket /api/game/ws/lobby/duelotesteo?username=anabohueles" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: rosblg708jo+A2IaDw8BMip/uGc=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:54:13 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...alse}],"max_players":4}' [170 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...alse}],"max_players":4}' [170 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...alse}],"max_players":4}' [170 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"START_GAME"}' [23 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"START_GAME"}' [21 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"START_GAME"}' [21 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"START_GAME"}' [21 bytes]
+card_binder_api  | DEBUG:    < CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    > CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    = connection is CLOSING
+card_binder_api  | DEBUG:    > EOF
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...alse}],"max_players":4}' [132 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...alse}],"max_players":4}' [132 bytes]
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=albealva HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9,es;q=0.8
+card_binder_api  | DEBUG:    < cookie: wp-settings-time-1=1778781268
+card_binder_api  | DEBUG:    < sec-websocket-key: WmE1aGP9L75qLQRbEAJqSQ==
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate; client_max_window_bits
+card_binder_api  | INFO:     172.19.0.1:57808 - "WebSocket /api/game/ws/game/sala-1?username=albealva" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: 1TvGwPEHgFLfWxficJP6BA/5z/s=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:54:15 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....lready_answered":false}' [276 bytes]
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=anabohueles HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9
+card_binder_api  | DEBUG:    < sec-websocket-key: eadUEICKS6URB83C71Mzkg==
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate; client_max_window_bits
+card_binder_api  | INFO:     172.19.0.1:57810 - "WebSocket /api/game/ws/game/sala-1?username=anabohueles" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: bMZA2CjdmSnvCUD2ouIl64vPExk=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:54:15 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....lready_answered":false}' [276 bytes]
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=berto2 HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0
+card_binder_api  | DEBUG:    < accept: */*
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate
+card_binder_api  | DEBUG:    < sec-websocket-key: 12uXj65ro5Tf5cQQkO3IQA==
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < cookie: wp-settings-time-1=1778781461
+card_binder_api  | DEBUG:    < sec-fetch-dest: empty
+card_binder_api  | DEBUG:    < sec-fetch-mode: websocket
+card_binder_api  | DEBUG:    < sec-fetch-site: same-site
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | INFO:     172.19.0.1:57826 - "WebSocket /api/game/ws/game/sala-1?username=berto2" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: x2HlMBxIToUFn6K+jTBZP7WTW50=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:54:15 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....lready_answered":false}' [276 bytes]
+card_binder_api  | DEBUG:    < CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    > CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    = connection is CLOSING
+card_binder_api  | DEBUG:    > EOF
+card_binder_api  | DEBUG:    > TEXT '{"type":"LOBBY_STATE","players":[{"username":"a...true}],"max_players":4}' [89 bytes]
+card_binder_api  | DEBUG:    < CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    > CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    = connection is CLOSING
+card_binder_api  | DEBUG:    > EOF
+card_binder_api  | DEBUG:    > PING cf f6 86 1d [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG cf f6 86 1d [binary, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"albealva"}' [53 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [111 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"berto2"}' [51 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [111 bytes]
+card_binder_api  | DEBUG:    > PING 01 e4 b1 4e [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 01 e4 b1 4e [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 24 e8 2e 46 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 24 e8 2e 46 [binary, 4 bytes]
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=anabohueles HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9
+card_binder_api  | DEBUG:    < sec-websocket-key: ndUrQ0CUTMoHz12S6B5JQQ==
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate; client_max_window_bits
+card_binder_api  | INFO:     172.19.0.1:55010 - "WebSocket /api/game/ws/game/sala-1?username=anabohueles" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: +GPCwdsEnAMk2m+FThhQIOSRBfE=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:54:35 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....lready_answered":false}' [261 bytes]
+card_binder_api  | DEBUG:    > PING fe 30 d5 6f [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG fe 30 d5 6f [binary, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"anabohueles"}' [56 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [111 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards...."],"time_remaining":15}' [232 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards...."],"time_remaining":15}' [232 bytes]
+card_binder_api  | DEBUG:    > PING bb b8 23 7d [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG bb b8 23 7d [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 24 dc a1 2e [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 24 dc a1 2e [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 3d 41 a0 d9 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 3d 41 a0 d9 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    > CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    = connection is CLOSING
+card_binder_api  | DEBUG:    > EOF
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=albealva HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9,es;q=0.8
+card_binder_api  | DEBUG:    < cookie: wp-settings-time-1=1778781268
+card_binder_api  | DEBUG:    < sec-websocket-key: ImH11Ipd2FtZ43VTXo7rZg==
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate; client_max_window_bits
+card_binder_api  | INFO:     172.19.0.1:50588 - "WebSocket /api/game/ws/game/sala-1?username=albealva" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: z2upd2vDQpOjZujFiq/pSD5mFRs=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:54:58 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....lready_answered":false}' [272 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"anabohueles"}' [56 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"berto2"}' [51 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    > PING a7 8d 9a 43 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG a7 8d 9a 43 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"albealva"}' [53 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards...."],"time_remaining":15}' [230 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards...."],"time_remaining":15}' [230 bytes]
+card_binder_api  | DEBUG:    > PING b3 d9 41 4b [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG b3 d9 41 4b [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 1f bc 85 f2 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 1f bc 85 f2 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 05 aa de 5a [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 05 aa de 5a [binary, 4 bytes]
+card_binder_api  | DEBUG:    < CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    > CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    = connection is CLOSING
+card_binder_api  | DEBUG:    > EOF
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=berto2 HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0
+card_binder_api  | DEBUG:    < accept: */*
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate
+card_binder_api  | DEBUG:    < sec-websocket-key: zC6gZW5g1pHRl8b/99TYbw==
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < cookie: wp-settings-time-1=1778781461
+card_binder_api  | DEBUG:    < sec-fetch-dest: empty
+card_binder_api  | DEBUG:    < sec-fetch-mode: websocket
+card_binder_api  | DEBUG:    < sec-fetch-site: same-site
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | INFO:     172.19.0.1:60262 - "WebSocket /api/game/ws/game/sala-1?username=berto2" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: uyMGXiU1dcWN99peb7G0cUUimgc=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:55:25 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....lready_answered":false}' [271 bytes]
+card_binder_api  | DEBUG:    > PING ac 2f fe d7 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG ac 2f fe d7 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"albealva"}' [53 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [106 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"anabohueles"}' [56 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [106 bytes]
+card_binder_api  | DEBUG:    > PING 19 26 10 01 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 19 26 10 01 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING bb 82 dd 6c [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG bb 82 dd 6c [binary, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"berto2"}' [51 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [106 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards...."],"time_remaining":15}' [232 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards...."],"time_remaining":15}' [232 bytes]
+card_binder_api  | DEBUG:    > PING 60 ff 60 e9 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 60 ff 60 e9 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 90 13 26 00 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 90 13 26 00 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"albealva"}' [53 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"berto2"}' [51 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    > PING c9 83 7a 47 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG c9 83 7a 47 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 01 9e 98 f7 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 01 9e 98 f7 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING e3 66 08 1e [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG e3 66 08 1e [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 1a 12 d4 57 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 1a 12 d4 57 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 65 8f 21 02 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 65 8f 21 02 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    > CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    = connection is CLOSING
+card_binder_api  | DEBUG:    > EOF
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=albealva HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9,es;q=0.8
+card_binder_api  | DEBUG:    < cookie: wp-settings-time-1=1778781268
+card_binder_api  | DEBUG:    < sec-websocket-key: nZHo0rZLJV8YVhc+YWS2ig==
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate; client_max_window_bits
+card_binder_api  | INFO:     172.19.0.1:44132 - "WebSocket /api/game/ws/game/sala-1?username=albealva" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: xITNTWGLerNnVMhkWx2bde3Pz4g=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:56:16 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....already_answered":true}' [257 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"Ishkanah, Broodmot...,"username":"albealva"}' [74 bytes]
+card_binder_api  | DEBUG:    < CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    > CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    = connection is CLOSING
+card_binder_api  | DEBUG:    > EOF
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=anabohueles HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9
+card_binder_api  | DEBUG:    < sec-websocket-key: GVrUXB97JdtJ6r4Cnq31tQ==
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate; client_max_window_bits
+card_binder_api  | INFO:     172.19.0.1:34822 - "WebSocket /api/game/ws/game/sala-1?username=anabohueles" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: /XBNbU7ZLxTExlxpCQ+BJTBG5/k=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12; client_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:56:19 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....lready_answered":false}' [258 bytes]
+card_binder_api  | DEBUG:    < CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    > CLOSE 1001 (going away) [2 bytes]
+card_binder_api  | DEBUG:    = connection is CLOSING
+card_binder_api  | DEBUG:    > EOF
+card_binder_api  | DEBUG:    = connection is CONNECTING
+card_binder_api  | DEBUG:    < GET /api/game/ws/game/sala-1?username=berto2 HTTP/1.1
+card_binder_api  | DEBUG:    < host: localhost:8000
+card_binder_api  | DEBUG:    < user-agent: Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0
+card_binder_api  | DEBUG:    < accept: */*
+card_binder_api  | DEBUG:    < accept-language: en-US,en;q=0.9
+card_binder_api  | DEBUG:    < accept-encoding: gzip, deflate, br, zstd
+card_binder_api  | DEBUG:    < sec-websocket-version: 13
+card_binder_api  | DEBUG:    < origin: http://localhost:8080
+card_binder_api  | DEBUG:    < sec-websocket-extensions: permessage-deflate
+card_binder_api  | DEBUG:    < sec-websocket-key: 2WFUh6t4qJY5txJH52iKzg==
+card_binder_api  | DEBUG:    < connection: Upgrade
+card_binder_api  | DEBUG:    < cookie: wp-settings-time-1=1778781461
+card_binder_api  | DEBUG:    < sec-fetch-dest: empty
+card_binder_api  | DEBUG:    < sec-fetch-mode: websocket
+card_binder_api  | DEBUG:    < sec-fetch-site: same-site
+card_binder_api  | DEBUG:    < pragma: no-cache
+card_binder_api  | DEBUG:    < cache-control: no-cache
+card_binder_api  | DEBUG:    < upgrade: websocket
+card_binder_api  | INFO:     172.19.0.1:34836 - "WebSocket /api/game/ws/game/sala-1?username=berto2" [accepted]
+card_binder_api  | DEBUG:    > HTTP/1.1 101 Switching Protocols
+card_binder_api  | DEBUG:    > Upgrade: websocket
+card_binder_api  | DEBUG:    > Connection: Upgrade
+card_binder_api  | DEBUG:    > Sec-WebSocket-Accept: E8mrxzRELpCRF7U6InXRnk4XkBg=
+card_binder_api  | DEBUG:    > Sec-WebSocket-Extensions: permessage-deflate; server_max_window_bits=12
+card_binder_api  | DEBUG:    > date: Sun, 18 Oct 2026 16:56:21 GMT
+card_binder_api  | DEBUG:    > server: uvicorn
+card_binder_api  | DEBUG:    = connection is OPEN
+card_binder_api  | INFO:     connection open
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards....already_answered":true}' [257 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"Dai Li Agents","username":"anabohueles"}' [69 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards...."],"time_remaining":15}' [234 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"Gastal Raider","username":"berto2"}' [64 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    > PING d7 de 36 c5 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG d7 de 36 c5 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"albealva"}' [53 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"anabohueles"}' [56 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [108 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"NEW_ROUND","image_uri":"https://cards...."],"time_remaining":15}' [243 bytes]
+card_binder_api  | DEBUG:    > PING 'u6rQ' [text, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 'u6rQ' [text, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"Ishkanah, Broodmother","username":"berto2"}' [72 bytes]
+card_binder_api  | DEBUG:    > TEXT '{"type":"ANSWER_RESULT","correct":false,"correc...ned":0,"total_score":0}' [109 bytes]
+card_binder_api  | DEBUG:    > PING a8 4d 09 09 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG a8 4d 09 09 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 9e 09 42 f2 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 9e 09 42 f2 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 68 3b e4 42 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 68 3b e4 42 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < TEXT '{"action":"ANSWER","answer":"","username":"berto2"}' [51 bytes]
+card_binder_api  | DEBUG:    > PING 59 5b a6 fb [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 59 5b a6 fb [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 01 1e 6e b7 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 01 1e 6e b7 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 95 fd aa f0 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 95 fd aa f0 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 6a 4f df 58 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 6a 4f df 58 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 70 86 5c 3d [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 70 86 5c 3d [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING bc 84 24 b3 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG bc 84 24 b3 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING eb 08 1d 25 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG eb 08 1d 25 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING 70 b5 bf 08 [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG 70 b5 bf 08 [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING e9 22 8c bb [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG e9 22 8c bb [binary, 4 bytes]
+card_binder_api  | DEBUG:    > PING d3 97 6f df [binary, 4 bytes]
+card_binder_api  | DEBUG:    < PONG d3 97 6f df [binary, 4 bytes]

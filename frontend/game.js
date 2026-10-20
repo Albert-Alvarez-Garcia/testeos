@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const API_HOST = "localhost:8000";
+
     const cardImg = document.getElementById("game-card-img");
     const titleMask = document.getElementById("title-mask");
     const optionsContainer = document.getElementById("options-container");
@@ -7,194 +9,284 @@ document.addEventListener("DOMContentLoaded", () => {
     const scoreDisplay = document.getElementById("player-score");
     const streakDisplay = document.getElementById("player-streak");
     const roomStatus = document.getElementById("room-status");
+    const scoreboard = document.getElementById("scoreboard");
+    const winScoreLabel = document.getElementById("win-score");
+    const roundNumberLabel = document.getElementById("round-number");
+    const roundBanner = document.getElementById("round-banner");
+    const endOverlay = document.getElementById("end-overlay");
+    const endWinner = document.getElementById("end-winner");
+    const endRanking = document.getElementById("end-ranking");
+    const endCountdown = document.getElementById("end-countdown");
 
-    let ws = null;
-    let timerInterval = null;
-    let timeLeft = 15;
-    let hasAnswered = false;
-    let roundFinished = false;
-
-    const userSession = JSON.parse(localStorage.getItem("user_session")) || 
+    const userSession = JSON.parse(localStorage.getItem("user_session")) ||
                         JSON.parse(localStorage.getItem("cardbinder_user")) || {
                             username: "Conjurador"
                         };
+    const urlParams = new URLSearchParams(window.location.search);
+    // ?user=Ana permite probar varios jugadores en el mismo navegador (se recuerda por pestaña)
+    if (urlParams.get("user")) sessionStorage.setItem("cb_tab_user", urlParams.get("user"));
+    const username = sessionStorage.getItem("cb_tab_user") || userSession.username || "Jugador";
+    const roomId = urlParams.get("room") || "sala-1";
 
+    console.info("Adivina la Carta · cliente v2 · usuario:", username, "· sala:", roomId);
+
+    // ---- Estado local (el reloj REAL vive en el servidor) ----
+    let ws = null;
+    let phase = "waiting";        // waiting | playing | reveal
+    let roundEndsAt = 0;          // performance.now() en el que acaba la ronda
+    let roundDuration = 15;
+    let selectedOption = null;
+    let locked = true;
+    let gameEnded = false;
+
+    const BTN_BASE = "option-btn py-3 px-4 rounded-lg text-sm font-medium text-left border transition-all ";
+    const BTN_STATES = {
+        idle: "bg-[#1e140d] hover:bg-[#2a1d13] border-[#b39258]/30 text-amber-100 cursor-pointer hover:border-amber-400",
+        pending: "bg-amber-900/60 border-amber-500 text-amber-100 cursor-not-allowed",
+        wrong: "bg-red-950/80 border-red-600 text-amber-200 cursor-not-allowed",
+        right: "bg-emerald-900/80 border-emerald-400 text-white cursor-not-allowed"
+    };
+
+    function setBtnState(btn, state) {
+        btn.dataset.state = state;
+        btn.className = BTN_BASE + BTN_STATES[state];
+    }
+
+    const norm = (s) => String(s || "").trim().toLowerCase();
+
+    // ---------------- WebSocket ----------------
     function connectGameWebSocket() {
-        ws = new WebSocket("ws://localhost:8000/api/game/ws/game/sala-1");
+        if (gameEnded) return;
+        ws = new WebSocket(`ws://${API_HOST}/api/game/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
 
         ws.onopen = () => {
-            if (roomStatus) roomStatus.textContent = "🟢 En línea - Sala 1";
+            if (roomStatus) roomStatus.textContent = `🟢 En línea - ${roomId}`;
         };
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
-
-            if (data.type === "NEW_ROUND") {
-                startNewRound(data);
-            } else if (data.type === "ANSWER_RESULT") {
-                handleAnswerResult(data);
-            } else if (data.type === "GAME_OVER") {
-                handleGameOver(data);
+            switch (data.type) {
+                case "NEW_ROUND": startRound(data); break;
+                case "ANSWER_RESULT": handleAnswerResult(data); break;
+                case "ROUND_END": showReveal(data.correct_answer, data.round_winner); break;
+                case "SCORES": renderScoreboard(data); break;
+                case "GAME_OVER": handleGameOver(data); break;
             }
         };
 
         ws.onclose = () => {
+            if (gameEnded) return;
             if (roomStatus) roomStatus.textContent = "🔴 Desconectado. Reintentando...";
-            setTimeout(connectGameWebSocket, 3000);
+            lockOptions();
+            setTimeout(connectGameWebSocket, 2000);
         };
     }
 
-    function applyBlurByTime(seconds) {
-        if (!cardImg) return;
-        
-        if (seconds >= 10) {
-            const progress = (15 - seconds) / 5;
-            const currentBlur = 6 * (1 - progress);
-            const currentBrightness = 0.8 + (0.2 * progress);
-            cardImg.style.filter = `blur(${currentBlur.toFixed(2)}px) brightness(${currentBrightness.toFixed(2)})`;
-        } else {
-            cardImg.style.filter = "blur(0px) brightness(1)";
-        }
-    }
+    // ---------------- Rondas ----------------
+    function startRound(data) {
+        phase = data.phase || "playing";
+        roundDuration = data.round_duration || 15;
+        roundEndsAt = performance.now() + (data.time_remaining || 0) * 1000;
+        selectedOption = null;
+        locked = false;
 
-    function startNewRound(data) {
-        hasAnswered = false;
-        roundFinished = false;
-        
+        if (roundNumberLabel) roundNumberLabel.textContent = data.round_number || 1;
+        if (roundBanner) roundBanner.textContent = "";
+        if (titleMask) titleMask.style.display = "block";
+
         if (cardImg) {
             cardImg.style.filter = "blur(6px) brightness(0.8)";
             cardImg.src = data.image_uri || "public/assets/nocapi.png";
         }
 
-        if (titleMask) {
-            titleMask.style.display = "block";
+        renderOptions(data.options || []);
+
+        if (phase === "reveal") {
+            showReveal(data.correct_answer, data.round_winner);
+            return;
         }
+        if (data.already_answered) lockOptions();
+        tick();
+    }
 
+    function renderOptions(options) {
         optionsContainer.innerHTML = "";
-        data.options.forEach(optionText => {
+        options.forEach(optionText => {
             const btn = document.createElement("button");
-            btn.className = "option-btn bg-[#1e140d] hover:bg-[#2a1d13] border border-[#b39258]/30 py-3 px-4 rounded-lg text-sm font-medium text-amber-100 transition-all cursor-pointer text-left hover:border-amber-400";
             btn.textContent = optionText;
-
-            btn.addEventListener("click", () => {
-                if (hasAnswered || roundFinished) return;
-                handlePlayerClick(optionText, btn);
-            });
-
+            setBtnState(btn, "idle");
+            btn.addEventListener("click", () => handlePlayerClick(optionText, btn));
             optionsContainer.appendChild(btn);
         });
-
-        resetTimer();
     }
 
-    function resetTimer() {
-        clearInterval(timerInterval);
-        timeLeft = 15;
-        
-        applyBlurByTime(timeLeft);
-        updateTimerUI();
-
-        timerInterval = setInterval(() => {
-            timeLeft--;
-            
-            applyBlurByTime(timeLeft);
-            updateTimerUI();
-
-            if (timeLeft <= 0) {
-                clearInterval(timerInterval);
-                
-                if (!roundFinished) {
-                    roundFinished = true;
-                    if (titleMask) titleMask.style.display = "none";
-                    if (cardImg) cardImg.style.filter = "blur(0px) brightness(1)";
-                    
-                    // Forzar el salto de ronda en el backend por tiempo agotado
-                    sendAnswerToBackend("");
-                }
-            }
-        }, 1000);
-    }
-
-    function updateTimerUI() {
-        if (timerText) timerText.textContent = `${timeLeft}s`;
-        if (timerBar) {
-            const percentage = (timeLeft / 15) * 100;
-            timerBar.style.width = `${percentage}%`;
-            
-            if (timeLeft <= 5) {
-                timerBar.className = "bg-red-500 h-full transition-all duration-1000";
-            } else if (timeLeft <= 10) {
-                timerBar.className = "bg-amber-500 h-full transition-all duration-1000";
-            } else {
-                timerBar.className = "bg-emerald-500 h-full transition-all duration-1000";
-            }
-        }
-    }
-
-    function handlePlayerClick(selectedOption, clickedBtn) {
-        hasAnswered = true;
-
-        // Bloquear todos los botones al fallar
-        const buttons = optionsContainer.querySelectorAll("button");
-        buttons.forEach(b => {
+    function lockOptions() {
+        locked = true;
+        optionsContainer.querySelectorAll("button").forEach(b => {
             b.disabled = true;
-            b.classList.add("opacity-50", "cursor-not-allowed");
+            if (b.dataset.state === "idle") b.classList.add("opacity-50", "cursor-not-allowed");
         });
-
-        // Marcar el botón pulsado en rojo
-        clickedBtn.className = "bg-red-950/80 border-red-600 text-amber-200 py-3 px-4 rounded-lg text-sm font-medium text-left cursor-not-allowed opacity-75";
-
-        sendAnswerToBackend(selectedOption);
     }
 
-    function sendAnswerToBackend(answerText) {
-        const payload = {
-            action: "ANSWER",
-            answer: answerText,
-            username: userSession.username || "Jugador"
-        };
+    function handlePlayerClick(optionText, btn) {
+        if (locked || phase !== "playing") return;
+        if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
-        if (ws && ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify(payload));
-        }
+        selectedOption = optionText;
+        setBtnState(btn, "pending");
+        lockOptions();
+        ws.send(JSON.stringify({ action: "ANSWER", answer: optionText }));
     }
 
     function handleAnswerResult(data) {
         if (scoreDisplay) scoreDisplay.textContent = data.total_score;
+        if (streakDisplay) streakDisplay.textContent = data.streak;
 
-        const buttons = optionsContainer.querySelectorAll("button");
+        const btn = Array.from(optionsContainer.querySelectorAll("button"))
+            .find(b => norm(b.textContent) === norm(selectedOption));
+        if (btn) setBtnState(btn, data.correct ? "right" : "wrong");
 
-        if (data.correct) {
-            // Si acierta, la ronda termina inmediatamente
-            roundFinished = true;
-            if (titleMask) titleMask.style.display = "none";
-            if (cardImg) cardImg.style.filter = "blur(0px) brightness(1)";
-            clearInterval(timerInterval);
-
-            buttons.forEach(btn => {
-                btn.disabled = true;
-                btn.classList.add("cursor-not-allowed");
-                if (btn.textContent.trim().toLowerCase() === data.correct_answer.trim().toLowerCase()) {
-                    btn.className = "bg-emerald-900/80 border-emerald-400 text-white py-3 px-4 rounded-lg text-sm font-medium transition-all text-left";
-                }
-            });
-        } else {
-            // Si falla, se queda bloqueado pero el crono SIGUE corriendo hasta llegar a 0
-            buttons.forEach(btn => {
-                if (btn.textContent.trim().toLowerCase() === data.correct_answer.trim().toLowerCase()) {
-                    // Opcional: dejar preparado para iluminar la correcta cuando expire el tiempo
-                }
-            });
-        }
-
-        if (streakDisplay) {
-            streakDisplay.textContent = data.correct ? parseInt(streakDisplay.textContent || "0") + 1 : "0";
+        if (roundBanner) {
+            roundBanner.textContent = data.correct
+                ? `✅ ¡Correcto! +${data.points_earned} puntos`
+                : "❌ Fallaste. Esperando al resto...";
         }
     }
 
+    function showReveal(correctAnswer, winner) {
+        phase = "reveal";
+        lockOptions();
+        if (titleMask) titleMask.style.display = "none";
+        if (cardImg) cardImg.style.filter = "blur(0px) brightness(1)";
+        updateTimerUI(0);
+
+        optionsContainer.querySelectorAll("button").forEach(b => {
+            if (norm(b.textContent) === norm(correctAnswer)) {
+                setBtnState(b, "right");
+                b.disabled = true;
+            }
+        });
+
+        if (roundBanner) {
+            roundBanner.textContent = winner
+                ? `🎉 ${winner} acertó: ${correctAnswer}`
+                : `⌛ Nadie acertó. Era: ${correctAnswer}`;
+        }
+    }
+
+    // ---------------- Reloj (derivado del tiempo que manda el servidor) ----------------
+    function tick() {
+        if (phase !== "playing") return;
+        const remaining = Math.max(0, roundEndsAt - performance.now()) / 1000;
+        applyBlur(roundDuration - remaining);
+        updateTimerUI(remaining);
+        if (remaining <= 0) lockOptions();   // el servidor cerrará la ronda con ROUND_END
+    }
+    setInterval(tick, 100);
+
+    function applyBlur(elapsed) {
+        if (!cardImg) return;
+        const progress = Math.min(1, Math.max(0, elapsed / 5));
+        const blur = 6 * (1 - progress);
+        const brightness = 0.8 + 0.2 * progress;
+        cardImg.style.filter = `blur(${blur.toFixed(2)}px) brightness(${brightness.toFixed(2)})`;
+    }
+
+    function updateTimerUI(remaining) {
+        const secs = Math.ceil(remaining);
+        if (timerText) timerText.textContent = phase === "playing" ? `${secs}s` : "—";
+        if (timerBar) {
+            const pct = (Math.max(0, remaining) / roundDuration) * 100;
+            timerBar.style.width = `${pct}%`;
+            const color = remaining <= 5 ? "bg-red-500" : remaining <= 10 ? "bg-amber-500" : "bg-emerald-500";
+            timerBar.className = `${color} h-full transition-[width] duration-100 ease-linear`;
+        }
+    }
+
+    // ---------------- Marcador ----------------
+    function renderScoreboard(data) {
+        const winScore = data.win_score || 10;
+        if (winScoreLabel) winScoreLabel.textContent = winScore;
+        if (!scoreboard) return;
+        scoreboard.innerHTML = "";
+
+        data.players.forEach((p, i) => {
+            const isMe = p.username === username;
+
+            if (isMe) {
+                if (scoreDisplay) scoreDisplay.textContent = p.score;
+                if (streakDisplay) streakDisplay.textContent = p.streak;
+            }
+
+            const row = document.createElement("li");
+            row.className = "bg-[#0b0705] border rounded-lg p-2 text-xs " +
+                (isMe ? "border-amber-400/60" : "border-[#b39258]/20") +
+                (p.connected ? "" : " opacity-50");
+
+            const top = document.createElement("div");
+            top.className = "flex justify-between items-center mb-1";
+
+            const name = document.createElement("span");
+            name.className = "font-medium text-amber-100";
+            const medal = ["🥇", "🥈", "🥉"][i] || `${i + 1}.`;
+            const status = !p.connected ? " 🔌" : (p.answered ? " ✔" : "");
+            name.textContent = `${medal} ${p.username}${isMe ? " (tú)" : ""}${status}`;
+
+            const pts = document.createElement("span");
+            pts.className = "font-bold text-emerald-400";
+            pts.textContent = `${p.score}` + (p.streak > 1 ? `  🔥${p.streak}` : "");
+
+            top.appendChild(name);
+            top.appendChild(pts);
+
+            const barWrap = document.createElement("div");
+            barWrap.className = "w-full bg-[#140e09] h-1.5 rounded-full overflow-hidden";
+            const bar = document.createElement("div");
+            bar.className = (isMe ? "bg-amber-400" : "bg-emerald-600") + " h-full transition-all duration-500";
+            bar.style.width = `${Math.min(100, (p.score / winScore) * 100)}%`;
+            barWrap.appendChild(bar);
+
+            row.appendChild(top);
+            row.appendChild(barWrap);
+            scoreboard.appendChild(row);
+        });
+    }
+
+    // ---------------- Fin de partida ----------------
     function handleGameOver(data) {
-        clearInterval(timerInterval);
-        alert(`🏆 ¡FIN DE LA PARTIDA! El ganador es: ${data.winner}`);
+        gameEnded = true;
+        phase = "reveal";
+        lockOptions();
+
+        if (endWinner) endWinner.textContent = `El ganador es ${data.winner}`;
+        if (endRanking) {
+            endRanking.innerHTML = "";
+            (data.ranking || []).forEach((p, i) => {
+                const li = document.createElement("li");
+                li.className = "flex justify-between text-sm py-1";
+                const a = document.createElement("span");
+                a.textContent = `${["🥇", "🥈", "🥉"][i] || (i + 1) + "."} ${p.username}`;
+                const b = document.createElement("span");
+                b.className = "font-bold text-emerald-400";
+                b.textContent = p.score;
+                li.appendChild(a);
+                li.appendChild(b);
+                endRanking.appendChild(li);
+            });
+        }
+        if (endOverlay) endOverlay.classList.remove("hidden");
+
+        let left = 6;
+        const t = setInterval(() => {
+            left--;
+            if (endCountdown) endCountdown.textContent = left;
+            if (left <= 0) {
+                clearInterval(t);
+                // Todos vuelven al MISMO lobby (antes cada uno iba a una sala aleatoria distinta)
+                window.location.href = `lobby.html?room=${encodeURIComponent(roomId)}`;
+            }
+        }, 1000);
+        if (ws) ws.close();
     }
 
     connectGameWebSocket();

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro - Pong Isométrico (Lobby)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0b0705; color: #fef3c7; }
+        .magic-title { font-family: 'Cinzel', serif; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+    <!-- Cabecera del Lobby de Pong -->
+    <div class="w-full max-w-4xl flex flex-wrap gap-3 justify-between items-center mb-6 bg-[#140e09] border border-[#b39258]/30 p-4 rounded-xl shadow-lg">
+        <div>
+            <h1 class="magic-title text-xl text-amber-400 font-bold">🏓 Pong Isométrico: <span id="room-name-display">sala-pong-1</span></h1>
+            <p id="room-status" class="text-xs text-amber-200/60">Conectando al vestíbulo de duelo...</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <div class="text-right">
+                <span class="text-xs text-amber-200/70">Jugadores en sala:</span>
+                <span id="player-count" class="text-xl font-bold text-emerald-400 ml-2">0/2</span>
+            </div>
+            <button id="invite-btn" type="button" class="bg-[#1e140d] hover:bg-[#2a1d13] text-amber-200 font-semibold px-3 py-2 rounded-xl text-xs transition-all border border-[#b39258]/40 cursor-pointer">
+                🔗 Invitar
+            </button>
+            <button id="leave-room-btn" type="button" class="bg-red-900/80 hover:bg-red-800 text-white font-bold px-3 py-2 rounded-xl text-xs transition-all shadow cursor-pointer border border-red-700/50">
+                🚪 Salir
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Controles y Personalización (Host / Modos) -->
+        <div class="bg-[#140e09] border border-[#b39258]/40 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+            <div>
+                <h2 class="magic-title text-sm font-bold text-amber-400 mb-4 uppercase tracking-wider">👥 Mago(s) en Arena</h2>
+                <ul id="players-list" class="space-y-2 mb-6">
+                    <li class="text-xs text-amber-200/50 italic">Esperando contrincante...</li>
+                </ul>
+            </div>
+
+            <!-- Opciones del Host / Modo de Juego -->
+            <div id="host-controls" class="border-t border-[#b39258]/20 pt-4 mt-2 space-y-3">
+                <h3 class="text-xs font-semibold text-amber-300">⚙️ Personalización del Duelo</h3>
+
+                <!-- Modo de Juego -->
+                <div>
+                    <label for="game-mode-select" class="block text-[11px] text-amber-200/70 mb-1">Modo de juego:</label>
+                    <select id="game-mode-select" class="w-full bg-[#0b0705] border border-[#b39258]/30 text-amber-100 text-xs rounded-lg p-2 focus:outline-none focus:border-amber-400">
+                        <option value="online" selected>🌐 Multijugador Online (En Red)</option>
+                        <option value="local">🖥️ 2 Jugadores en Mismo PC (Teclado)</option>
+                    </select>
+                </div>
+
+                <!-- Meta de Goles -->
+                <div>
+                    <label for="win-score-select" class="block text-[11px] text-amber-200/70 mb-1">Goles para ganar:</label>
+                    <select id="win-score-select" class="w-full bg-[#0b0705] border border-[#b39258]/30 text-amber-100 text-xs rounded-lg p-2 focus:outline-none focus:border-amber-400">
+                        <option value="5" selected>5 Goles (Partida Rápida)</option>
+                        <option value="10">10 Goles (Estándar)</option>
+                        <option value="15">15 Goles (Duelo Largo)</option>
+                    </select>
+                </div>
+
+                <!-- Orbe de Maná (Pelota) -->
+                <div>
+                    <label for="orb-color-select" class="block text-[11px] text-amber-200/70 mb-1">Orbe de Maná (Pelota):</label>
+                    <select id="orb-color-select" class="w-full bg-[#0b0705] border border-[#b39258]/30 text-amber-100 text-xs rounded-lg p-2 focus:outline-none focus:border-amber-400">
+                        <option value="white" selected>☀️ Blanco (Plains - Brillo Dorado)</option>
+                        <option value="blue">💧 Azul (Island - Destello Místico)</option>
+                        <option value="black">⬛ Negro (Swamp - Oscuridad Sombra)</option>
+                        <option value="red">🔥 Rojo (Mountain - Fuego y Chispas)</option>
+                        <option value="green">🌳 Verde (Forest - Energía Natural)</option>
+                    </select>
+                </div>
+
+                <!-- Tema de Pista y Palas -->
+                <div>
+                    <label for="arena-theme-select" class="block text-[11px] text-amber-200/70 mb-1">Estilo de Arena:</label>
+                    <select id="arena-theme-select" class="w-full bg-[#0b0705] border border-[#b39258]/30 text-amber-100 text-xs rounded-lg p-2 focus:outline-none focus:border-amber-400">
+                        <option value="classic" selected>🏰 Tapete Clásico de Llanura</option>
+                        <option value="innistrad">🦇 Cripta de Innistrad (Gótico)</option>
+                        <option value="ravnica">🏛️ Ciudad de Rávnica (Dorado)</option>
+                    </select>
+                </div>
+
+                <button id="start-game-btn" type="button" class="w-full mt-2 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg cursor-pointer">
+                    🚀 Iniciar Pong Isométrico
+                </button>
+            </div>
+
+            <div id="waiting-host-msg" class="hidden text-center text-xs text-amber-200/60 italic border-t border-[#b39258]/20 pt-4 mt-4">
+                Esperando a que el Host configure la partida...
+            </div>
+        </div>
+
+        <!-- Chat del Lobby de Pong -->
+        <div class="md:col-span-2 bg-[#140e09] border border-[#b39258]/40 rounded-2xl p-6 shadow-2xl flex flex-col justify-between h-[450px] md:h-auto">
+            <h2 class="magic-title text-sm font-bold text-amber-400 mb-4 uppercase tracking-wider">💬 Chat de la Arena</h2>
+
+            <div id="chat-messages" aria-live="polite" class="flex-1 bg-[#0b0705] border border-[#b39258]/20 rounded-xl p-4 overflow-y-auto space-y-2 mb-4 text-xs">
+                <div class="text-amber-200/40 italic">Bienvenido al área de desafío. ¡Ajusta tu orbe y configura el duelo!</div>
+            </div>
+
+            <form id="chat-form" class="flex gap-2">
+                <input type="text" id="chat-input" placeholder="Escribe un mensaje..." autocomplete="off" maxlength="200"
+                    class="flex-1 bg-[#0b0705] border border-[#b39258]/30 text-amber-100 text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-amber-400">
+                <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-black font-bold px-5 py-3 rounded-xl text-xs transition-all cursor-pointer">
+                    Enviar
+                </button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const API_HOST = window.location.host;
+
+            const roomStatus = document.getElementById("room-status");
+            const playerCount = document.getElementById("player-count");
+            const playersList = document.getElementById("players-list");
+            const hostControls = document.getElementById("host-controls");
+            const waitingHostMsg = document.getElementById("waiting-host-msg");
+            const startGameBtn = document.getElementById("start-game-btn");
+            const gameModeSelect = document.getElementById("game-mode-select");
+            const winScoreSelect = document.getElementById("win-score-select");
+            const orbColorSelect = document.getElementById("orb-color-select");
+            const arenaThemeSelect = document.getElementById("arena-theme-select");
+
+            const chatMessages = document.getElementById("chat-messages");
+            const chatForm = document.getElementById("chat-form");
+            const chatInput = document.getElementById("chat-input");
+            const leaveRoomBtn = document.getElementById("leave-room-btn");
+            const inviteBtn = document.getElementById("invite-btn");
+
+            let userSession = JSON.parse(localStorage.getItem("user_session")) ||
+                              JSON.parse(localStorage.getItem("cardbinder_user"));
+            if (!userSession || !userSession.username) {
+                userSession = { username: "Mago_" + Math.floor(Math.random() * 1000) };
+            }
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get("user")) sessionStorage.setItem("cb_tab_user", urlParams.get("user"));
+            const username = sessionStorage.getItem("cb_tab_user") || userSession.username;
+
+            const roomId = urlParams.get("room") || "sala-pong-1";
+            document.getElementById("room-name-display").textContent = roomId;
+
+            let ws = null;
+            let isHost = false;
+            let leaving = false;
+
+            function connectLobbyWebSocket() {
+                ws = new WebSocket(`ws://${API_HOST}/api/pong/ws/lobby/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
+
+                ws.onopen = () => {
+                    roomStatus.textContent = "🟢 Conectado a la arena de Pong";
+                };
+
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === "LOBBY_STATE") {
+                        updateLobbyUI(data.players);
+                    } else if (data.type === "CHAT_MESSAGE") {
+                        appendChatMessage(data.username, data.message);
+                    } else if (data.type === "START_PONG") {
+                        leaving = true;
+                        const mode = gameModeSelect.value;
+                        const win = winScoreSelect.value;
+                        const orb = orbColorSelect.value;
+                        const theme = arenaThemeSelect.value;
+                        window.location.href = `pong.jsx?room=${encodeURIComponent(roomId)}&mode=${mode}&win=${win}&orb=${orb}&theme=${theme}`;
+                    }
+                };
+
+                ws.onclose = () => {
+                    if (leaving) return;
+                    roomStatus.textContent = "🔴 Desconectado. Reconectando...";
+                    setTimeout(connectLobbyWebSocket, 2000);
+                };
+            }
+
+            function send(payload) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify(payload));
+                    return true;
+                }
+                return false;
+            }
+
+            function updateLobbyUI(players) {
+                playerCount.textContent = `${players.length}/2`;
+                playersList.innerHTML = "";
+                isHost = false;
+
+                players.forEach(p => {
+                    const isMe = p.username === username;
+                    const li = document.createElement("li");
+                    li.className = "flex justify-between items-center bg-[#0b0705] border p-2.5 rounded-lg text-xs " +
+                        (isMe ? "border-amber-400/50" : "border-[#b39258]/20");
+
+                    const nameSpan = document.createElement("span");
+                    nameSpan.className = "font-medium text-amber-100 flex items-center gap-1.5";
+                    nameSpan.textContent = p.username + (isMe ? " (tú)" : "");
+
+                    if (p.is_host) {
+                        const hostBadge = document.createElement("span");
+                        hostBadge.className = "bg-amber-500/20 text-amber-400 text-[10px] px-1.5 py-0.5 rounded font-bold border border-amber-500/30";
+                        hostBadge.textContent = "HOST";
+                        nameSpan.appendChild(hostBadge);
+                    }
+
+                    li.appendChild(nameSpan);
+                    playersList.appendChild(li);
+
+                    if (isMe && p.is_host) isHost = true;
+                });
+
+                if (isHost) {
+                    hostControls.classList.remove("hidden");
+                    waitingHostMsg.classList.add("hidden");
+                } else {
+                    hostControls.classList.add("hidden");
+                    waitingHostMsg.classList.remove("hidden");
+                }
+            }
+
+            function appendChatMessage(author, message) {
+                const isMe = author === username;
+                const div = document.createElement("div");
+                const strong = document.createElement("strong");
+                strong.className = isMe ? "text-emerald-400" : "text-amber-400";
+                strong.textContent = `${author}: `;
+                const span = document.createElement("span");
+                span.className = "text-amber-100/90 break-words";
+                span.textContent = message;
+                div.appendChild(strong);
+                div.appendChild(span);
+                chatMessages.appendChild(div);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+            chatForm.addEventListener("submit", (e) => {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (!text) return;
+                if (send({ action: "CHAT_MESSAGE", username, message: text })) {
+                    chatInput.value = "";
+                }
+            });
+
+            startGameBtn.addEventListener("click", () => {
+                if (!isHost) return;
+                send({ action: "START_PONG" });
+            });
+
+            leaveRoomBtn.addEventListener("click", () => {
+                leaving = true;
+                if (ws) ws.close();
+                window.location.href = "rooms.html";
+            });
+
+            inviteBtn.addEventListener("click", async () => {
+                const link = `${location.origin}${location.pathname}?room=${encodeURIComponent(roomId)}`;
+                try {
+                    await navigator.clipboard.writeText(link);
+                    inviteBtn.textContent = "✅ ¡Enlace copiado!";
+                } catch (_) {
+                    inviteBtn.textContent = "⚠️ No se pudo copiar";
+                }
+                setTimeout(() => { inviteBtn.textContent = "🔗 Invitar"; }, 1800);
+            });
+
+            connectLobbyWebSocket();
+        });
+    </script>
+</body>
+</html>

@@ -1,45 +1,365 @@
+import asyncio
 import random
 import time
+from typing import Dict, List, Optional
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
-from typing import Dict, List
 from backend.database import get_db_connection
 
 router = APIRouter(
     prefix="/api/game",
-    tags=["Minijuego Adivina la Carta"]
+    tags=["Minijuego Adivina la Carta y Lobby"]
 )
 
-# Gestor de salas de juego activas
+ROUND_SECONDS = 15       # duración de cada ronda
+REVEAL_SECONDS = 3       # pausa mostrando la carta revelada
+WIN_SCORE = 10           # puntos para ganar
+EMPTY_ROOM_GRACE = 30    # segundos que se conserva una sala de juego sin nadie conectado
+
+
+# ---------------------------------------------------------------------------
+# Estado de una partida (una por sala). El SERVIDOR es el dueño del reloj:
+# los clientes solo reciben "time_remaining" y lo pintan.
+# ---------------------------------------------------------------------------
+class GameRoom:
+    def __init__(self, room_id: str):
+        self.room_id = room_id
+        # username -> {"score", "streak", "answered", "ws"}  (ws=None si está desconectado)
+        self.players: Dict[str, dict] = {}
+        self.card: Optional[dict] = None
+        self.round_number = 0
+        self.round_started_at = 0.0
+        self.round_ends_at = 0.0
+        self.phase = "waiting"          # waiting | playing | reveal
+        self.round_winner: Optional[str] = None
+        self.round_over = asyncio.Event()
+        self.loop_task: Optional[asyncio.Task] = None
+        self.cleanup_task: Optional[asyncio.Task] = None
+        self.finished = False
+
+    def connected_players(self) -> List[dict]:
+        return [p for p in self.players.values() if p["ws"] is not None]
+
+    def time_remaining(self) -> float:
+        if self.phase != "playing":
+            return 0.0
+        return max(0.0, self.round_ends_at - time.time())
+
+    def snapshot(self, username: Optional[str] = None) -> dict:
+        player = self.players.get(username) if username else None
+        msg = {
+            "type": "NEW_ROUND",
+            "phase": self.phase,
+            "round_number": self.round_number,
+            "image_uri": self.card["image_uri"],
+            "options": self.card["options"],
+            "time_remaining": round(self.time_remaining(), 2),
+            "round_duration": ROUND_SECONDS,
+            "already_answered": bool(player and player["answered"]),
+        }
+        if self.phase == "reveal":
+            msg["correct_answer"] = self.card["name"]
+            msg["round_winner"] = self.round_winner
+        return msg
+
+    def ranking(self) -> List[dict]:
+        return [
+            {"username": u, "score": p["score"]}
+            for u, p in sorted(self.players.items(), key=lambda kv: -kv[1]["score"])
+        ]
+
+    def scores_payload(self) -> dict:
+        return {
+            "type": "SCORES",
+            "win_score": WIN_SCORE,
+            "players": [
+                {
+                    "username": u,
+                    "score": p["score"],
+                    "streak": p["streak"],
+                    "answered": p["answered"],
+                    "connected": p["ws"] is not None,
+                }
+                for u, p in sorted(self.players.items(), key=lambda kv: -kv[1]["score"])
+            ],
+        }
+
+    @staticmethod
+    async def send(ws: Optional[WebSocket], message: dict):
+        if ws is None:
+            return
+        try:
+            await ws.send_json(message)
+        except Exception as e:
+            print(f"❌ Error enviando a jugador: {e}")
+
+    async def broadcast(self, message: dict):
+        for p in list(self.players.values()):
+            await self.send(p["ws"], message)
+
+    async def broadcast_round(self):
+        # Se recalcula time_remaining por jugador justo al enviar
+        for u, p in list(self.players.items()):
+            await self.send(p["ws"], self.snapshot(u))
+
+
 class GameManager:
     def __init__(self):
-        self.rooms: Dict[str, List[WebSocket]] = {}
-        self.scores: Dict[WebSocket, dict] = {}
+        # --- Lobby ---
+        self.lobbies: Dict[str, List[WebSocket]] = {}
+        self.lobby_players: Dict[WebSocket, dict] = {}
+        self.room_config: Dict[str, int] = {}
+        # --- Partidas ---
+        self.game_rooms: Dict[str, GameRoom] = {}
 
-    async def connect(self, websocket: WebSocket, room_id: str):
+    # --- GESTIÓN DE LOBBY CON CONTROL DE DUPLICADOS ---
+    async def connect_lobby(self, websocket: WebSocket, room_id: str, username: str):
         await websocket.accept()
-        if room_id not in self.rooms:
-            self.rooms[room_id] = []
-        self.rooms[room_id].append(websocket)
-        self.scores[websocket] = {"score": 0, "streak": 0}
+        if room_id not in self.lobbies:
+            self.lobbies[room_id] = []
 
-    def disconnect(self, websocket: WebSocket, room_id: str):
-        if room_id in self.rooms:
-            if websocket in self.rooms[room_id]:
-                self.rooms[room_id].remove(websocket)
-            if not self.rooms[room_id]:
-                del self.rooms[room_id]
-        if websocket in self.scores:
-            del self.scores[websocket]
+        existing_ws = None
+        for ws in self.lobbies[room_id]:
+            if self.lobby_players.get(ws, {}).get("username") == username:
+                existing_ws = ws
+                break
 
-    async def broadcast_to_room(self, room_id: str, message: dict):
-        if room_id in self.rooms:
-            for connection in self.rooms[room_id]:
+        if existing_ws:
+            self.disconnect_lobby(existing_ws, room_id)
+            if room_id not in self.lobbies:
+                self.lobbies[room_id] = []
+
+        self.lobbies[room_id].append(websocket)
+        is_host = len(self.lobbies[room_id]) == 1
+        if room_id not in self.room_config:
+            self.room_config[room_id] = 4
+
+        self.lobby_players[websocket] = {
+            "username": username,
+            "is_host": is_host
+        }
+        await self.broadcast_lobby_state(room_id)
+
+    def disconnect_lobby(self, websocket: WebSocket, room_id: str):
+        if room_id in self.lobbies:
+            if websocket in self.lobbies[room_id]:
+                self.lobbies[room_id].remove(websocket)
+
+            if self.lobby_players.get(websocket, {}).get("is_host") and self.lobbies[room_id]:
+                next_host_ws = self.lobbies[room_id][0]
+                if next_host_ws in self.lobby_players:
+                    self.lobby_players[next_host_ws]["is_host"] = True
+
+            if not self.lobbies[room_id]:
+                del self.lobbies[room_id]
+                if room_id in self.room_config:
+                    del self.room_config[room_id]
+
+        if websocket in self.lobby_players:
+            del self.lobby_players[websocket]
+
+    async def broadcast_lobby_state(self, room_id: str):
+        if room_id in self.lobbies:
+            players_list = [
+                {
+                    "username": self.lobby_players[ws]["username"],
+                    "is_host": self.lobby_players[ws]["is_host"]
+                }
+                for ws in self.lobbies[room_id] if ws in self.lobby_players
+            ]
+            message = {
+                "type": "LOBBY_STATE",
+                "players": players_list,
+                "max_players": self.room_config.get(room_id, 4)
+            }
+            for connection in self.lobbies[room_id]:
                 try:
                     await connection.send_json(message)
                 except Exception as e:
-                    print(f"❌ Error enviando mensaje a sala {room_id}: {e}")
+                    print(f"❌ Error en lobby broadcast: {e}")
+
+    # -----------------------------------------------------------------------
+    # PARTIDA SINCRONIZADA (reloj del servidor)
+    # -----------------------------------------------------------------------
+    async def connect_game(self, websocket: WebSocket, room_id: str, username: str) -> GameRoom:
+        await websocket.accept()
+
+        room = self.game_rooms.get(room_id)
+        if room is None:
+            room = GameRoom(room_id)
+            self.game_rooms[room_id] = room
+            room.loop_task = asyncio.create_task(self._game_loop(room))
+
+        if room.cleanup_task:
+            room.cleanup_task.cancel()
+            room.cleanup_task = None
+
+        player = room.players.get(username)
+        if player:
+            # Reconexión: se conservan puntos y racha, solo cambia el socket
+            old_ws = player["ws"]
+            player["ws"] = websocket
+            if old_ws is not None and old_ws is not websocket:
+                try:
+                    await old_ws.close()
+                except Exception:
+                    pass
+        else:
+            room.players[username] = {
+                "score": 0,
+                "streak": 0,
+                "answered": False,
+                "ws": websocket,
+            }
+
+        # Estado actual con el tiempo restante REAL (igual para todos)
+        if room.card is not None and room.phase != "waiting":
+            await room.send(websocket, room.snapshot(username))
+        await room.broadcast(room.scores_payload())
+        return room
+
+    async def disconnect_game(self, room: GameRoom, username: str, websocket: WebSocket):
+        player = room.players.get(username)
+        if player and player["ws"] is websocket:
+            player["ws"] = None
+
+        if room.finished:
+            return
+
+        await room.broadcast(room.scores_payload())
+
+        connected = room.connected_players()
+        if not connected:
+            if room.cleanup_task is None:
+                room.cleanup_task = asyncio.create_task(self._cleanup_later(room))
+        elif room.phase == "playing" and all(p["answered"] for p in connected):
+            # Los que quedan ya habían respondido: no esperamos más
+            room.round_over.set()
+
+    async def _cleanup_later(self, room: GameRoom):
+        try:
+            await asyncio.sleep(EMPTY_ROOM_GRACE)
+        except asyncio.CancelledError:
+            return
+        if not room.connected_players():
+            self._drop_game_room(room)
+
+    def _drop_game_room(self, room: GameRoom):
+        if self.game_rooms.get(room.room_id) is room:
+            del self.game_rooms[room.room_id]
+        task = room.loop_task
+        if task and not task.done() and task is not asyncio.current_task():
+            task.cancel()
+
+    async def _game_loop(self, room: GameRoom):
+        """Un único bucle por sala: arranca ronda, espera fin, revela, repite."""
+        try:
+            next_card_task: Optional[asyncio.Task] = None
+            while True:
+                # La carta de esta ronda ya se pidió a la BD durante la ronda anterior,
+                # así que entre rondas solo se espera la pausa de revelación.
+                if next_card_task is not None:
+                    card = await next_card_task
+                    next_card_task = None
+                else:
+                    card = await asyncio.to_thread(get_random_card_with_options)
+                if not card:
+                    await asyncio.sleep(2)
+                    continue
+
+                # --- Inicio de ronda ---
+                room.card = card
+                room.round_number += 1
+                room.round_winner = None
+                room.round_over.clear()
+                for p in room.players.values():
+                    p["answered"] = False
+                room.round_started_at = time.time()
+                room.round_ends_at = room.round_started_at + ROUND_SECONDS
+                room.phase = "playing"
+
+                # Precarga de la siguiente carta mientras se juega esta ronda
+                next_card_task = asyncio.create_task(asyncio.to_thread(get_random_card_with_options))
+
+                await room.broadcast_round()
+                await room.broadcast(room.scores_payload())
+
+                # --- Espera: acierto, todos respondieron o se acaba el tiempo ---
+                timeout = max(0.0, room.round_ends_at - time.time())
+                try:
+                    await asyncio.wait_for(room.round_over.wait(), timeout=timeout)
+                except asyncio.TimeoutError:
+                    pass
+
+                # --- Revelación ---
+                room.phase = "reveal"
+                await room.broadcast({
+                    "type": "ROUND_END",
+                    "correct_answer": card["name"],
+                    "round_winner": room.round_winner,
+                })
+                await room.broadcast(room.scores_payload())
+
+                leader = max(room.players.items(), key=lambda kv: kv[1]["score"], default=None)
+                if leader and leader[1]["score"] >= WIN_SCORE:
+                    room.finished = True
+                    await room.broadcast({
+                        "type": "GAME_OVER",
+                        "winner": leader[0],
+                        "ranking": room.ranking(),
+                    })
+                    await asyncio.sleep(2)
+                    self._drop_game_room(room)
+                    return
+
+                await asyncio.sleep(REVEAL_SECONDS)
+        except asyncio.CancelledError:
+            raise
+        except Exception as e:
+            print(f"❌ Error en el bucle de juego ({room.room_id}): {e}")
+
+    async def handle_answer(self, room: GameRoom, username: str, websocket: WebSocket, answer: str):
+        player = room.players.get(username)
+        if not player or player["ws"] is not websocket:
+            return
+        if room.phase != "playing" or player["answered"] or room.card is None:
+            return
+
+        now = time.time()
+        if now > room.round_ends_at:
+            return  # llegó tarde: el reloj del servidor manda
+
+        player["answered"] = True
+        is_correct = answer.strip().lower() == room.card["name"].strip().lower()
+        points = 0
+
+        if is_correct:
+            elapsed = now - room.round_started_at
+            base_pts = 3 if elapsed <= 5 else 2 if elapsed <= 10 else 1
+            streak_bonus = 1 if player["streak"] > 0 else 0
+            points = base_pts + streak_bonus
+            player["score"] += points
+            player["streak"] += 1
+            room.round_winner = username
+        else:
+            player["streak"] = 0
+
+        await room.send(websocket, {
+            "type": "ANSWER_RESULT",
+            "correct": is_correct,
+            "points_earned": points,
+            "total_score": player["score"],
+            "streak": player["streak"],
+        })
+        await room.broadcast(room.scores_payload())
+
+        connected = room.connected_players()
+        if is_correct or all(p["answered"] for p in connected):
+            room.round_over.set()
+
 
 manager = GameManager()
+
 
 def get_random_card_with_options():
     conn = get_db_connection()
@@ -78,95 +398,86 @@ def get_random_card_with_options():
             "options": options
         }
     except Exception as e:
-        print(f"❌ Error obteniendo carta para el juego: {e}")
+        print(f"❌ Error obteniendo carta: {e}")
         return None
     finally:
         cursor.close()
         conn.close()
 
-@router.websocket("/ws/game/{room_id}")
-async def game_websocket(websocket: WebSocket, room_id: str):
-    await manager.connect(websocket, room_id)
-    current_card = None
-    round_start_time = 0.0
-    
-    try:
-        current_card = get_random_card_with_options()
-        if current_card:
-            round_start_time = time.time()
-            await websocket.send_json({
-                "type": "NEW_ROUND",
-                "image_uri": current_card["image_uri"],
-                "options": current_card["options"],
-                "start_time": round_start_time
-            })
 
+# --- ENDPOINT REST PARA LISTAR SALAS ACTIVAS ---
+@router.get("/rooms")
+def get_active_rooms():
+    active_rooms = []
+    for room_id, players in manager.lobbies.items():
+        max_p = manager.room_config.get(room_id, 4)
+        active_rooms.append({
+            "room_id": room_id,
+            "current_players": len(players),
+            "max_players": max_p
+        })
+    return {"rooms": active_rooms}
+
+
+# --- WEBSOCKET DEL LOBBY ---
+@router.websocket("/ws/lobby/{room_id}")
+async def lobby_websocket(websocket: WebSocket, room_id: str):
+    username = websocket.query_params.get("username", "Conjurador")
+    await manager.connect_lobby(websocket, room_id, username)
+
+    try:
         while True:
             data = await websocket.receive_json()
             action = data.get("action")
 
-            if action == "ANSWER":
-                selected_answer = data.get("answer", "")
-                answer_time = time.time()
-                elapsed = answer_time - round_start_time
+            if action == "CHAT_MESSAGE":
+                chat_msg = {
+                    "type": "CHAT_MESSAGE",
+                    "username": data.get("username", username),
+                    "message": data.get("message", "")
+                }
+                if room_id in manager.lobbies:
+                    for conn in manager.lobbies[room_id]:
+                        await conn.send_json(chat_msg)
 
-                # Detectar si es un envío por tiempo agotado (respuesta vacía)
-                is_timeout = (selected_answer == "")
-                is_correct = False
+            elif action == "UPDATE_CONFIG":
+                player_info = manager.lobby_players.get(websocket, {})
+                if player_info.get("is_host"):
+                    new_max = int(data.get("max_players", 4))
+                    manager.room_config[room_id] = max(1, min(4, new_max))
+                    await manager.broadcast_lobby_state(room_id)
 
-                if not is_timeout:
-                    is_correct = (selected_answer.strip().lower() == current_card["name"].strip().lower())
-                
-                player_data = manager.scores[websocket]
-                points_earned = 0
-
-                if is_correct:
-                    if elapsed <= 5:
-                        base_pts = 3
-                    elif elapsed <= 10:
-                        base_pts = 2
-                    else:
-                        base_pts = 1
-                    
-                    streak_bonus = 1 if player_data["streak"] > 0 else 0
-                    points_earned = base_pts + streak_bonus
-                    
-                    player_data["score"] += points_earned
-                    player_data["streak"] += 1
-                else:
-                    if not is_timeout:
-                        player_data["streak"] = 0
-
-                # Enviar resultado al jugador
-                await websocket.send_json({
-                    "type": "ANSWER_RESULT",
-                    "correct": is_correct,
-                    "correct_answer": current_card["name"],
-                    "points_earned": points_earned,
-                    "total_score": player_data["score"]
-                })
-
-                if player_data["score"] >= 10:
-                    await manager.broadcast_to_room(room_id, {
-                        "type": "GAME_OVER",
-                        "winner": data.get("username", "Un jugador")
-                    })
-                elif is_correct or is_timeout:
-                    # SOLO avanzamos de ronda si se acierta o si el tiempo de la ronda expira (timeout)
-                    current_card = get_random_card_with_options()
-                    round_start_time = time.time()
-                    await manager.broadcast_to_room(room_id, {
-                        "type": "NEW_ROUND",
-                        "image_uri": current_card["image_uri"],
-                        "options": current_card["options"],
-                        "start_time": round_start_time
-                    })
-                else:
-                    # Si falla antes de tiempo, NO cambiamos de carta. El jugador se queda bloqueado esperando.
-                    pass
+            elif action == "START_GAME":
+                player_info = manager.lobby_players.get(websocket, {})
+                if player_info.get("is_host"):
+                    start_signal = {"type": "START_GAME"}
+                    if room_id in manager.lobbies:
+                        for conn in manager.lobbies[room_id]:
+                            await conn.send_json(start_signal)
 
     except WebSocketDisconnect:
-        manager.disconnect(websocket, room_id)
+        manager.disconnect_lobby(websocket, room_id)
+        await manager.broadcast_lobby_state(room_id)
     except Exception as e:
-        print(f"❌ Excepción en WebSocket de juego: {e}")
-        manager.disconnect(websocket, room_id)
+        print(f"❌ Error en lobby: {e}")
+        manager.disconnect_lobby(websocket, room_id)
+        await manager.broadcast_lobby_state(room_id)
+
+
+# --- WEBSOCKET DEL JUEGO ---
+@router.websocket("/ws/game/{room_id}")
+async def game_websocket(websocket: WebSocket, room_id: str):
+    username = websocket.query_params.get("username", "Jugador")
+    room = await manager.connect_game(websocket, room_id, username)
+
+    try:
+        while True:
+            data = await websocket.receive_json()
+            if data.get("action") == "ANSWER":
+                await manager.handle_answer(room, username, websocket, str(data.get("answer", "")))
+    except WebSocketDisconnect:
+        pass
+    except Exception as e:
+        print(f"❌ Error en game websocket: {e}")
+    finally:
+        await manager.disconnect_game(room, username, websocket)
