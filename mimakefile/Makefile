@@ -12,14 +12,14 @@ help: logo
 	@echo ""
 	@echo "$(BLUE)📋 CARD BINDER PRO - HELP & COMMANDS$(RESET)"
 	@echo "$(YELLOW)======================================$(RESET)"
-	@echo "  $(GREEN)make up      $(RESET)- Levanta la base de datos, la API y el Frontend Nginx"
-	@echo "  $(GREEN)make down    $(RESET)- Detiene y apaga todos los contenedores limpiamente"
-	@echo "  $(GREEN)make restart $(RESET)- Reinicia los contenedores"
-	@echo "  $(GREEN)make logs    $(RESET)- Muestra los logs en tiempo real (todos los servicios)"
-	@echo "  $(GREEN)make download$(RESET)- Descarga el Bulk Data de Scryfall a la carpeta local data/"
-	@echo "  $(GREEN)make import  $(RESET)- Ejecuta el script de Python para importar los datos a Postgres"
-	@echo "  $(GREEN)make clean   $(RESET)- $(PINK)ATENCIÓN:$(RESET) Apaga contenedores y borra el volumen de datos"
-	@echo "  $(GREEN)make prune   $(RESET)- Purga y elimina contenedores en desuso"
+	@echo "  $(GREEN)make up      $(RESET)Levanta la base de datos, la API y el Frontend Nginx"
+	@echo "  $(GREEN)make down    $(RESET)Detiene y apaga todos los contenedores limpiamente"
+	@echo "  $(GREEN)make restart $(RESET)Reconstruye y reinicia los contenedores (incluye React)"
+	@echo "  $(GREEN)make logs    $(RESET)Muestra los logs en tiempo real (todos los servicios)"
+	@echo "  $(GREEN)make download$(RESET)Descarga el Bulk Data de Scryfall a la carpeta local data/"
+	@echo "  $(GREEN)make import  $(RESET)Ejecuta el script de Python para importar los datos a Postgres"
+	@echo "  $(GREEN)make clean   $(RESET)$(PINK)ATENCIÓN:$(RESET) Apaga contenedores y borra el volumen de datos"
+	@echo "  $(GREEN)make prune   $(RESET)Purga y elimina contenedores en desuso"
 	@echo ""
 
 # Imprime el arte ASCII directamente con colores ANSI
@@ -43,7 +43,7 @@ logo:
 	@echo -e "@@@@@%-+*-%@@@@%=+%%#=+@@*-*%%*-#@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%*#*#@"
 	@echo -e "@@@@@+-*+=%@@@@@+=#%%*-%@%-*%%#==%@@%%@%##@@@@@@%%@%@@@%%##@@@@@@@#%@@@@@%@%**@@"
 	@echo -e "@@@@*-+#+-+@@@@@*=####-*@*-*####==#@%%@#%%@@%%@%@##%#%%%%%%@@%%%%%##%%%%#%@@@@@@"
-	@echo -e "@@@+-=##*=-%@@@@#-*##=-#+=+**++**=-%@%@%@#@#@%%%@#@%%%%@%@#@#@%#@#@%@#@#%@%@@@@@"
+	@echo -e "@@@+-=##*=-%@@@@#-*##=-#+=+**++**=-%@%@%@#@#@%%%@#@%%%%@%@#@#@%#@#@%@#@%@%@@@@@@"
 	@echo -e "@@#-=+=--==%@@@@%-+#=-#@===-----==-#@#@#%#@#@%@@@@@#@@%%%%#@#@%#@%%#@#@#@%@@@@@@"
 	@echo -e "@@#---+***%@@@@@@====#@@*-=*#%%#+=+@@%%@%%%@%%@@@%@@%%%@%%%%@%%@%@%@%%%%@@%@@@@@"
 	@echo -e "@@@*+%@@@@@@@@@@@*-=#@@@@%%@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@%@@@@@@@\033[0m"
@@ -73,13 +73,12 @@ prune:
 	docker system prune -f --volumes
 	@echo "💀 Se hizo la purga de contenedores."
 
-# Reinicia los contenedores
+# Reinicia los contenedores y fuerza la compilación de React con Vite
 restart:
 	docker compose down --remove-orphans
 	docker rm -f card_binder_db card_binder_api card_binder_web 2>/dev/null || true
-	docker system prune -f
 	docker compose up --build -d
-	@echo "🔄 Contenedores reiniciados."
+	@echo "🔄 Contenedores reiniciados y aplicación de React compilada."
 
 # Muestra los logs en tiempo real de todos los servicios
 logs:
