@@ -87,4 +87,6 @@ logs:
 # Limpia contenedores y borra el volumen de datos
 clean:
 	docker compose down -v
+	docker igamegs -q | xargs -r dpcker rmi -f
+	docker volume ls -q | xargs -r dpcker volume rm -f
 	@echo "⚠️ Contenedores y volumen de datos eliminados."
