@@ -51,18 +51,164 @@ body {
     box-shadow: 0 0 15px var(--accent-glow), inset 0 2px 6px rgba(255,255,255,0.4);
 }
 
-.search-bar-fantasy {
-    background: radial-gradient(circle, #22180f 0%, #0f0a06 100%);
-    border: 2px solid var(--border-color);
-    box-shadow: inset 0 4px 10px rgba(0,0,0,0.85), 0 4px 12px rgba(0,0,0,0.6);
+/* --- 2b. AVATAR DE USUARIO Y MEDALLAS --- */
+.avatar-img,
+.avatar-initial {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    border: 1px solid rgba(179, 146, 88, 0.6);
+    flex-shrink: 0;
 }
 
-.search-bar-fantasy input {
+.avatar-img {
+    object-fit: cover;
+}
+
+.avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 30% 30%, #5c4323 0%, #1c130a 70%);
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 0.95rem;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    user-select: none;
+}
+
+.medal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.medal {
+    position: relative;
+    padding: 0.55rem 0.3rem;
+    border-radius: 10px;
+    background: rgba(15, 10, 6, 0.85);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    cursor: default;
+}
+
+/* Contenido de la medalla: es lo único que se atenúa, para que la tarjeta de info no herede la opacidad */
+.medal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.medal.unlocked {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Medallas sin conseguir: tenues y en gris; al pasar el ratón se ven un poco más */
+.medal.locked {
+    border-color: rgba(140, 109, 54, 0.35);
+}
+
+.medal.locked .medal-body {
+    filter: grayscale(1);
+    opacity: 0.35;
+}
+
+.medal.locked:hover .medal-body {
+    opacity: 0.7;
+}
+
+/* Tarjeta de información al pasar el ratón */
+.medal-tip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+    background: rgba(20, 14, 9, 0.97);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 60;
+}
+
+.medal:hover .medal-tip {
+    opacity: 1;
+}
+
+.medal-tip-name {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.medal-tip-desc {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.65rem;
+    line-height: 1.25;
     color: var(--text-main);
 }
 
-.search-bar-fantasy input::placeholder {
+.medal-tip-state {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.6rem;
     color: var(--text-muted);
+}
+
+.medal-icon {
+    font-size: 1.75rem;
+    line-height: 1.2;
+}
+
+.medal-name {
+    margin-top: 0.2rem;
+    font-size: 0.65rem;
+    line-height: 1.1;
+    color: var(--text-main);
+    min-height: 1.5em;
+}
+
+.medal-bar {
+    width: 100%;
+    height: 4px;
+    margin-top: 0.35rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+
+.medal-bar-fill {
+    height: 100%;
+    background: var(--accent);
+}
+
+.medal-progress {
+    margin-top: 0.2rem;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+}
+
+.medal-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.medal-msg-error {
+    color: #f87171;
 }
 
 /* --- 3. COMPONENTES COMUNES DE PANEL (Paneles, Inputs y Botones) --- */

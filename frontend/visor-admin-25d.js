@@ -6,7 +6,6 @@
 
 const API_BASE_URL = 'http://localhost:8000/api';
 
-
 const macroCategorySelect = document.getElementById('macroCategorySelect');
 const subtypeSelect = document.getElementById('subtypeSelect');
 const searchBtn = document.getElementById('searchBtn');
@@ -21,7 +20,6 @@ const toggleBtn = document.getElementById('toggleMagnifierBtn');
 const modeStatus = document.getElementById('modeStatus');
 
 const cardQuantity = document.getElementById('cardQuantity');
-
 const cardState = document.getElementById('cardState');
 const cardOwned = document.getElementById('cardOwned');
 const saveInventoryBtn = document.getElementById('saveInventoryBtn');
@@ -37,7 +35,6 @@ const ZOOM_SCALE = 2;
 const MAGNIFIER_SIZE = 160; 
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // 1. Cargar taxonomía de tipos
     const searchInput = document.getElementById('searchInput');
     const cardLocation = document.getElementById('cardLocation');
     try {
@@ -56,7 +53,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error("Error al cargar la taxonomía de tipos:", e);
     }
 
-    // 2. Cargar contenedores en el desplegable de inventario
     await cargarContenedores();
     
     if (cardLocation) {
@@ -72,9 +68,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 // 3. GESTIÓN DE CONTENEDORES Y UBICACIONES (API)
 // ============================================================================
 
-
 async function cargarContenedores() {
-    // Llama directamente a la función global definida en el HTML
     const authHeader = typeof getAuthHeader === 'function' ? getAuthHeader() : { 'X-Username': 'admin' };
 
     try {
@@ -103,9 +97,9 @@ async function cargarContenedores() {
 }
 
 function actualizarDesplegableContenedores() {
+    const cardLocation = document.getElementById('cardLocation');
     if (!cardLocation) return;
 
-    // Recuperamos el valor guardado previamente si existe
     const lastSelected = localStorage.getItem('last_selected_container');
     
     cardLocation.innerHTML = '<option value="">Selecciona un contenedor...</option>';
@@ -114,20 +108,19 @@ function actualizarDesplegableContenedores() {
         const option = document.createElement('option');
         option.value = c.id; 
         const contieneCarta = currentCardOwnership?.containers?.some(
-    container => container.container_id === c.id
-);
+            container => container.container_id === c.id
+        );
 
-    option.textContent = `${c.name || 'Sin nombre'} (${(c.type || 'GENERAL').toUpperCase()})${contieneCarta ? ' ★' : ''}`;
+        option.textContent = `${c.name || 'Sin nombre'} (${(c.type || 'GENERAL').toUpperCase()})${contieneCarta ? ' ★' : ''}`;
         cardLocation.appendChild(option);
     });
     
-    // Si teníamos uno guardado, lo volvemos a seleccionar
     if (lastSelected) {
         cardLocation.value = lastSelected;
     }
 }
 
-// Escuchar cambios para persistir la selección automáticamente
+const cardLocation = document.getElementById('cardLocation');
 if (cardLocation) {
     cardLocation.addEventListener('change', (e) => {
         if (e.target.value) {
@@ -161,6 +154,7 @@ if (macroCategorySelect) {
 }
 
 async function realizarBusqueda() {
+    const searchInput = document.getElementById('searchInput');
     const query = searchInput.value.trim();
     const macroCategory = macroCategorySelect ? macroCategorySelect.value.trim() : '';
     const subtype = subtypeSelect ? subtypeSelect.value.trim() : '';
@@ -235,7 +229,10 @@ function manejarSinResultados() {
 }
 
 searchBtn.addEventListener('click', realizarBusqueda);
-searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') realizarBusqueda(); });
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') realizarBusqueda(); });
+}
 
 // ============================================================================
 // 5. SELECCIÓN DE CARTA Y VISOR INTERACTIVO
@@ -263,26 +260,18 @@ async function comprobarPropiedadCarta(cardData) {
         );
 
         if (!response.ok) {
-            console.error(
-                'Error comprobando propiedad de carta:',
-                response.status
-            );
+            console.error('Error comprobando propiedad de carta:', response.status);
             currentCardOwnership = null;
             return;
         }
 
         currentCardOwnership = await response.json();
-        console.log('📦 Propiedad de carta:', currentCardOwnership);
 
         if (cardOwned) {
             cardOwned.value = currentCardOwnership.owned ? 'true' : 'false';
         }
 
-        if (cardQuantity) {
-            cardQuantity.value = currentCardOwnership.quantity > 0
-                ? currentCardOwnership.quantity
-                : 1;
-        }
+        // Ya no sobrescribimos cardQuantity aquí para permitir que el usuario elija cuántas copias desea añadir libremente.
 
         actualizarDesplegableContenedores();
 
@@ -291,8 +280,6 @@ async function comprobarPropiedadCarta(cardData) {
         currentCardOwnership = null;
     }
 }
-
-
 
 function seleccionarCarta(cardData) {
     currentSelectedCard = cardData;
@@ -312,16 +299,19 @@ function seleccionarCarta(cardData) {
     if (visorMana) visorMana.textContent = cardData.mana_cost || "";
     if (visorType) visorType.textContent = cardData.type_line || "";
 
-    cardQuantity.value = cardData.quantity ?? 1;
+    if (cardQuantity) cardQuantity.value = 1;
     cardState.value = cardData.state ?? 'NM';
     
+    const cardLocation = document.getElementById('cardLocation');
     const lastContainer = localStorage.getItem('last_selected_container');
 
     if (cardOwned) {
         cardOwned.value = 'false';
     }
 
-    cardLocation.value = lastContainer || '';
+    if (cardLocation) {
+        cardLocation.value = lastContainer || '';
+    }
 
     comprobarPropiedadCarta(cardData);
 }
@@ -430,6 +420,7 @@ saveInventoryBtn.addEventListener('click', async () => {
         return;
     }
 
+    const cardLocation = document.getElementById('cardLocation');
     const containerId = cardLocation.value;
     if (!containerId) {
         alert("Por favor, selecciona un contenedor de destino.");
@@ -443,6 +434,8 @@ saveInventoryBtn.addEventListener('click', async () => {
         return;
     }
 
+    const cantidadACrear = cardQuantity ? (parseInt(cardQuantity.value, 10) || 1) : 1;
+
     const authHeader = getAuthHeader();
     const payload = {
         printing_id: printingId,
@@ -453,30 +446,38 @@ saveInventoryBtn.addEventListener('click', async () => {
     };
 
     try {
-        const response = await fetch(`${API_BASE_URL}/containers/items`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'accept': 'application/json',
-                ...authHeader
-            },
-            body: JSON.stringify(payload)
-        });
+        for (let i = 0; i < cantidadACrear; i++) {
+            const response = await fetch(`${API_BASE_URL}/containers/items`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'accept': 'application/json',
+                    ...authHeader
+                },
+                body: JSON.stringify(payload)
+            });
 
-        const data = await response.json();
+            const data = await response.json();
 
-        if (!response.ok) {
-            let errorMsg = 'Error al guardar la carta.';
-            if (data.detail) {
-                errorMsg = Array.isArray(data.detail) 
-                    ? data.detail.map(err => err.msg).join(', ') 
-                    : String(data.detail);
+            if (!response.ok) {
+                let errorMsg = 'Error al guardar la carta.';
+                if (data.detail) {
+                    errorMsg = Array.isArray(data.detail) 
+                        ? data.detail.map(err => err.msg).join(', ') 
+                        : String(data.detail);
+                }
+                alert(`Error / Validación en la copia ${i + 1}: ${errorMsg}`);
+                return;
             }
-            alert(`Error / Validación: ${errorMsg}`);
-            return;
+
+            if (i < cantidadACrear - 1) {
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
         }
 
-        mostrarNotificacionFlotante(`¡${currentSelectedCard.name} añadida al contenedor con éxito!`);
+        mostrarNotificacionFlotante(`¡${cantidadACrear}x ${currentSelectedCard.name} añadida(s) al contenedor con éxito!`);
+        
+        comprobarPropiedadCarta(currentSelectedCard);
 
     } catch (error) {
         console.error("Error al guardar inventario:", error);

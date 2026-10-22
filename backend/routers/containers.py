@@ -128,7 +128,6 @@ def list_containers(current_user: dict = Depends(get_current_user)):
     try:
         user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
         
-        # Filtramos estrictamente por el user_id del usuario autenticado
         cursor.execute(
             """
             SELECT id, user_id, name, type, max_capacity, slots_per_page, total_pages, sideboard_capacity, created_at 
@@ -289,185 +288,59 @@ def get_container_slots_with_cards(container_id: str, current_user: dict = Depen
         cursor.close()
         conn.close()
 
-@router.put("/{container_id}/slots")
-def update_container_slots_layout(container_id: str, slots_data: list[dict], current_user: dict = Depends(get_current_user)):
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    try:
-        user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
-        cursor.execute("SELECT id FROM containers WHERE id = %s AND user_id = %s;", (container_id, user_id))
-        if not cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Contenedor no encontrado o sin permisos.")
-
-        cursor.execute(
-            """
-            UPDATE card_copies 
-            SET slot_id = NULL 
-            WHERE container_id = %s;
-            """,
-            (container_id,)
-        )
-
-        cursor.execute(
-            """
-            UPDATE container_slots 
-            SET is_occupied = FALSE 
-            WHERE container_id = %s;
-            """,
-            (container_id,)
-        )
-
-        for slot in slots_data:
-            slot_index = slot.get("slot_index")
-            page_number = slot.get("page_number", 1)
-            is_occupied = slot.get("is_occupied", False)
-            copy_id = slot.get("copy_id")
-
-            cursor.execute(
-                """
-                SELECT id FROM container_slots 
-                WHERE container_id = %s AND page_number = %s AND slot_index = %s
-                LIMIT 1;
-                """,
-                (container_id, page_number, slot_index)
-            )
-            slot_row = cursor.fetchone()
-
-            if slot_row:
-                target_slot_id = slot_row["id"]
-
-                if is_occupied:
-                    cursor.execute(
-                        """
-                        UPDATE container_slots 
-                        SET is_occupied = TRUE 
-                        WHERE id = %s;
-                        """,
-                        (target_slot_id,)
-                    )
-
-                    if copy_id:
-                        cursor.execute(
-                            """
-                            UPDATE card_copies 
-                            SET slot_id = %s 
-                            WHERE id = %s AND container_id = %s;
-                            """,
-                            (target_slot_id, copy_id, container_id)
-                        )
-
-        conn.commit()
-        return {"status": "success", "message": "Distribución del contenedor actualizada correctamente."}
-
-    except HTTPException as he:
-        conn.rollback()
-        raise he
-    except Exception as e:
-        conn.rollback()
-        print(f"❌ Error al actualizar los slots del contenedor: {e}")
-        raise HTTPException(status_code=500, detail="Error interno al actualizar la distribución.")
-    finally:
-        cursor.close()
-        conn.close()
-
-@router.post("/move-cross-container")
-def move_card_between_containers(data: MoveCardBetweenContainersRequest, current_user: dict = Depends(get_current_user)):
+@router.delete("/items/{copy_id}")
+def delete_card_copy(copy_id: str, current_user: dict = Depends(get_current_user)):
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
 
+        # Verificar que la copia existe y pertenece a un contenedor del usuario
         cursor.execute(
             """
-            SELECT id, container_id, slot_id 
-            FROM card_copies 
-            WHERE id = %s;
+            SELECT cc.id, cc.slot_id 
+            FROM card_copies cc
+            JOIN containers co ON cc.container_id = co.id
+            WHERE cc.id = %s AND co.user_id = %s;
             """,
-            (data.copy_id,)
+            (copy_id, user_id)
         )
         copy_row = cursor.fetchone()
         if not copy_row:
-            raise HTTPException(status_code=404, detail="La copia de la carta especificada no existe.")
-        
-        old_slot_id = copy_row["slot_id"]
+            raise HTTPException(status_code=404, detail="La copia de la carta especificada no existe o no tienes permisos.")
 
-        cursor.execute("SELECT id, type FROM containers WHERE id = %s AND user_id = %s;", (data.target_container_id, user_id))
-        target_container = cursor.fetchone()
-        if not target_container:
-            raise HTTPException(status_code=404, detail="El contenedor de destino no existe o no te pertenece.")
+        slot_id = copy_row["slot_id"]
 
-        target_slot_id = data.target_slot_id
-        if not target_slot_id:
-            cursor.execute(
-                """
-                SELECT id FROM container_slots 
-                WHERE container_id = %s AND is_occupied = FALSE 
-                ORDER BY 
-                    CASE WHEN section = 'main' THEN 1 ELSE 2 END ASC,
-                    page_number ASC, 
-                    slot_index ASC 
-                LIMIT 1;
-                """,
-                (data.target_container_id,)
-            )
-            free_slot = cursor.fetchone()
-            if not free_slot:
-                raise HTTPException(status_code=400, detail="El contenedor de destino está completamente lleno.")
-            target_slot_id = free_slot["id"]
-        else:
-            cursor.execute(
-                """
-                SELECT is_occupied FROM container_slots 
-                WHERE id = %s AND container_id = %s;
-                """,
-                (target_slot_id, data.target_container_id)
-            )
-            slot_check = cursor.fetchone()
-            if not slot_check:
-                raise HTTPException(status_code=404, detail="El slot de destino no es válido para este contenedor.")
-            if slot_check["is_occupied"]:
-                raise HTTPException(status_code=400, detail="El slot de destino seleccionado ya está ocupado.")
-
-        if old_slot_id:
+        # 1. Liberar el slot exacto
+        if slot_id:
             cursor.execute(
                 """
                 UPDATE container_slots 
                 SET is_occupied = FALSE 
                 WHERE id = %s;
                 """,
-                (old_slot_id,)
+                (slot_id,)
             )
 
+        # 2. Eliminar la copia física de la base de datos
         cursor.execute(
             """
-            UPDATE container_slots 
-            SET is_occupied = TRUE 
+            DELETE FROM card_copies 
             WHERE id = %s;
             """,
-            (target_slot_id,)
+            (copy_id,)
         )
-
-        cursor.execute(
-            """
-            UPDATE card_copies 
-            SET container_id = %s, slot_id = %s 
-            WHERE id = %s
-            RETURNING id, container_id, slot_id, condition, language, is_foil;
-            """,
-            (data.target_container_id, target_slot_id, data.copy_id)
-        )
-        updated_copy = cursor.fetchone()
 
         conn.commit()
-        return {"status": "success", "message": "Carta movida de contenedor con éxito.", "copy": dict(updated_copy)}
+        return {"status": "success", "message": "Copia de carta eliminada y slot liberado con éxito."}
 
     except HTTPException as he:
         conn.rollback()
         raise he
     except Exception as e:
         conn.rollback()
-        print(f"❌ Error al mover carta entre contenedores: {e}")
-        raise HTTPException(status_code=500, detail="Error interno al trasladar la carta.")
+        print(f"❌ Error al eliminar la copia de la carta: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al eliminar la carta.")
     finally:
         cursor.close()
         conn.close()

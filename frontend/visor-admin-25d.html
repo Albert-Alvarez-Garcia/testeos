@@ -110,7 +110,7 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 130px 90px 1fr; gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: 130px 110px 1fr; gap: 1rem;">
                         <div>
                             <label for="cardOwned">¿En posesión?</label>
                             <select id="cardOwned">
@@ -119,8 +119,8 @@
                             </select>
                         </div>
                         <div>
-                            <label for="cardQuantity">Cantidad</label>
-                            <input type="number" id="cardQuantity" value="1" min="0">
+                            <label for="cardQuantity" title="Número de copias a añadir">Añadir cant.</label>
+                            <input type="number" id="cardQuantity" value="1" min="1" max="99">
                         </div>
                         <div>
                             <label for="cardState">Estado de la Carta</label>

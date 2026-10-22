@@ -16,6 +16,15 @@
         <!-- Se rellenará dinámicamente mediante JavaScript -->
     </div>
 
+    <!-- 🏅 PANEL DE MEDALLAS / LOGROS (se abre desde el botón Perfil) -->
+    <div id="achievements-panel" class="absolute top-24 right-6 z-40 w-80 hidden bg-[#140e09]/95 border-2 border-[#b39258] rounded-2xl shadow-2xl backdrop-blur-md p-4 font-sans">
+        <div class="flex justify-between items-center mb-3">
+            <h2 class="text-amber-200 font-bold text-sm tracking-wide">🏅 Medallas</h2>
+            <span id="achievements-summary" class="text-xs text-amber-300/70"></span>
+        </div>
+        <div id="achievements-grid" class="medal-grid"></div>
+    </div>
+
     <!-- ILUSTRACIÓN CENTRAL DECORATIVA (DECO1) -->
     <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden">
         <img src="public/assets/deco1.png" alt="Decorative Character" class="hero-illustration h-full max-h-[90vh] w-auto object-contain">
@@ -83,23 +92,11 @@
         </div>
     </div>
 
-    <!-- CENTRO: Logo grande y Buscador -->
+    <!-- CENTRO: Logo grande -->
     <div class="my-auto text-center relative z-25 flex flex-col items-center">
         <!-- Logo central -->
-        <div class="px-6 py-2 relative flex items-center justify-center mb-6">
+        <div class="px-6 py-2 relative flex items-center justify-center">
             <img src="public/assets/logomagic.png" alt="Card Binder Logo" class="relative z-25 max-h-56 w-auto object-contain drop-shadow-[0_4px_20px_rgba(0,0,0,0.95)]">
-        </div>
-
-        <!-- Barra de búsqueda -->
-        <div class="w-full max-w-xl">
-            <div class="search-bar-fantasy rounded-full px-6 py-3.5 flex items-center justify-between">
-                <input type="text" placeholder="Search for cards, decks, or brewers..." class="bg-transparent border-none outline-none w-full text-amber-100 text-base font-medium font-sans">
-                <button class="text-amber-400 hover:text-amber-200 transition-colors ml-2 cursor-pointer">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                </button>
-            </div>
         </div>
     </div>
 
@@ -158,6 +155,12 @@
     document.addEventListener('DOMContentLoaded', () => {
 
         let userData = null;
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>'"]/g,
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
 
         // ==========================================
         // LOGIN MEDIANTE 42
@@ -224,13 +227,13 @@
             userMenuContainer.innerHTML = `
                 <div class="flex items-center space-x-2 text-amber-100 text-sm font-sans">
                     <span class="font-semibold text-amber-400">
-                        👤 ${userData.username}
+                        ${escapeHtml(userData.username)}
                     </span>
                     <span class="text-xs px-2 py-0.5 rounded
                         bg-[#b39258]/20
                         border border-[#b39258]/40
                         text-amber-300">
-                        (${userData.badge})
+                        (${escapeHtml(userData.badge)})
                     </span>
                 </div>
                 <div class="flex items-center space-x-2 pl-2 border-l border-[#b39258]/40">
@@ -258,13 +261,141 @@
                 </div>
             `;
 
+            // Avatar (debe ir DESPUÉS de innerHTML, que si no lo sobrescribe):
+            // imagen de 42 si existe; si no (o si falla la carga), círculo con la inicial.
+            const initial = (userData.username || '?').trim().charAt(0).toUpperCase() || '?';
+
+            function buildInitialAvatar() {
+                const div = document.createElement('div');
+                div.className = 'avatar-initial';
+                div.textContent = initial;
+                div.title = userData.username || '';
+                return div;
+            }
+
+            const API_BASE = 'http://localhost:8000';
+
+            // El backend descarga el avatar y lo sirve desde /api/auth/avatar/<usuario>; las URLs
+            // de 42 quedan como alternativa. Se prueban en orden y, si ninguna carga, se usa la inicial.
+            const resolveAvatarUrl = (u) =>
+                (typeof u === 'string' && u.startsWith('/api/')) ? API_BASE + u : u;
+
+            const avatarCandidates = [
+                userData.avatar,
+                ...(Array.isArray(userData.avatar_fallbacks) ? userData.avatar_fallbacks : []),
+                userData.image_url,
+                userData.picture,
+                userData.image && userData.image.link,
+                userData.image && userData.image.versions && userData.image.versions.medium
+            ].map(resolveAvatarUrl)
+             .filter((u, i, arr) => typeof u === 'string' &&
+                 (/^https:\/\//.test(u) || u.startsWith(API_BASE + '/api/')) &&
+                 arr.indexOf(u) === i);
+
+            let avatarEl;
+            if (avatarCandidates.length) {
+                let attempt = 0;
+                avatarEl = document.createElement('img');
+                avatarEl.alt = userData.username || '';
+                avatarEl.referrerPolicy = 'no-referrer';
+                avatarEl.className = 'avatar-img';
+                avatarEl.addEventListener('error', () => {
+                    console.warn('No se pudo cargar el avatar:', avatarCandidates[attempt]);
+                    attempt += 1;
+                    if (attempt < avatarCandidates.length) {
+                        avatarEl.src = avatarCandidates[attempt];
+                    } else {
+                        avatarEl.replaceWith(buildInitialAvatar());
+                    }
+                });
+                avatarEl.src = avatarCandidates[0];
+            } else {
+                avatarEl = buildInitialAvatar();
+            }
+            userMenuContainer.prepend(avatarEl);
+
             document.getElementById('logout-btn').addEventListener('click', () => {
                 localStorage.removeItem('cardbinder_user');
                 window.location.href = 'login.html';
             });
 
-            document.getElementById('profile-btn').addEventListener('click', () => {
-                alert('Próximamente: Vista para completar el perfil y rango.');
+            // ==========================================
+            // PANEL DE MEDALLAS
+            // ==========================================
+            const achievementsPanel = document.getElementById('achievements-panel');
+            const achievementsGrid = document.getElementById('achievements-grid');
+            const achievementsSummary = document.getElementById('achievements-summary');
+
+            function fetchAchievements(usernameHeader) {
+                return fetch(`${API_BASE}/api/achievements/`, {
+                    headers: { 'X-Username': usernameHeader }
+                });
+            }
+
+            function showAchievementsMessage(text, isError) {
+                achievementsSummary.textContent = '';
+                achievementsGrid.innerHTML = '';
+                const span = document.createElement('span');
+                span.className = 'medal-msg' + (isError ? ' medal-msg-error' : '');
+                span.textContent = text;
+                achievementsGrid.appendChild(span);
+            }
+
+            function renderAchievements(data) {
+                const list = data.achievements || [];
+                const unlockedCount = list.filter(a => a.unlocked).length;
+                achievementsSummary.textContent = `${unlockedCount}/${list.length} desbloqueadas`;
+                achievementsGrid.innerHTML = list.map(a => {
+                    const pct = a.target ? Math.round((a.progress / a.target) * 100) : 0;
+                    const state = a.unlocked ? '¡Conseguida!' : `Progreso: ${a.progress}/${a.target}`;
+                    return `
+                        <div class="medal ${a.unlocked ? 'unlocked' : 'locked'}">
+                            <div class="medal-body">
+                                <div class="medal-icon">${escapeHtml(a.icon)}</div>
+                                <div class="medal-name">${escapeHtml(a.name)}</div>
+                                <div class="medal-bar"><div class="medal-bar-fill" style="width:${pct}%"></div></div>
+                                <div class="medal-progress">${a.progress}/${a.target}</div>
+                            </div>
+                            <div class="medal-tip">
+                                <span class="medal-tip-name">${escapeHtml(a.name)}</span>
+                                <span class="medal-tip-desc">${escapeHtml(a.description)}</span>
+                                <span class="medal-tip-state">${escapeHtml(state)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            async function loadAchievements() {
+                showAchievementsMessage('Cargando medallas...', false);
+                try {
+                    let res = await fetchAchievements(userData.username);
+                    // Si el backend no reconoce el username, probamos con el login de 42
+                    if (res.status === 401 && userData.user_login && userData.user_login !== userData.username) {
+                        res = await fetchAchievements(userData.user_login);
+                    }
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    renderAchievements(await res.json());
+                } catch (error) {
+                    console.error('Error cargando medallas:', error);
+                    showAchievementsMessage('No se pudieron cargar las medallas.', true);
+                }
+            }
+
+            document.getElementById('profile-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const willOpen = achievementsPanel.classList.contains('hidden');
+                achievementsPanel.classList.toggle('hidden');
+                if (willOpen) loadAchievements();
+            });
+
+            // Cerrar el panel al hacer clic fuera de él
+            document.addEventListener('click', (e) => {
+                if (!achievementsPanel.classList.contains('hidden') &&
+                    !achievementsPanel.contains(e.target) &&
+                    !userMenuContainer.contains(e.target)) {
+                    achievementsPanel.classList.add('hidden');
+                }
             });
         }
 

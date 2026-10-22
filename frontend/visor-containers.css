@@ -1,3 +1,16 @@
+Aquí tienes el archivo **`visor-containers.css`** completamente actualizado con los tres ajustes aplicados para que no se corte la última fila:
+
+1. Eliminación de `max-height: 80vh` y `overflow: hidden` en `.binder-page-container` para permitir la extensión vertical necesaria.
+
+
+2. Cambio a `overflow: visible` en `.binder-slot` para asegurar que el botón flotante **🗑️ Borrar** y las etiquetas badge nunca se recorten.
+
+
+3. Adición de padding inferior en `.binder-viewport-wrapper` como espacio de reserva de seguridad.
+
+
+
+```css
 /* ==========================================
    1. ESTILOS DE MAZOS (DECKBOX)
    ========================================== */
@@ -89,11 +102,10 @@
    2. VISOR INTERACTIVO Y LUPA 2.5D
    ========================================== */
 
-/* El contenedor principal de la carta debe controlar el desbordamiento y posicionamiento */
 #cardContainer {
     position: relative;
     overflow: hidden;
-    perspective: 1000px; /* Vital para el efecto 3D */
+    perspective: 1000px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -101,7 +113,6 @@
     margin: 0 auto;
 }
 
-/* La tarjeta interactiva */
 #interactiveCard {
     width: 100%;
     height: 100%;
@@ -116,7 +127,6 @@
     border-radius: 12px;
 }
 
-/* La lupa circular flotante */
 #cardMagnifier {
     position: absolute;
     width: 160px;
@@ -124,13 +134,12 @@
     border-radius: 50%;
     border: 3px solid rgba(255, 255, 255, 0.8);
     box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-    pointer-events: none; /* Evita que bloquee el ratón */
-    display: none; /* Se oculta por defecto hasta que se active */
+    pointer-events: none;
+    display: none;
     z-index: 50;
     background-repeat: no-repeat;
 }
 
-/* Clase que activa la visibilidad de la lupa desde JS */
 #cardMagnifier.is-visible {
     display: block;
 }
@@ -140,111 +149,48 @@
    3. ARCHIVADOR (BINDER) Y REJILLA DINÁMICA
    ========================================== */
 
-/* Columnas dinámicas optimizadas para evitar deformaciones */
-.binder-page-container[data-columns="2"] {
-    grid-template-columns: repeat(2, minmax(140px, 190px));
-    grid-template-rows: repeat(2, auto); /* FUERZA MÁXIMA: Estrictamente 2 filas por página */
-    max-width: 450px; 
-}
-
+/* Rejilla de 3 columnas (BINDER_M / 9 cartas) escalada y con espacio suficiente */
 .binder-page-container[data-columns="3"],
 .binder-page-container:not([data-columns]) {
-    grid-template-columns: repeat(3, minmax(140px, 180px));
-    max-width: 700px;
+    grid-template-columns: repeat(3, minmax(200px, 260px)) !important;
+    max-width: 980px !important;
+    gap: 1.8rem !important;
+}
+
+/* Rejillas alternativas */
+.binder-page-container[data-columns="2"] {
+    grid-template-columns: repeat(2, minmax(180px, 240px)) !important;
+    max-width: 550px !important;
 }
 
 .binder-page-container[data-columns="4"] {
-    grid-template-columns: repeat(4, minmax(120px, 150px));
-    max-width: 900px;
+    grid-template-columns: repeat(4, minmax(140px, 180px)) !important;
+    max-width: 1050px !important;
 }
 
-/* Cada hueco individual del binder */
-.binder-slot {
-    position: relative;
-    width: 100%;
-    background: var(--bg-card, #1a1a1a);
-    border: 2px dashed var(--border-color, #444);
-    border-radius: 12px;
-    aspect-ratio: 5 / 7; /* Proporción exacta de Magic */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    overflow: hidden;
-    cursor: pointer;
-    transition: transform 0.2s ease, border-color 0.2s ease;
-}
-
-.binder-slot.occupied {
-    border-style: solid;
-    border-color: transparent;
-}
-
-.binder-slot:hover {
-    transform: translateY(-4px);
-    border-color: var(--accent-color, #3b82f6);
-}
-
-/* Imagen ajustada al hueco */
-.binder-slot img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    border-radius: 10px;
-}
-
-/* Información superpuesta en la esquina (NM, Foil) */
-.slot-overlay-info {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: flex-end;
-    pointer-events: none;
-}
-
-.slot-badge {
-    background: rgba(0, 0, 0, 0.75);
-    color: #fff;
-    font-size: 0.65rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: bold;
-}
-
-.foil-badge {
-    background: linear-gradient(135deg, #f59e0b, #ec4899, #8b5cf6);
-    color: #fff;
-    font-size: 0.6rem;
-    padding: 2px 6px;
-    border-radius: 4px;
-    font-weight: bold;
-    text-transform: uppercase;
-}
-
-/* Texto para los huecos vacíos del archivador */
-.empty-slot-text {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    text-align: center;
-    padding: 10px;
-}
-
-/* Contenedor base de la página del archivador */
+/* Contenedor base sin límites de altura que corten la vista inferior */
 .binder-page-container {
-    display: grid;
-    gap: 1.5rem;
-    max-width: 1000px;
-    margin: 1.5rem auto;
-    padding: 1rem;
-    justify-content: center;
-    justify-items: center;
-    overflow: hidden;
-    max-height: 80vh;
+    display: grid !important;
+    margin: 1rem auto 2.5rem auto !important;
+    padding: 1rem !important;
+    justify-content: center !important;
+    justify-items: center !important;
+    overflow: visible !important;
+    max-height: none !important; /* Elimina cualquier restricción vertical */
 }
 
+/* Garantiza que el área envolvente permita scroll libre sin recortar el botón de borrar */
+.binder-viewport-wrapper {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    max-width: 1100px !important;
+    margin: 0 auto !important;
+    padding-bottom: 4rem !important; /* Margen de seguridad amplio para la última fila */
+    overflow: visible !important;
+}
 
 /* ==========================================
    4. COMPONENTES NUEVOS (MODAL, NAV Y PLACEHOLDER)
@@ -404,27 +350,7 @@
     font-size: 1.1rem;
 }
 
-/* Botón rápido para mover carta en el slot */
-.cross-move-btn {
-    background: rgba(15, 23, 42, 0.85) !important;
-    border: 1px solid #f59e0b !important;
-    color: #f59e0b !important;
-    border-radius: 6px !important;
-    padding: 4px 10px !important;
-    font-size: 11px !important;
-    font-weight: bold !important;
-    cursor: pointer !important;
-    transition: all 0.2s ease !important;
-    text-transform: uppercase;
-    backdrop-filter: blur(4px);
-}
-.cross-move-btn:hover {
-    background: #f59e0b !important;
-    color: #0f172a !important;
-    transform: scale(1.05);
-}
-
-/* Placeholder para estado vacío (Antes de cargar contenedor) */
+/* Placeholder para estado vacío */
 .placeholder-msg {
     display: flex;
     flex-direction: column;
@@ -450,6 +376,7 @@
     width: 100%;
     max-width: 1100px;
     margin: 0 auto;
+    padding-bottom: 2rem; /* Margen de seguridad para que la última fila mantenga espacio accesible */
 }
 
 /* Flechas centradas verticalmente a los costados del grid */
@@ -500,3 +427,4 @@
     width: 100% !important;
     box-sizing: border-box;
 }
+

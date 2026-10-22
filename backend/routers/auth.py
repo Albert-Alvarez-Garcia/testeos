@@ -1,12 +1,14 @@
 import os
+import re
 import json
+import time
 import secrets
-from urllib.parse import urlencode
+from urllib.parse import urlencode, urljoin, urlparse
 
 import bcrypt
 import requests
 from fastapi import APIRouter, HTTPException, status, Request
-from fastapi.responses import RedirectResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse
 from pydantic import BaseModel, EmailStr
 from passlib.context import CryptContext
 
@@ -36,6 +38,144 @@ FORTYTWO_REDIRECT_URI = os.getenv(
     "FORTYTWO_REDIRECT_URI",
     "http://localhost:8080/api/auth/42/callback"
 )
+
+# --- AVATARES ---
+# La API descarga el avatar de 42 al iniciar sesión y lo sirve ella misma, para que el
+# navegador no dependa del CDN (que a veces falla o es bloqueado por ORB al enlazarlo).
+# Si quieres que sobrevivan a recrear el contenedor, monta AVATAR_DIR como volumen.
+AVATAR_DIR = os.getenv("AVATAR_DIR", "data/avatars")
+AVATAR_ALLOWED_HOSTS = {"cdn.intra.42.fr"}  # solo se descarga de aquí (evita SSRF)
+AVATAR_MAX_BYTES = 5 * 1024 * 1024
+AVATAR_MEDIA_TYPES = {
+    "png": "image/png",
+    "jpg": "image/jpeg",
+    "gif": "image/gif",
+    "webp": "image/webp",
+}
+
+
+def _safe_avatar_name(username: str) -> str:
+    """Nombre de archivo seguro derivado del usuario (sin rutas ni caracteres raros)."""
+    return re.sub(r"[^A-Za-z0-9_-]", "_", username or "")[:64] or "user"
+
+
+def _detect_image_ext(data: bytes):
+    """Devuelve la extensión según la firma real del archivo, o None si no es una imagen soportada."""
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "jpg"
+    if data.startswith((b"GIF87a", b"GIF89a")):
+        return "gif"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "webp"
+    return None
+
+
+def _download_avatar(url: str):
+    """
+    Descarga una imagen comprobando host (solo https y AVATAR_ALLOWED_HOSTS, también en
+    cada redirección), tamaño máximo y firma de imagen. Devuelve (bytes, extensión) o None.
+    """
+    for _ in range(4):  # la URL original + hasta 3 redirecciones
+        parsed = urlparse(url)
+        if parsed.scheme != "https" or parsed.hostname not in AVATAR_ALLOWED_HOSTS:
+            return None
+
+        resp = requests.get(
+            url,
+            headers={"Accept": "image/*,*/*;q=0.8"},
+            timeout=8,
+            stream=True,
+            allow_redirects=False,
+        )
+        try:
+            if resp.status_code in (301, 302, 303, 307, 308):
+                location = resp.headers.get("Location")
+                if not location:
+                    return None
+                url = urljoin(url, location)
+                continue
+
+            if resp.status_code != 200:
+                return None
+
+            data = b""
+            for chunk in resp.iter_content(65536):
+                data += chunk
+                if len(data) > AVATAR_MAX_BYTES:
+                    return None
+        finally:
+            resp.close()
+
+        ext = _detect_image_ext(data)
+        return (data, ext) if ext else None
+
+    return None
+
+
+def save_avatar_locally(username: str, urls: list):
+    """
+    Prueba cada URL hasta conseguir una imagen válida y la guarda en AVATAR_DIR.
+    Devuelve la ruta pública del avatar en esta API, o None si no se pudo (el login no falla por esto).
+    """
+    safe = _safe_avatar_name(username)
+
+    try:
+        os.makedirs(AVATAR_DIR, exist_ok=True)
+    except OSError as e:
+        print(f"⚠️ No se pudo crear el directorio de avatares '{AVATAR_DIR}': {e}")
+        return None
+
+    for url in urls:
+        try:
+            result = _download_avatar(url)
+        except requests.RequestException as e:
+            print(f"⚠️ Error descargando avatar de 42 ({url}): {e}")
+            continue
+
+        if not result:
+            print(f"⚠️ Avatar de 42 no válido o no disponible: {url}")
+            continue
+
+        data, ext = result
+        try:
+            # Si antes tenía una imagen con otra extensión, se elimina para no servir una antigua
+            for other in AVATAR_MEDIA_TYPES:
+                if other != ext:
+                    stale = os.path.join(AVATAR_DIR, f"{safe}.{other}")
+                    if os.path.isfile(stale):
+                        os.remove(stale)
+
+            final_path = os.path.join(AVATAR_DIR, f"{safe}.{ext}")
+            tmp_path = final_path + ".tmp"
+            with open(tmp_path, "wb") as f:
+                f.write(data)
+            os.replace(tmp_path, final_path)
+        except OSError as e:
+            print(f"⚠️ No se pudo guardar el avatar de '{safe}': {e}")
+            return None
+
+        # ?v=... evita que el navegador use una versión antigua en caché al cambiar la foto
+        return f"/api/auth/avatar/{safe}?v={int(time.time())}"
+
+    return None
+
+
+@router.get("/avatar/{username}")
+async def get_avatar(username: str):
+    """Sirve el avatar guardado de un usuario (imagen pública de 42) con su Content-Type correcto."""
+    safe = _safe_avatar_name(username)
+    for ext, media_type in AVATAR_MEDIA_TYPES.items():
+        path = os.path.join(AVATAR_DIR, f"{safe}.{ext}")
+        if os.path.isfile(path):
+            return FileResponse(
+                path,
+                media_type=media_type,
+                headers={"Cache-Control": "public, max-age=3600"},
+            )
+    raise HTTPException(status_code=404, detail="Avatar no disponible.")
+
 
 
 class UserRegister(BaseModel):
@@ -241,6 +381,39 @@ async def callback_42(
         "username": final_user["username"],
         "badge": final_user.get("badge_type", "42_student"),
     }
+
+    # Imagen de perfil de 42: /v2/me devuelve "image" con "link" y "versions"
+    # (en formatos antiguos, "image_url"). El CDN a veces falla con alguna de
+    # ellas, así que se envían varias para que el frontend pruebe una tras otra.
+    image = profile.get("image")
+    candidates = []
+    if isinstance(image, dict):
+        versions = image.get("versions") or {}
+        candidates += [
+            versions.get("medium"),
+            versions.get("small"),
+            versions.get("large"),
+            versions.get("micro"),
+            image.get("link"),
+        ]
+    candidates.append(profile.get("image_url"))
+
+    avatar_urls = []
+    for url in candidates:
+        if isinstance(url, str) and url.startswith("https://") and url not in avatar_urls:
+            avatar_urls.append(url)
+
+    if avatar_urls:
+        # Primero se intenta descargar y servir el avatar desde esta API. Las URLs de 42
+        # quedan como alternativa por si el archivo local desapareciera.
+        local_avatar = save_avatar_locally(final_user["username"], avatar_urls)
+        if local_avatar:
+            payload["avatar"] = local_avatar
+            payload["avatar_fallbacks"] = avatar_urls
+        else:
+            payload["avatar"] = avatar_urls[0]
+            if len(avatar_urls) > 1:
+                payload["avatar_fallbacks"] = avatar_urls[1:]
 
     payload_json = json.dumps(payload).replace("<", "\\u003c")
 
