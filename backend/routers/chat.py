@@ -47,7 +47,19 @@ async def get_chat_history():
             LIMIT 50;
         """)
         messages = cursor.fetchall()
-        return [dict(msg) for msg in messages]
+        
+        result = []
+        for msg in messages:
+            msg_dict = dict(msg)
+            if msg_dict.get("created_at"):
+                dt_val = msg_dict["created_at"]
+                dt_str = dt_val.isoformat() if hasattr(dt_val, "isoformat") else str(dt_val)
+                if not dt_str.endswith("Z") and "+" not in dt_str and "-" not in dt_str[10:]:
+                    dt_str += "Z"
+                msg_dict["created_at"] = dt_str
+            result.append(msg_dict)
+            
+        return result
     except Exception as e:
         print(f"❌ Error al recuperar el historial del chat: {e}")
         raise HTTPException(status_code=500, detail="No se pudo cargar el historial del chat.")
@@ -84,6 +96,12 @@ async def chat_websocket(websocket: WebSocket):
             new_msg = cursor.fetchone()
             conn.commit()
 
+            # Asegurar formato ISO con 'Z' (UTC) para que JavaScript interprete la zona horaria correctamente
+            created_at_val = new_msg["created_at"]
+            created_at_str = created_at_val.isoformat() if hasattr(created_at_val, "isoformat") else str(created_at_val)
+            if not created_at_str.endswith("Z") and "+" not in created_at_str and "-" not in created_at_str[10:]:
+                created_at_str += "Z"
+
             # Estructura del mensaje para difundir a todos los clientes conectados
             message_payload = {
                 "id": str(new_msg["id"]),
@@ -91,7 +109,7 @@ async def chat_websocket(websocket: WebSocket):
                 "user_login": new_msg["user_login"],
                 "badge_type": new_msg["badge_type"],
                 "message": new_msg["message"],
-                "created_at": new_msg["created_at"].isoformat()
+                "created_at": created_at_str
             }
 
             await manager.broadcast(message_payload)

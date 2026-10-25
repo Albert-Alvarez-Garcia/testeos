@@ -31,7 +31,8 @@ def search_cards_by_substring(name: str, card_type: str = None):
             query += " AND LOWER(c.type_line) LIKE LOWER(%s)"
             params.append(f"%{card_type.strip()}%")
         
-        query += ";"
+        # Orden estable: las impresiones de una misma carta salen juntas
+        query += " ORDER BY c.name ASC, p.set_name ASC, p.collector_number ASC;"
         cursor.execute(query, tuple(params))
         
         local_cards = cursor.fetchall()

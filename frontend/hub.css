@@ -1,0 +1,91 @@
+/* ==========================================================================
+   PÁGINAS INTERMEDIAS (hub-coleccion.html, hub-juegos.html)
+   Se apoya en portal.css (fondo, fuente MagicTheGathering, .metal-orb) y no necesita Tailwind.
+   ========================================================================== */
+
+:root {
+    --hub-panel: rgba(20, 14, 9, 0.94);
+    --hub-panel-2: #1e140d;
+    --hub-line: rgba(179, 146, 88, 0.32);
+    --hub-line-strong: #8c6d36;
+    --hub-gold: #fbbf24;
+    --hub-gold-soft: #fcd34d;
+    --hub-text: #fef3c7;
+    --hub-muted: rgba(253, 230, 138, 0.68);
+}
+
+* { box-sizing: border-box; }
+
+body.hub-body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--hub-text);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.45;
+}
+
+.hub-header {
+    width: 100%; max-width: 64rem; display: flex; align-items: center; gap: 16px;
+    background: var(--hub-panel); border: 1px solid var(--hub-line); border-radius: 12px;
+    padding: 12px 18px; margin-bottom: 28px; box-shadow: 0 6px 20px rgba(0, 0, 0, .35);
+}
+.hub-logo img { height: 40px; width: auto; display: block; }
+.hub-crumbs { display: flex; align-items: center; gap: 8px; font-size: .88rem; color: var(--hub-muted); border-left: 1px solid var(--hub-line); padding-left: 16px; }
+.hub-crumbs a { color: var(--hub-text); text-decoration: none; padding: 4px 6px; border-radius: 6px; }
+.hub-crumbs a:hover { background: var(--hub-panel-2); color: var(--hub-gold-soft); }
+.hub-crumbs [aria-current="page"] { color: var(--hub-gold); font-weight: 600; }
+
+.hub-main { width: 100%; max-width: 64rem; }
+.hub-main h1 { font-family: 'Cinzel', Georgia, serif; font-size: 2rem; color: var(--hub-gold); margin: 0 0 6px; text-shadow: 0 2px 10px rgba(0, 0, 0, .8); }
+.hub-lead { margin: 0 0 24px; color: var(--hub-text); max-width: 60ch; text-shadow: 0 1px 6px rgba(0, 0, 0, .9); }
+
+.hub-grid { display: grid; gap: 18px; grid-template-columns: repeat(3, 1fr); }
+.hub-grid.two { grid-template-columns: repeat(2, 1fr); }
+
+.hub-card {
+    position: relative; display: flex; gap: 16px; align-items: flex-start; text-decoration: none; color: inherit;
+    background: var(--hub-panel); border: 1px solid var(--hub-line-strong); border-radius: 14px; padding: 20px;
+    transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+a.hub-card:hover { border-color: #ffd700; box-shadow: 0 0 18px rgba(212, 175, 55, .4); transform: translateY(-2px); }
+a.hub-card:focus-visible { outline: 2px solid var(--hub-gold); outline-offset: 3px; }
+.hub-card.primary { grid-column: 1 / -1; padding: 26px; }
+
+.hub-orb { flex: none; width: 56px; height: 56px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; }
+.hub-card.primary .hub-orb { width: 72px; height: 72px; font-size: 2.1rem; }
+
+.hub-card h2 { font-family: 'Cinzel', Georgia, serif; font-size: 1.1rem; color: var(--hub-gold-soft); margin: 0 0 6px; }
+.hub-card.primary h2 { font-size: 1.4rem; }
+.hub-card p { margin: 0; font-size: .88rem; color: rgba(254, 243, 199, .88); max-width: 52ch; }
+
+.hub-stats { display: flex; flex-wrap: wrap; gap: 6px 28px; margin: 14px 0 0; padding: 0; }
+.hub-stats div { display: flex; flex-direction: column-reverse; }
+.hub-stats dt { font-size: .78rem; color: var(--hub-muted); }
+.hub-stats dd { margin: 0; font-family: 'Cinzel', Georgia, serif; font-size: 1.5rem; font-weight: 700; color: var(--hub-gold); line-height: 1.1; }
+
+/* Juego bloqueado o en comprobación */
+.hub-card.is-locked { border-color: var(--hub-line); background: rgba(14, 10, 7, .94); }
+.hub-card.is-locked .hub-orb { filter: grayscale(1); opacity: .55; }
+.hub-card.is-locked h2 { color: var(--hub-muted); }
+.hub-lock {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 10px; border-radius: 99px;
+    font-size: .78rem; font-weight: 600; background: rgba(251, 191, 36, .09); border: 1px solid rgba(251, 191, 36, .4); color: var(--hub-gold-soft);
+}
+.hub-retry {
+    margin-left: 6px; font: inherit; font-size: .78rem; color: var(--hub-text); background: var(--hub-panel-2);
+    border: 1px solid var(--hub-line-strong); border-radius: 8px; padding: 3px 10px; cursor: pointer;
+}
+.hub-retry:hover { border-color: var(--hub-gold); color: var(--hub-gold-soft); }
+.hub-retry:focus-visible { outline: 2px solid var(--hub-gold); outline-offset: 2px; }
+
+@media (max-width: 760px) {
+    .hub-grid, .hub-grid.two { grid-template-columns: 1fr; }
+    .hub-main h1 { font-size: 1.6rem; }
+    .hub-card.primary { padding: 20px; }
+}
+@media (prefers-reduced-motion: reduce) { .hub-card { transition: none; } a.hub-card:hover { transform: none; } }
+
+#pongSlot { display: flex; }
+#pongSlot > .hub-card { flex: 1; }

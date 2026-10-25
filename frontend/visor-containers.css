@@ -1,16 +1,3 @@
-Aquí tienes el archivo **`visor-containers.css`** completamente actualizado con los tres ajustes aplicados para que no se corte la última fila:
-
-1. Eliminación de `max-height: 80vh` y `overflow: hidden` en `.binder-page-container` para permitir la extensión vertical necesaria.
-
-
-2. Cambio a `overflow: visible` en `.binder-slot` para asegurar que el botón flotante **🗑️ Borrar** y las etiquetas badge nunca se recorten.
-
-
-3. Adición de padding inferior en `.binder-viewport-wrapper` como espacio de reserva de seguridad.
-
-
-
-```css
 /* ==========================================
    1. ESTILOS DE MAZOS (DECKBOX)
    ========================================== */
@@ -177,6 +164,14 @@ Aquí tienes el archivo **`visor-containers.css`** completamente actualizado con
     justify-items: center !important;
     overflow: visible !important;
     max-height: none !important; /* Elimina cualquier restricción vertical */
+}
+
+/* Cada hueco es el punto de referencia de sus propios botones flotantes (🗑️ Borrar).
+   Sin position: relative, los botones absolutos de todas las cartas se apilan
+   en la esquina del contenedor posicionado más cercano. */
+.binder-slot {
+    position: relative !important;
+    overflow: visible !important;
 }
 
 /* Garantiza que el área envolvente permita scroll libre sin recortar el botón de borrar */
@@ -368,17 +363,6 @@ Aquí tienes el archivo **`visor-containers.css`** completamente actualizado con
     color: var(--text-muted, #64748b);
 }
 
-.binder-viewport-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding-bottom: 2rem; /* Margen de seguridad para que la última fila mantenga espacio accesible */
-}
-
 /* Flechas centradas verticalmente a los costados del grid */
 .side-nav-arrow {
     position: absolute;
@@ -427,4 +411,3 @@ Aquí tienes el archivo **`visor-containers.css`** completamente actualizado con
     width: 100% !important;
     box-sizing: border-box;
 }
-

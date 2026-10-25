@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, Header
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from backend.database import get_db_connection
 from backend.services import get_user_by_username_or_email
@@ -38,6 +38,7 @@ class AddCardToContainerRequest(BaseModel):
     language: Optional[str] = "en"
     is_foil: Optional[bool] = False
     notes: Optional[str] = None
+    quantity: int = Field(1, ge=1, le=99)
 
 class MoveCardRequest(BaseModel):
     copy_id: str
@@ -158,7 +159,7 @@ def add_card_to_container(data: AddCardToContainerRequest, current_user: dict = 
             SELECT p.id 
             FROM printings p
             JOIN cards c ON p.card_id = c.id
-            WHERE c.scryfall_id::text = %s OR p.id::text = %s
+            WHERE p.scryfall_printing_id = %s OR p.id::text = %s
             LIMIT 1;
             """,
             (data.printing_id, data.printing_id)
@@ -173,59 +174,68 @@ def add_card_to_container(data: AddCardToContainerRequest, current_user: dict = 
         
         internal_printing_id = printing_row["id"]
 
-        target_slot_id = data.slot_id
-        if not target_slot_id:
+        if data.slot_id and data.quantity > 1:
+            raise HTTPException(
+                status_code=400,
+                detail="No se puede indicar un slot concreto al añadir más de una copia."
+            )
+
+        if data.slot_id:
+            target_slot_ids = [data.slot_id]
+        else:
+            # Bloqueamos los huecos libres para que dos peticiones simultáneas no se pisen
             cursor.execute(
                 """
-                SELECT id FROM container_slots 
-                WHERE container_id = %s AND is_occupied = FALSE 
-                ORDER BY 
+                SELECT id FROM container_slots
+                WHERE container_id = %s AND is_occupied = FALSE
+                ORDER BY
                     CASE WHEN section = 'main' THEN 1 ELSE 2 END ASC,
-                    page_number ASC, 
-                    slot_index ASC 
-                LIMIT 1;
+                    page_number ASC,
+                    slot_index ASC
+                LIMIT %s
+                FOR UPDATE;
                 """,
-                (data.container_id,)
+                (data.container_id, data.quantity)
             )
-            free_slot = cursor.fetchone()
-            if free_slot:
-                target_slot_id = free_slot["id"]
+            target_slot_ids = [str(row["id"]) for row in cursor.fetchall()]
 
-        if not target_slot_id:
-            raise HTTPException(
-                status_code=400, 
-                detail="No hay huecos libres disponibles en este contenedor o no se han generado."
+            if len(target_slot_ids) < data.quantity:
+                libres = len(target_slot_ids)
+                raise HTTPException(
+                    status_code=409,
+                    detail=(
+                        f"No caben {data.quantity} copias en este contenedor. "
+                        f"Solo hay {libres} hueco(s) libre(s)."
+                    )
+                )
+
+        new_copies = []
+        for slot_id in target_slot_ids:
+            cursor.execute(
+                """
+                INSERT INTO card_copies (printing_id, container_id, slot_id, condition, language, is_foil, notes)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING id, container_id, slot_id, condition, language, is_foil, created_at;
+                """,
+                (
+                    internal_printing_id,
+                    data.container_id,
+                    slot_id,
+                    data.condition,
+                    data.language,
+                    data.is_foil,
+                    data.notes
+                )
             )
+            new_copies.append(dict(cursor.fetchone()))
 
         cursor.execute(
-            """
-            INSERT INTO card_copies (printing_id, container_id, slot_id, condition, language, is_foil, notes)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-            RETURNING id, container_id, slot_id, condition, language, is_foil, created_at;
-            """,
-            (
-                internal_printing_id, 
-                data.container_id, 
-                target_slot_id, 
-                data.condition, 
-                data.language, 
-                data.is_foil, 
-                data.notes
-            )
-        )
-        new_copy = cursor.fetchone()
-
-        cursor.execute(
-            """
-            UPDATE container_slots 
-            SET is_occupied = TRUE 
-            WHERE id = %s;
-            """,
-            (target_slot_id,)
+            "UPDATE container_slots SET is_occupied = TRUE WHERE id = ANY(%s::uuid[]);",
+            (target_slot_ids,)
         )
 
         conn.commit()
-        return {"status": "success", "copy": dict(new_copy)}
+        return {"status": "success", "added": len(new_copies), "copies": new_copies}
 
     except HTTPException as he:
         conn.rollback()

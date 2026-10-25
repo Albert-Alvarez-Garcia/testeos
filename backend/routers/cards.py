@@ -53,13 +53,14 @@ def get_types_taxonomy():
         return json.load(f)
 
 
-@router.get("/ownership/{scryfall_id}")
+@router.get("/ownership/{scryfall_printing_id}")
 def get_card_ownership(
-    scryfall_id: str,
+    scryfall_printing_id: str,
     x_username: str = Header(None)
 ):
     """
-    Comprueba si el usuario posee copias de una carta y en qué contenedores.
+    Comprueba si el usuario posee copias de ESA impresión exacta (arte/colección)
+    y en qué contenedores.
     """
 
     if not x_username:
@@ -88,11 +89,10 @@ def get_card_ownership(
                 COUNT(DISTINCT cc.container_id) AS container_count
             FROM card_copies cc
             JOIN printings p ON cc.printing_id = p.id
-            JOIN cards c ON p.card_id = c.id
             JOIN containers co ON cc.container_id = co.id
-            WHERE c.scryfall_id::text = %s
+            WHERE p.scryfall_printing_id = %s
               AND co.user_id = %s;
-        """, (scryfall_id, user_id))
+        """, (scryfall_printing_id, user_id))
 
         ownership = cursor.fetchone()
 
@@ -105,13 +105,12 @@ def get_card_ownership(
                 COUNT(cc.id) AS quantity
             FROM card_copies cc
             JOIN printings p ON cc.printing_id = p.id
-            JOIN cards c ON p.card_id = c.id
             JOIN containers co ON cc.container_id = co.id
-            WHERE c.scryfall_id::text = %s
+            WHERE p.scryfall_printing_id = %s
               AND co.user_id = %s
             GROUP BY co.id, co.name
             ORDER BY co.name ASC;
-        """, (scryfall_id, user_id))
+        """, (scryfall_printing_id, user_id))
 
         containers = cursor.fetchall()
 

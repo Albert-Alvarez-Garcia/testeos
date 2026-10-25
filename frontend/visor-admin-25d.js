@@ -205,6 +205,7 @@ async function realizarBusqueda() {
             item.innerHTML = `
                 <img src="${imgSrc}" alt="${cardData.name}" loading="lazy">
                 <span>${cardData.name}</span>
+                <small style="display: block; font-size: 0.7rem; color: var(--text-muted);">${(cardData.set_code || '').toUpperCase()} ${cardData.collector_number ? '#' + cardData.collector_number : ''}</small>
             `;
             
             item.addEventListener('click', () => seleccionarCarta(cardData));
@@ -238,7 +239,7 @@ if (searchInput) {
 // 5. SELECCIÓN DE CARTA Y VISOR INTERACTIVO
 // ============================================================================
 async function comprobarPropiedadCarta(cardData) {
-    if (!cardData || !cardData.scryfall_id) {
+    if (!cardData || !cardData.scryfall_printing_id) {
         currentCardOwnership = null;
         return;
     }
@@ -249,7 +250,7 @@ async function comprobarPropiedadCarta(cardData) {
 
     try {
         const response = await fetch(
-            `${API_BASE_URL}/cards/ownership/${encodeURIComponent(cardData.scryfall_id)}`,
+            `${API_BASE_URL}/cards/ownership/${encodeURIComponent(cardData.scryfall_printing_id)}`,
             {
                 method: 'GET',
                 headers: {
@@ -297,7 +298,10 @@ function seleccionarCarta(cardData) {
     
     if (visorName) visorName.textContent = cardData.name || "Sin nombre";
     if (visorMana) visorMana.textContent = cardData.mana_cost || "";
-    if (visorType) visorType.textContent = cardData.type_line || "";
+    if (visorType) {
+        const setInfo = [cardData.set_name, cardData.collector_number ? `#${cardData.collector_number}` : ''].filter(Boolean).join(' ');
+        visorType.textContent = [cardData.type_line, setInfo].filter(Boolean).join(' · ');
+    }
 
     if (cardQuantity) cardQuantity.value = 1;
     cardState.value = cardData.state ?? 'NM';
@@ -427,7 +431,8 @@ saveInventoryBtn.addEventListener('click', async () => {
         return;
     }
 
-    const printingId = currentSelectedCard.scryfall_id || currentSelectedCard.id || currentSelectedCard.printing_id;
+    // Impresión exacta (arte/colección) elegida; nunca el scryfall_id de la carta, que es común a todas sus impresiones.
+    const printingId = currentSelectedCard.scryfall_printing_id;
 
     if (!printingId) {
         alert("Error: La carta seleccionada no tiene un ID de impresión válido.");
@@ -442,45 +447,43 @@ saveInventoryBtn.addEventListener('click', async () => {
         container_id: containerId,
         condition: cardState.value || "Near Mint",
         language: "en",
-        is_foil: false
+        is_foil: false,
+        quantity: cantidadACrear
     };
 
+    saveInventoryBtn.disabled = true;
+
     try {
-        for (let i = 0; i < cantidadACrear; i++) {
-            const response = await fetch(`${API_BASE_URL}/containers/items`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'accept': 'application/json',
-                    ...authHeader
-                },
-                body: JSON.stringify(payload)
-            });
+        const response = await fetch(`${API_BASE_URL}/containers/items`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'accept': 'application/json',
+                ...authHeader
+            },
+            body: JSON.stringify(payload)
+        });
 
-            const data = await response.json();
+        const data = await response.json();
 
-            if (!response.ok) {
-                let errorMsg = 'Error al guardar la carta.';
-                if (data.detail) {
-                    errorMsg = Array.isArray(data.detail) 
-                        ? data.detail.map(err => err.msg).join(', ') 
-                        : String(data.detail);
-                }
-                alert(`Error / Validación en la copia ${i + 1}: ${errorMsg}`);
-                return;
+        if (!response.ok) {
+            let errorMsg = 'Error al guardar la carta.';
+            if (data.detail) {
+                errorMsg = Array.isArray(data.detail)
+                    ? data.detail.map(err => err.msg).join(', ')
+                    : String(data.detail);
             }
-
-            if (i < cantidadACrear - 1) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
-            }
+            alert(errorMsg);
+            return;
         }
 
-        mostrarNotificacionFlotante(`¡${cantidadACrear}x ${currentSelectedCard.name} añadida(s) al contenedor con éxito!`);
-        
+        mostrarNotificacionFlotante(`¡${data.added}x ${currentSelectedCard.name} añadida(s) al contenedor con éxito!`);
         comprobarPropiedadCarta(currentSelectedCard);
 
     } catch (error) {
         console.error("Error al guardar inventario:", error);
         alert(`Hubo un error de conexión: ${error.message}`);
+    } finally {
+        saveInventoryBtn.disabled = false;
     }
 });

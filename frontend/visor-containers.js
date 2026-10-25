@@ -1,7 +1,7 @@
 /********************************************************************************
- * [MODULE]: VISOR DE CONTENEDORES Y BINDERS (visor-containers.js)
- * [DESCRIPTION]: Lógica de renderizado unificada, listado inicial de contenedores
- *                del usuario y borrado persistente en BBDD.
+- [MODULE]: VISOR DE CONTENEDORES Y BINDERS (visor-containers.js)
+- [DESCRIPTION]: Lógica de renderizado unificada, listado inicial de contenedores
+-                del usuario, borrado persistente en BBDD y visor Lightbox integrado.
  ********************************************************************************/
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,6 +13,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterContainerTypeSelect = document.getElementById('filterContainerType');
     const showAllContainersBtn = document.getElementById('showAllContainersBtn');
     const backToGridBtn = document.getElementById('backToGridBtn');
+
+    // Referencias al Lightbox unificado
+    const lightbox = document.getElementById('lightbox');
+    const lightboxImg = document.getElementById('lightbox-img');
+    const lightboxCaption = document.getElementById('lightbox-caption');
+    const lightboxClose = document.getElementById('lightbox-close');
+
+    if (lightboxClose) {
+        lightboxClose.addEventListener('click', () => lightbox.close());
+    }
+    if (lightbox) {
+        lightbox.addEventListener('click', (event) => {
+            if (event.target === lightbox) lightbox.close();
+        });
+    }
 
     let currentContainerData = null;
     let allContainers = [];
@@ -88,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return allContainers.filter(c => (c.type || c.tipo || '').toLowerCase().includes(typeFilter.toLowerCase()));
     }
 
-    // --- RENDERIZADO DE LA REJILLA DE TODOS LOS CONTENEDORES ---
+    // --- RENDERIZADO DE LA REJILLA DE TODOS LOS CONTENEDORES (FORMATO ORIGINAL RESTAURADO) ---
     function renderizarRejillaContenedores() {
         containerInfoBar.classList.add('hidden');
         showAllContainersBtn.classList.add('hidden');
@@ -100,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!lista || lista.length === 0) {
             visualWorkspace.innerHTML = `
-                <div class="bg-[#140e09] border border-[#b39258]/30 rounded-2xl p-12 text-center">
+                <div class="fantasy-panel p-12 text-center">
                     <p class="text-amber-200/60 text-sm mb-2">No se encontraron contenedores para el filtro seleccionado.</p>
                     <span class="text-xs text-amber-200/40">Crea nuevos binders o mazos desde el panel principal.</span>
                 </div>
@@ -110,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let html = `
             <div class="mb-4 flex justify-between items-center">
-                <h2 class="magic-title text-base font-bold text-amber-400 uppercase tracking-wider">🏰 Tus Bóvedas y Archivadores (${lista.length})</h2>
+                <h2 class="font-magic text-base font-bold text-amber-400 uppercase tracking-wider">🏰 Tus Bóvedas y Archivadores (${lista.length})</h2>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         `;
@@ -120,10 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
             const icon = tipoUpper.includes('BINDER') ? '📖' : tipoUpper.includes('DECK') ? '🎴' : '📦';
             
             html += `
-                <div data-container-id="${c.id}" class="container-card rounded-2xl p-5 cursor-pointer flex flex-col justify-between h-[170px]">
+                <div data-container-id="${c.id}" class="container-card fantasy-panel rounded-2xl p-5 cursor-pointer flex flex-col justify-between h-[170px]">
                     <div>
                         <div class="flex justify-between items-start mb-2">
-                            <h3 class="magic-title font-bold text-amber-300 text-base flex items-center gap-2">
+                            <h3 class="font-magic font-bold text-amber-300 text-base flex items-center gap-2">
                                 <span>${icon}</span> ${c.name || 'Sin Nombre'}
                             </h3>
                             <span class="bg-amber-500/20 text-amber-400 text-[10px] px-2 py-0.5 rounded-full border border-amber-500/30 font-bold">
@@ -135,7 +150,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     <div class="flex justify-between items-center border-t border-[#b39258]/20 pt-3 mt-2">
                         <span class="text-[11px] text-amber-200/50">Haz clic para desplegar ➔</span>
-                        <button class="bg-[#1e140d] hover:bg-amber-600 hover:text-black text-amber-200 font-bold px-3 py-1.5 rounded-lg text-xs border border-[#b39258]/40 transition-all">
+                        <button class="btn-fantasy text-xs py-1.5 px-3">
                             Inspeccionar
                         </button>
                     </div>
@@ -146,7 +161,6 @@ document.addEventListener('DOMContentLoaded', () => {
         html += `</div>`;
         visualWorkspace.innerHTML = html;
 
-        // Asignar listeners a cada tarjeta
         visualWorkspace.querySelectorAll('[data-container-id]').forEach(card => {
             card.addEventListener('click', () => {
                 const id = card.getAttribute('data-container-id');
@@ -349,9 +363,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 slotDiv.addEventListener('click', () => {
-                    const encodedImg = encodeURIComponent(slot.image_uri || '');
-                    const encodedName = encodeURIComponent(slot.card_name || '');
-                    window.location.href = `gestor-contenedor.html?card_id=${slot.card_id}&printing_id=${slot.copy_id}&img=${encodedImg}&name=${encodedName}`;
+                    if (slot.image_uri && lightbox) {
+                        lightboxImg.src = slot.image_uri;
+                        lightboxImg.alt = slot.card_name || 'Carta';
+                        lightboxCaption.textContent = slot.card_name || 'Carta en contenedor';
+                        lightbox.showModal();
+                    }
                 });
             } else {
                 slotDiv.innerHTML = `<span class="empty-slot-text">Hueco ${(absoluteIndex % itemsPerPage) + 1}</span>`;
@@ -423,9 +440,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
 
                 item.querySelector('img').addEventListener('click', () => {
-                    const encodedImg = encodeURIComponent(slot.image_uri || '');
-                    const encodedName = encodeURIComponent(slot.card_name || '');
-                    window.location.href = `gestor-contenedor.html?card_id=${slot.card_id}&printing_id=${slot.copy_id}&img=${encodedImg}&name=${encodedName}`;
+                    if (slot.image_uri && lightbox) {
+                        lightboxImg.src = slot.image_uri;
+                        lightboxImg.alt = slot.card_name || 'Carta';
+                        lightboxCaption.textContent = slot.card_name || 'Carta en mazo';
+                        lightbox.showModal();
+                    }
                 });
             } else {
                 item.innerHTML = `<span class="empty-slot-mini">${slot.slot_index}</span>`;
