@@ -147,8 +147,7 @@
     <!-- ESPACIADOR INFERIOR -->
     <div class="h-10"></div>
 
-    <!-- SCRIPT DE CONTROL DE PESTAÑAS -->
-<!-- SCRIPT DE CONTROL DE PESTAÑAS Y AUTENTICACIÓN -->
+    <!-- SCRIPT DE CONTROL DE PESTAÑAS Y AUTENTICACIÓN -->
     <script>
         function switchTab(tab) {
             const loginBtn = document.getElementById('tabLoginBtn');
@@ -199,6 +198,11 @@
                     badge: data.badge || 'Homebrewer'
                 }));
 
+                // 🔑 GUARDAR UUID DEL USUARIO PARA EL PERFIL Y SISTEMA SOCIAL
+                if (data.id) {
+                    localStorage.setItem('user_id', data.id);
+                }
+
                 // Redirigir al index principal
                 window.location.href = 'index.html';
 
@@ -231,6 +235,11 @@
                     username: data.username || username,
                     badge: data.badge || 'Homebrewer'
                 }));
+
+                // 🔑 GUARDAR UUID DEL USUARIO PARA EL PERFIL Y SISTEMA SOCIAL
+                if (data.id) {
+                    localStorage.setItem('user_id', data.id);
+                }
 
                 alert('¡Cuenta civil creada con éxito!');
                 window.location.href = 'index.html';

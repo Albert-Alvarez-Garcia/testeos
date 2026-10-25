@@ -16,7 +16,7 @@
         <!-- Se rellenará dinámicamente mediante JavaScript -->
     </div>
 
-    <!-- 🏅 PANEL DE MEDALLAS / LOGROS (se abre desde el botón Perfil) -->
+    <!-- 🏅 PANEL DE MEDALLAS / LOGROS (se abre desde el botón Logros) -->
     <div id="achievements-panel" class="absolute top-24 right-6 z-40 w-80 hidden bg-[#140e09]/95 border-2 border-[#b39258] rounded-2xl shadow-2xl backdrop-blur-md p-4 font-sans">
         <div class="flex justify-between items-center mb-3">
             <h2 class="text-amber-200 font-bold text-sm tracking-wide">🏅 Medallas</h2>
@@ -226,6 +226,14 @@
                     </span>
                 </div>
                 <div class="flex items-center space-x-2 pl-2 border-l border-[#b39258]/40">
+                    <div class="relative">
+                        <button id="notif-btn" type="button" aria-label="Notificaciones" aria-expanded="false"
+                            class="relative px-1.5 text-lg text-amber-300 hover:text-amber-100 transition-colors cursor-pointer">
+                            🔔
+                            <span id="notif-count" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold items-center justify-center"></span>
+                        </button>
+                        <div id="notif-menu" class="hidden absolute right-0 top-full mt-3 w-72 max-h-80 overflow-y-auto bg-[#140e09]/95 border-2 border-[#b39258] rounded-2xl shadow-2xl backdrop-blur-md p-3 space-y-2 font-sans z-50"></div>
+                    </div>
                     <button
                         id="profile-btn"
                         class="px-2.5 py-1 text-xs font-medium rounded
@@ -234,8 +242,18 @@
                         text-amber-200
                         transition-colors
                         cursor-pointer">
-                        Perfil
+                        Logros
                     </button>
+                    <a
+                        href="profile.html"
+                        class="px-2.5 py-1 text-xs font-medium rounded
+                        bg-[#b39258]/30
+                        hover:bg-[#b39258]/50
+                        text-amber-200
+                        transition-colors
+                        cursor-pointer">
+                        Perfil
+                    </a>
                     <button
                         id="logout-btn"
                         class="px-2.5 py-1 text-xs font-medium rounded
@@ -269,44 +287,145 @@
             const resolveAvatarUrl = (u) =>
                 (typeof u === 'string' && u.startsWith('/api/')) ? API_BASE + u : u;
 
-            const avatarCandidates = [
-                userData.avatar,
-                ...(Array.isArray(userData.avatar_fallbacks) ? userData.avatar_fallbacks : []),
-                userData.image_url,
-                userData.picture,
-                userData.image && userData.image.link,
-                userData.image && userData.image.versions && userData.image.versions.medium
-            ].map(resolveAvatarUrl)
-             .filter((u, i, arr) => typeof u === 'string' &&
-                 (/^https:\/\//.test(u) || u.startsWith(API_BASE + '/api/')) &&
-                 arr.indexOf(u) === i);
+            const localAvatar = (u) => typeof u === 'string' && u.startsWith('/api/');
 
-            let avatarEl;
-            if (avatarCandidates.length) {
-                let attempt = 0;
-                avatarEl = document.createElement('img');
-                avatarEl.alt = userData.username || '';
-                avatarEl.referrerPolicy = 'no-referrer';
-                avatarEl.className = 'avatar-img';
-                avatarEl.addEventListener('error', () => {
-                    console.warn('No se pudo cargar el avatar:', avatarCandidates[attempt]);
-                    attempt += 1;
-                    if (attempt < avatarCandidates.length) {
-                        avatarEl.src = avatarCandidates[attempt];
-                    } else {
-                        avatarEl.replaceWith(buildInitialAvatar());
-                    }
-                });
-                avatarEl.src = avatarCandidates[0];
-            } else {
-                avatarEl = buildInitialAvatar();
+            // Si el usuario ya tiene un avatar guardado en el servidor (el que eligió o el de 42 ya descargado),
+            // se usa SOLO ese. Las imágenes del CDN de 42 únicamente se intentan si no tiene ninguno.
+            function avatarCandidatesFor(u) {
+                const list = localAvatar(u.avatar) ? [u.avatar] : [
+                    u.avatar,
+                    ...(Array.isArray(u.avatar_fallbacks) ? u.avatar_fallbacks : []),
+                    u.image_url,
+                    u.picture,
+                    u.image && u.image.link,
+                    u.image && u.image.versions && u.image.versions.medium
+                ];
+                return list.map(resolveAvatarUrl)
+                    .filter((x, i, arr) => typeof x === 'string' &&
+                        (/^https:\/\//.test(x) || x.startsWith(API_BASE + '/api/')) &&
+                        arr.indexOf(x) === i);
             }
-            userMenuContainer.prepend(avatarEl);
+
+            let avatarEl = null;
+            function renderAvatar(urls) {
+                let next;
+                if (urls.length) {
+                    let attempt = 0;
+                    const img = document.createElement('img');
+                    img.alt = userData.username || '';
+                    img.referrerPolicy = 'no-referrer';
+                    img.className = 'avatar-img';
+                    img.addEventListener('error', () => {
+                        attempt += 1;
+                        if (attempt < urls.length) { img.src = urls[attempt]; return; }
+                        const initialEl = buildInitialAvatar();
+                        img.replaceWith(initialEl);
+                        if (avatarEl === img) avatarEl = initialEl;
+                    });
+                    img.src = urls[0];
+                    next = img;
+                } else {
+                    next = buildInitialAvatar();
+                }
+                if (avatarEl && avatarEl.isConnected) avatarEl.replaceWith(next);
+                else userMenuContainer.prepend(next);
+                avatarEl = next;
+            }
+            renderAvatar(avatarCandidatesFor(userData));
+
+            // El servidor es quien sabe cuál es el avatar actual: se corrige la sesión si no coincide
+            (async () => {
+                try {
+                    const res = await fetch(API_BASE + '/api/profile/me', {
+                        headers: { Accept: 'application/json', 'X-Username': userData.username }
+                    });
+                    if (!res.ok) return;
+                    const me = await res.json();
+                    if (me.avatar) {
+                        if (me.avatar === userData.avatar) return;
+                        userData.avatar = me.avatar;
+                        delete userData.avatar_fallbacks;
+                    } else if (localAvatar(userData.avatar)) {
+                        delete userData.avatar; // el servidor ya no lo tiene
+                    } else {
+                        return;
+                    }
+                    localStorage.setItem('cardbinder_user', JSON.stringify(userData));
+                    renderAvatar(avatarCandidatesFor(userData));
+                } catch (e) { /* sin servidor: se queda lo que hay */ }
+            })();
 
             document.getElementById('logout-btn').addEventListener('click', () => {
                 localStorage.removeItem('cardbinder_user');
                 window.location.href = 'login.html';
             });
+
+            // ==========================================
+            // NOTIFICACIONES: solicitudes de amistad y mensajes directos sin ver
+            // ==========================================
+            const notifBtn = document.getElementById('notif-btn');
+            const notifMenu = document.getElementById('notif-menu');
+            const notifCount = document.getElementById('notif-count');
+            let notifTimer = null;
+
+            function notifRow(name, text, href) {
+                const a = document.createElement('a');
+                a.href = href;
+                a.className = 'block bg-[#0f0a06] p-2 rounded-lg border border-[#b39258]/60 hover:bg-[#2c1d0f] transition-colors';
+                const p1 = document.createElement('p');
+                p1.className = 'text-sm font-bold text-amber-100 truncate';
+                p1.textContent = name;
+                const p2 = document.createElement('p');
+                p2.className = 'text-xs text-amber-200/70';
+                p2.textContent = text;
+                a.append(p1, p2);
+                return a;
+            }
+
+            function setNotifOpen(open) {
+                notifMenu.classList.toggle('hidden', !open);
+                notifBtn.setAttribute('aria-expanded', String(open));
+            }
+
+            function renderNotifications(n) {
+                notifCount.textContent = n.total > 99 ? '99+' : String(n.total);
+                notifCount.classList.toggle('hidden', !n.total);
+                notifCount.classList.toggle('flex', !!n.total);
+                const rows = [
+                    ...n.requests.map((u) => notifRow(u.username, '👥 Quiere ser tu amigo', 'profile.html#solicitudes')),
+                    ...n.messages.map((m) => notifRow(m.username,
+                        '💬 ' + (m.count === 1 ? '1 mensaje nuevo' : m.count + ' mensajes nuevos'),
+                        'profile.html#chat=' + encodeURIComponent(m.username))),
+                ];
+                if (!rows.length) {
+                    const empty = document.createElement('p');
+                    empty.className = 'text-xs text-amber-200/60 italic';
+                    empty.textContent = 'No tienes notificaciones.';
+                    rows.push(empty);
+                }
+                notifMenu.replaceChildren(...rows);
+            }
+
+            async function loadNotifications() {
+                try {
+                    const res = await fetch(API_BASE + '/api/social/notifications', {
+                        headers: { Accept: 'application/json', 'X-Username': userData.username }
+                    });
+                    if (res.status === 401) { clearInterval(notifTimer); return; }
+                    if (res.ok) renderNotifications(await res.json());
+                } catch (e) { /* sin servidor: la campana se queda como está */ }
+            }
+
+            notifBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                setNotifOpen(notifMenu.classList.contains('hidden'));
+            });
+            notifMenu.addEventListener('click', (e) => e.stopPropagation());
+            document.addEventListener('click', () => setNotifOpen(false));
+            document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setNotifOpen(false); });
+
+            loadNotifications();
+            notifTimer = setInterval(() => { if (!document.hidden) loadNotifications(); }, 10000);
 
             // ==========================================
             // PANEL DE MEDALLAS

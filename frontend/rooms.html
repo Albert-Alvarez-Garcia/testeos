@@ -6,15 +6,24 @@
     <title>Card Binder Pro - Selector de Salas</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Estilos del portal: fondo (fondomejorado.jpg) y paleta, igual que index.html -->
+    <link rel="stylesheet" href="portal.css">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #0b0705; color: #fef3c7; }
+        body { font-family: 'Inter', sans-serif; color: #fef3c7; }
         .magic-title { font-family: 'Cinzel', serif; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4">
+<body class="min-h-screen flex flex-col items-center justify-center p-4 pt-20 md:pt-4 relative">
+
+    <!-- 🔙 BOTÓN DE RETORNO AL INICIO -->
+    <div class="absolute top-6 left-6 z-40">
+        <a href="index.html" class="bg-[#140e09]/90 border border-[#b39258]/60 px-4 py-2 rounded-xl text-amber-200 text-xs font-semibold hover:bg-[#b39258]/30 transition-colors shadow-2xl backdrop-blur-md flex items-center space-x-2">
+            <span>← Volver al Inicio</span>
+        </a>
+    </div>
 
     <!-- Cabecera principal -->
-    <div class="w-full max-w-3xl text-center mb-8">
+    <div class="w-full max-w-3xl text-center mb-8 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
         <h1 class="magic-title text-3xl md:text-4xl text-amber-400 font-bold mb-2">⚔️ Salas de Duelo - Card Binder</h1>
         <p class="text-xs md:text-sm text-amber-200/70">Elige una sala activa para unirte o crea tu propio campo de batalla.</p>
     </div>
@@ -23,7 +32,7 @@
     <div class="w-full max-w-3xl grid grid-cols-1 md:grid-cols-3 gap-6">
         
         <!-- Columna Izquierda: Crear Sala -->
-        <div class="bg-[#140e09] border border-[#b39258]/40 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+        <div class="bg-[#140e09]/90 backdrop-blur-md border border-[#b39258]/40 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
             <div>
                 <h2 class="magic-title text-sm font-bold text-amber-400 mb-4 uppercase tracking-wider">🏰 Crear Sala</h2>
                 <form id="create-room-form" class="space-y-4">
@@ -45,7 +54,7 @@
         </div>
 
         <!-- Columna Derecha: Listado de Salas Activas -->
-        <div class="md:col-span-2 bg-[#140e09] border border-[#b39258]/40 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
+        <div class="md:col-span-2 bg-[#140e09]/90 backdrop-blur-md border border-[#b39258]/40 rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
             <div>
                 <div class="flex justify-between items-center mb-4">
                     <h2 class="magic-title text-sm font-bold text-amber-400 uppercase tracking-wider">📜 Salas Abiertas</h2>
