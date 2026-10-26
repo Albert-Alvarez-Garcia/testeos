@@ -1,0 +1,228 @@
+docker compose logs -f
+card_binder_db  | 
+card_binder_db   | PostgreSQL Database directory appears to contain a database; Skipping initialization
+card_binder_db   | 
+card_binder_db   | 2026-10-25 17:44:41.625 UTC [1] LOG:  starting PostgreSQL 15.18 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+card_binder_db   | 2026-10-25 17:44:41.625 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+card_binder_db   | 2026-10-25 17:44:41.625 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+card_binder_db   | 2026-10-25 17:44:41.628 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+card_binder_db   | 2026-10-25 17:44:41.636 UTC [29] LOG:  database system was shut down at 2026-10-25 17:44:29 UTC
+card_binder_db   | 2026-10-25 17:44:41.646 UTC [1] LOG:  database system is ready to accept connections
+card_binder_db   | 2026-10-25 17:44:45.242 UTC [33] ERROR:  relation "friendships" does not exist at character 144
+card_binder_db   | 2026-10-25 17:44:45.242 UTC [33] STATEMENT:  
+card_binder_db   | 	            SELECT f.id, f.status, f.created_at,
+card_binder_db   | 	                   u.id as user_id, u.username, u.badge_type, u.avatar_path
+card_binder_db   | 	            FROM friendships f
+card_binder_db   | 	            JOIN users u ON (u.id = CASE WHEN f.user_id = '1' THEN f.friend_id ELSE f.user_id END)
+card_binder_db   | 	            WHERE (f.user_id = '1' OR f.friend_id = '1');
+card_binder_db   | 	        
+card_binder_db   | 2026-10-25 17:44:45.244 UTC [34] ERROR:  column "avatar_path" does not exist at character 65
+card_binder_db   | 2026-10-25 17:44:45.244 UTC [34] STATEMENT:  
+card_binder_db   | 	            SELECT id, username, email, badge_type, auth_type, avatar_path, created_at
+card_binder_db   | 	            FROM users
+card_binder_db   | 	            WHERE id = '1';
+card_binder_db   | 	        
+card_binder_web  | /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+card_binder_web  | /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+card_binder_api  | INFO:     Will watch for changes in these directories: ['/app']
+card_binder_api  | INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+card_binder_api  | INFO:     Started reloader process [1] using WatchFiles
+card_binder_api  | INFO:     Started server process [8]
+card_binder_api  | INFO:     Waiting for application startup.
+card_binder_api  | INFO:     Application startup complete.
+card_binder_api  | 🔌 [Chat] Inicializando ConnectionManager...
+card_binder_api  | INFO:     172.19.0.4:43954 - "GET /api/profile/1/friends HTTP/1.1" 500 Internal Server Error
+card_binder_api  | ERROR:    Exception in ASGI application
+card_binder_api  | Traceback (most recent call last):
+card_binder_web  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 422, in run_asgi
+card_binder_api  |     result = await app(  # type: ignore[func-returns-value]
+card_binder_api  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_web  | 10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+card_binder_web  | 10-listen-on-ipv6-by-default.sh: info: /etc/nginx/conf.d/default.conf differs from the packaged version
+card_binder_web  | /docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+card_binder_web  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+card_binder_web  | /docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+card_binder_web  | /docker-entrypoint.sh: Configuration complete; ready for start up
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: using the "epoll" event method
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: nginx/1.31.8
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: OS: Linux 7.0.0-38-generic
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 1024:524288
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker processes
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker process 29
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker process 30
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker process 31
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker process 32
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker process 33
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker process 34
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker process 35
+card_binder_web  | 2026/10/25 17:44:41 [notice] 1#1: start worker process 36
+card_binder_web  | 172.19.0.1 - - [25/Oct/2026:17:44:45 +0000] "GET /profile.html HTTP/1.1" 304 0 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36" "-"
+card_binder_web  | 172.19.0.1 - - [25/Oct/2026:17:44:45 +0000] "GET /assets/avatars/default.jpg HTTP/1.1" 304 0 "http://localhost:8080/profile.html" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36" "-"
+card_binder_web  | 172.19.0.1 - - [25/Oct/2026:17:44:45 +0000] "GET /api/profile/1/friends HTTP/1.1" 500 21 "http://localhost:8080/profile.html" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36" "-"
+card_binder_web  | 172.19.0.1 - - [25/Oct/2026:17:44:45 +0000] "GET /api/profile/1 HTTP/1.1" 500 21 "http://localhost:8080/profile.html" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36" "-"
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+card_binder_api  |     return await self.app(scope, receive, send)
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1194, in __call__
+card_binder_api  |     await super().__call__(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 96, in __call__
+card_binder_api  |     await self.middleware_stack(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+card_binder_api  |     raise exc
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+card_binder_api  |     await self.app(scope, receive, _send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_asgi.py", line 151, in __call__
+card_binder_api  |     await self.app(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 91, in __call__
+card_binder_api  |     await self.simple_response(scope, receive, send, request_headers=headers)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 149, in simple_response
+card_binder_api  |     await self.app(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+card_binder_api  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+card_binder_api  |     raise exc
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+card_binder_api  |     await app(scope, receive, sender)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+card_binder_api  |     await self.app(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 683, in __call__
+card_binder_api  |     await self.middleware_stack(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2811, in app
+card_binder_api  |     await route.handle(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1839, in handle
+card_binder_api  |     await self.original_router.handle(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2894, in handle
+card_binder_api  |     await included_router._handle_selected(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1865, in _handle_selected
+card_binder_api  |     await original_route.handle(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1328, in handle
+card_binder_api  |     await effective_context.app(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 166, in app
+card_binder_api  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+card_binder_api  |     raise exc
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+card_binder_api  |     await app(scope, receive, sender)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 152, in app
+card_binder_api  |     response = await f(request)
+card_binder_api  |                ^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 745, in app
+card_binder_api  |     raw_response = await run_endpoint_function(
+card_binder_api  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 374, in run_endpoint_function
+card_binder_api  |     return await run_in_threadpool(
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/concurrency.py", line 34, in run_in_threadpool
+card_binder_api  |     return await anyio.to_thread.run_sync(func)
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/anyio/to_thread.py", line 65, in run_sync
+card_binder_api  |     return await get_async_backend().run_sync_in_worker_thread(
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2706, in run_sync_in_worker_thread
+card_binder_api  |     return await future
+card_binder_api  |            ^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+card_binder_api  |     result = context.run(func, *args)
+card_binder_api  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_api.py", line 244, in _run_sync_endpoint
+card_binder_api  |     return function(**arguments)
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/app/backend/routers/profile.py", line 74, in list_friends
+card_binder_api  |     return {"friends": get_user_friends(user_id)}
+card_binder_api  |                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/app/backend/profile_services.py", line 118, in get_user_friends
+card_binder_api  |     cursor.execute("""
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/psycopg2/extras.py", line 236, in execute
+card_binder_api  |     return super().execute(query, vars)
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  | psycopg2.errors.UndefinedTable: relation "friendships" does not exist
+card_binder_api  | LINE 4:             FROM friendships f
+card_binder_api  |                          ^
+card_binder_api  | 
+card_binder_api  | INFO:     172.19.0.4:43946 - "GET /api/profile/1 HTTP/1.1" 500 Internal Server Error
+card_binder_api  | ERROR:    Exception in ASGI application
+card_binder_api  | Traceback (most recent call last):
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/protocols/http/httptools_impl.py", line 422, in run_asgi
+card_binder_api  |     result = await app(  # type: ignore[func-returns-value]
+card_binder_api  |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/uvicorn/middleware/proxy_headers.py", line 63, in __call__
+card_binder_api  |     return await self.app(scope, receive, send)
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/applications.py", line 1194, in __call__
+card_binder_api  |     await super().__call__(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/applications.py", line 96, in __call__
+card_binder_api  |     await self.middleware_stack(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 186, in __call__
+card_binder_api  |     raise exc
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/errors.py", line 164, in __call__
+card_binder_api  |     await self.app(scope, receive, _send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_asgi.py", line 151, in __call__
+card_binder_api  |     await self.app(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 91, in __call__
+card_binder_api  |     await self.simple_response(scope, receive, send, request_headers=headers)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/cors.py", line 149, in simple_response
+card_binder_api  |     await self.app(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/middleware/exceptions.py", line 63, in __call__
+card_binder_api  |     await wrap_app_handling_exceptions(self.app, conn)(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+card_binder_api  |     raise exc
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+card_binder_api  |     await app(scope, receive, sender)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/middleware/asyncexitstack.py", line 18, in __call__
+card_binder_api  |     await self.app(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/routing.py", line 683, in __call__
+card_binder_api  |     await self.middleware_stack(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2811, in app
+card_binder_api  |     await route.handle(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1839, in handle
+card_binder_api  |     await self.original_router.handle(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 2894, in handle
+card_binder_api  |     await included_router._handle_selected(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1865, in _handle_selected
+card_binder_api  |     await original_route.handle(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 1328, in handle
+card_binder_api  |     await effective_context.app(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 166, in app
+card_binder_api  |     await wrap_app_handling_exceptions(app, request)(scope, receive, send)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 53, in wrapped_app
+card_binder_api  |     raise exc
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/_exception_handler.py", line 42, in wrapped_app
+card_binder_api  |     await app(scope, receive, sender)
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 152, in app
+card_binder_api  |     response = await f(request)
+card_binder_api  |                ^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 745, in app
+card_binder_api  |     raw_response = await run_endpoint_function(
+card_binder_api  |                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/routing.py", line 374, in run_endpoint_function
+card_binder_api  |     return await run_in_threadpool(
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/starlette/concurrency.py", line 34, in run_in_threadpool
+card_binder_api  |     return await anyio.to_thread.run_sync(func)
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/anyio/to_thread.py", line 65, in run_sync
+card_binder_api  |     return await get_async_backend().run_sync_in_worker_thread(
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 2706, in run_sync_in_worker_thread
+card_binder_api  |     return await future
+card_binder_api  |            ^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1100, in run
+card_binder_api  |     result = context.run(func, *args)
+card_binder_api  |              ^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/fastapi/telemetry/_api.py", line 244, in _run_sync_endpoint
+card_binder_api  |     return function(**arguments)
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/app/backend/routers/profile.py", line 22, in get_profile
+card_binder_api  |     profile = get_user_profile_by_id(user_id)
+card_binder_api  |               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  |   File "/app/backend/profile_services.py", line 18, in get_user_profile_by_id
+card_binder_api  |     cursor.execute("""
+card_binder_api  |   File "/usr/local/lib/python3.11/site-packages/psycopg2/extras.py", line 236, in execute
+card_binder_api  |     return super().execute(query, vars)
+card_binder_api  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+card_binder_api  | psycopg2.errors.UndefinedColumn: column "avatar_path" does not exist
+card_binder_api  | LINE 2: ...ELECT id, username, email, badge_type, auth_type, avatar_pat...
+card_binder_api  |                                                              ^
+card_binder_api  | 

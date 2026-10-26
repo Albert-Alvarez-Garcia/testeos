@@ -10,3 +10,4 @@ bcrypt
 httpx
 requests
 websockets
+python-multipart

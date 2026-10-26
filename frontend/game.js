@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", () => {
-    const API_HOST = "localhost:8000";
+    const API_HOST = location.host;
 
     const cardImg = document.getElementById("game-card-img");
     const titleMask = document.getElementById("title-mask");
@@ -57,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ---------------- WebSocket ----------------
     function connectGameWebSocket() {
         if (gameEnded) return;
-        ws = new WebSocket(`ws://${API_HOST}/api/game/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
+        ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${API_HOST}/api/game/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
 
         ws.onopen = () => {
             if (roomStatus) roomStatus.textContent = `🟢 En línea - ${roomId}`;

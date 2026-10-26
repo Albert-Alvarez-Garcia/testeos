@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Cargar historial inicial desde el API REST
     async function loadHistory() {
         try {
-            const response = await fetch("http://localhost:8000/api/chat/history");
+            const response = await fetch("/api/chat/history");
             const messages = await response.json();
             messages.forEach(msg => appendMessage(msg));
         } catch (error) {
@@ -143,7 +143,7 @@ document.addEventListener("DOMContentLoaded", () => {
     function connectWebSocket() {
         if (ws && ws.readyState === WebSocket.OPEN) return;
 
-        ws = new WebSocket("ws://localhost:8000/api/chat/ws/chat");
+        ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + "/api/chat/ws/chat");
 
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);

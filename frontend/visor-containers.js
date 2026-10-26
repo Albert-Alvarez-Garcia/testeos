@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function cargarContenedores() {
         try {
-            const response = await fetch('http://localhost:8000/api/containers/', {
+            const response = await fetch('/api/containers/', {
                 headers: { ...getAuthHeader() }
             });
             if (!response.ok) throw new Error('Error al listar contenedores');
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         visualWorkspace.innerHTML = `<div class="text-center text-amber-200/50 py-12 italic text-xs">Cargando estructura del contenedor...</div>`;
         
         try {
-            const response = await fetch(`http://localhost:8000/api/containers/${containerId}/slots`, {
+            const response = await fetch(`/api/containers/${containerId}/slots`, {
                 headers: { ...getAuthHeader() }
             });
             if (!response.ok) throw new Error('Error al obtener slots');
@@ -261,7 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 try {
                     if (copyId) {
-                        const response = await fetch(`http://localhost:8000/api/containers/items/${copyId}`, {
+                        const response = await fetch(`/api/containers/items/${copyId}`, {
                             method: 'DELETE',
                             headers: { ...getAuthHeader() }
                         });

@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro - Perfil y Social</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CSS Estético del Portal de Magic -->
+    <link rel="stylesheet" href="portal.css">
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="border-b border-[#8c6d36] bg-[#080503]/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold font-magic tracking-wider text-[#d4af37] flex items-center gap-2">
+                <span>🛡️</span> Perfil y Sistema Social
+            </h1>
+            <a href="index.html" class="text-sm text-[#9ca3af] hover:text-[#ffd700] transition">← Volver al Inicio</a>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8 flex-grow w-full grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <!-- Columna izquierda: identidad -->
+        <div class="md:col-span-1 fantasy-panel p-6 flex flex-col items-center text-center self-start">
+            <div id="avatar-slot" class="mb-4"></div>
+            <h2 id="username-display" class="text-2xl font-bold font-magic text-[#f3f4f6] break-all">Cargando...</h2>
+            <p id="email-display" class="text-sm text-[#9ca3af] mt-1 break-all">&nbsp;</p>
+            <span id="badge-display" class="mt-3 px-3 py-1 text-xs font-semibold bg-[#2c1d0f] text-[#d4af37] rounded-full border border-[#8c6d36] hidden"></span>
+            <button id="remove-avatar-btn" type="button" class="mt-5 text-xs text-[#9ca3af] hover:text-red-400 underline hidden">Quitar mi avatar</button>
+        </div>
+
+        <div class="md:col-span-2 space-y-6">
+
+            <!-- Avatar -->
+            <section class="fantasy-panel p-6" id="avatar-panel">
+                <h3 class="text-lg font-semibold font-magic text-[#d4af37] mb-4">Personalizar Avatar</h3>
+
+                <div class="mb-6">
+                    <label for="custom-avatar-input" class="block text-sm text-[#9ca3af] mb-2">Subir imagen propia (PNG, JPG, GIF o WebP · máx. 1 MB)</label>
+                    <div class="flex gap-3">
+                        <input type="file" id="custom-avatar-input" accept="image/png,image/jpeg,image/gif,image/webp" class="block w-full text-sm text-[#9ca3af] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-[#8c6d36] file:text-sm file:font-semibold file:bg-[#2c1d0f] file:text-[#d4af37] hover:file:bg-[#5c4323] cursor-pointer">
+                        <button id="upload-btn" type="button" class="btn-fantasy text-sm">Subir</button>
+                    </div>
+                </div>
+
+                <div id="presets-block" class="hidden">
+                    <p class="block text-sm text-[#9ca3af] mb-2">O elige un avatar predefinido</p>
+                    <div class="grid grid-cols-5 gap-2" id="predefined-avatars-grid"></div>
+                </div>
+            </section>
+
+            <!-- Resumen de la colección -->
+            <section class="fantasy-panel p-6" id="collection-panel">
+                <div class="flex items-baseline justify-between gap-3 mb-4">
+                    <h3 class="text-lg font-semibold font-magic text-[#d4af37]">Mi colección</h3>
+                    <a href="hub-coleccion.html" class="text-sm text-[#9ca3af] hover:text-[#ffd700] transition">Ver mi colección</a>
+                </div>
+                <dl class="grid grid-cols-3 gap-3 text-center">
+                    <div class="flex flex-col-reverse bg-[#0f0a06] p-3 rounded-lg border border-[#8c6d36]">
+                        <dt class="text-xs text-[#9ca3af]">Copias</dt>
+                        <dd class="text-2xl font-bold font-magic text-[#d4af37]" data-stat="copies">—</dd>
+                    </div>
+                    <div class="flex flex-col-reverse bg-[#0f0a06] p-3 rounded-lg border border-[#8c6d36]">
+                        <dt class="text-xs text-[#9ca3af]">Cartas distintas</dt>
+                        <dd class="text-2xl font-bold font-magic text-[#d4af37]" data-stat="cards">—</dd>
+                    </div>
+                    <div class="flex flex-col-reverse bg-[#0f0a06] p-3 rounded-lg border border-[#8c6d36]">
+                        <dt class="text-xs text-[#9ca3af]">Contenedores</dt>
+                        <dd class="text-2xl font-bold font-magic text-[#d4af37]" data-stat="containers">—</dd>
+                    </div>
+                </dl>
+                <p id="collection-note" class="hidden text-xs mt-3"></p>
+            </section>
+
+            <!-- Social -->
+            <section class="fantasy-panel p-6" id="social-panel">
+                <h3 class="text-lg font-semibold font-magic text-[#d4af37] mb-4">Sistema Social</h3>
+
+                <label for="search-input" class="block text-xs text-[#9ca3af] mb-1">Buscar o añadir un usuario por su nombre</label>
+                <div class="flex gap-2">
+                    <input type="text" id="search-input" placeholder="Nombre de usuario" autocomplete="off" maxlength="100" class="w-full text-sm">
+                    <button id="send-request-btn" type="button" class="btn-fantasy text-sm whitespace-nowrap">Enviar solicitud</button>
+                </div>
+                <div id="search-results" class="mt-2 space-y-2"></div>
+
+                <div id="social-lists" class="mt-6 space-y-5"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Perfil de amigo + mensajes directos -->
+    <div id="fm-modal" class="hidden fixed inset-0 z-[90] bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="fm-name">
+        <div class="fantasy-panel w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-5 flex items-center gap-4 border-b border-[#8c6d36]">
+                <div id="fm-avatar"></div>
+                <div class="min-w-0 flex-grow">
+                    <h3 id="fm-name" class="text-lg font-bold font-magic text-[#f3f4f6] truncate"></h3>
+                    <span id="fm-badge" class="hidden mt-1 inline-block px-2 py-0.5 text-xs font-semibold bg-[#2c1d0f] text-[#d4af37] rounded-full border border-[#8c6d36]"></span>
+                </div>
+                <button id="fm-close" type="button" aria-label="Cerrar" class="text-xl text-[#9ca3af] hover:text-[#ffd700] transition">✕</button>
+            </div>
+            <dl class="grid grid-cols-3 gap-2 p-4 text-center">
+                <div class="flex flex-col-reverse bg-[#0f0a06] p-2 rounded-lg border border-[#8c6d36]">
+                    <dt class="text-xs text-[#9ca3af]">Copias</dt>
+                    <dd class="text-xl font-bold font-magic text-[#d4af37]" data-fm-stat="copies">—</dd>
+                </div>
+                <div class="flex flex-col-reverse bg-[#0f0a06] p-2 rounded-lg border border-[#8c6d36]">
+                    <dt class="text-xs text-[#9ca3af]">Cartas distintas</dt>
+                    <dd class="text-xl font-bold font-magic text-[#d4af37]" data-fm-stat="cards">—</dd>
+                </div>
+                <div class="flex flex-col-reverse bg-[#0f0a06] p-2 rounded-lg border border-[#8c6d36]">
+                    <dt class="text-xs text-[#9ca3af]">Contenedores</dt>
+                    <dd class="text-xl font-bold font-magic text-[#d4af37]" data-fm-stat="containers">—</dd>
+                </div>
+            </dl>
+            <div id="fm-messages" class="flex-grow overflow-y-auto px-4 space-y-2 min-h-[160px] max-h-64" aria-live="polite"></div>
+            <form id="fm-form" class="p-4 flex gap-2 border-t border-[#8c6d36]">
+                <input type="text" id="fm-input" maxlength="1000" autocomplete="off" placeholder="Escribe un mensaje" aria-label="Mensaje" class="w-full text-sm">
+                <button type="submit" class="btn-fantasy text-sm whitespace-nowrap">Enviar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite" class="fixed bottom-6 right-6 z-[100] max-w-xs px-4 py-3 rounded-xl text-sm shadow-2xl border opacity-0 pointer-events-none transition-opacity duration-300"></div>
+
+    <script>
+    (() => {
+        'use strict';
+
+        const API = '';
+        const MAX_AVATAR_BYTES = 1024 * 1024;
+        const $ = (id) => document.getElementById(id);
+
+        // ---------- Sesión (la misma que usa el resto de la web: localStorage.cardbinder_user) ----------
+        function readSession() {
+            try {
+                const u = JSON.parse(localStorage.getItem('cardbinder_user'));
+                return u && u.username ? u : null;
+            } catch (e) { return null; }
+        }
+        let session = readSession();
+
+        function patchSession(patch) {
+            session = { ...session, ...patch };
+            Object.keys(patch).forEach((k) => { if (patch[k] === undefined) delete session[k]; });
+            try { localStorage.setItem('cardbinder_user', JSON.stringify(session)); } catch (e) {}
+        }
+
+        function showNoSession(reason) {
+            $('username-display').textContent = 'Sesión no válida';
+            const p = $('email-display');
+            p.textContent = '';
+            p.append(reason + ' ');
+            const a = document.createElement('a');
+            a.href = 'login.html';
+            a.className = 'text-[#d4af37] underline';
+            a.textContent = 'Inicia sesión de nuevo';
+            p.append(a, '.');
+            $('avatar-panel').classList.add('hidden');
+            $('social-panel').classList.add('hidden');
+            $('collection-panel').classList.add('hidden');
+            $('avatar-slot').replaceChildren(avatarNode(null, session ? session.username : '?', 128));
+        }
+
+        // ---------- Utilidades ----------
+        function el(tag, cls, text) {
+            const n = document.createElement(tag);
+            if (cls) n.className = cls;
+            if (text != null) n.textContent = text;
+            return n;
+        }
+
+        let toastTimer = null;
+        function toast(message, isError) {
+            const t = $('toast');
+            t.textContent = message;
+            t.className = 'fixed bottom-6 right-6 z-[100] max-w-xs px-4 py-3 rounded-xl text-sm shadow-2xl border transition-opacity duration-300 opacity-100 ' +
+                (isError ? 'bg-red-950 text-red-200 border-red-700' : 'bg-[#140e09] text-amber-200 border-[#b39258]');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { t.classList.replace('opacity-100', 'opacity-0'); }, 3200);
+        }
+
+        const resolveAvatar = (u) => (typeof u === 'string' && u.startsWith('/api/') ? API + u : u);
+
+        // Imagen redonda; si no hay avatar o falla la carga, círculo con la inicial
+        function avatarNode(url, username, size) {
+            const px = size + 'px';
+            const initial = () => {
+                const d = el('div', 'flex items-center justify-center rounded-full border-2 border-[#d4af37] font-bold text-[#d4af37] select-none',
+                    ((username || '?').trim().charAt(0) || '?').toUpperCase());
+                d.style.cssText = `width:${px};height:${px};font-size:${Math.round(size * 0.45)}px;background:radial-gradient(circle at 30% 30%,#5c4323 0%,#1c130a 70%)`;
+                return d;
+            };
+            const src = resolveAvatar(url);
+            if (!src) return initial();
+            const img = el('img', 'rounded-full object-cover border-2 border-[#d4af37] shadow-lg');
+            img.style.cssText = `width:${px};height:${px}`;
+            img.alt = 'Avatar de ' + username;
+            img.referrerPolicy = 'no-referrer';
+            img.addEventListener('error', () => img.replaceWith(initial()));
+            img.src = src;
+            return img;
+        }
+
+        async function api(path, opts = {}) {
+            const headers = { 'X-Username': session.username, ...(opts.headers || {}) };
+            let body = opts.body;
+            if (opts.json !== undefined) {
+                headers['Content-Type'] = 'application/json';
+                body = JSON.stringify(opts.json);
+            }
+            const res = await fetch(API + (opts.base || '/api/profile') + path, { method: opts.method || 'GET', headers, body });
+            let data = null;
+            try { data = await res.json(); } catch (e) {}
+            if (res.status === 401) {
+                showNoSession('Tu sesión ha caducado.');
+                throw new Error('Sesión caducada');
+            }
+            if (!res.ok) {
+                const d = data && data.detail;
+                throw new Error(Array.isArray(d) ? d.map((x) => x.msg).join(', ') : (d || `Error ${res.status}`));
+            }
+            return data;
+        }
+
+        // ---------- Perfil ----------
+        function renderProfile(me) {
+            $('username-display').textContent = me.username;
+            $('email-display').textContent = me.email || '';
+            const badge = $('badge-display');
+            badge.textContent = me.badge || 'Miembro';
+            badge.classList.remove('hidden');
+
+            // Si no hay avatar propio se muestra el que trajo el login de 42 (si lo hay) y, si no, la inicial
+            const shown = me.avatar || (session.avatar && !me.avatar ? session.avatar : null);
+            $('avatar-slot').replaceChildren(avatarNode(shown, me.username, 128));
+            $('remove-avatar-btn').classList.toggle('hidden', !me.avatar);
+
+            // La página de inicio lee el avatar de la sesión
+            if (me.avatar) patchSession({ avatar: me.avatar });
+        }
+
+        async function loadProfile() {
+            renderProfile(await api('/me'));
+        }
+
+        // ---------- Avatar: subir y quitar ----------
+        async function sendAvatar(blob) {
+            if (!blob.type.startsWith('image/')) { toast('Eso no es una imagen.', true); return; }
+            if (blob.size > MAX_AVATAR_BYTES) { toast('La imagen supera 1 MB.', true); return; }
+            const data = await api('/avatar', { method: 'POST', body: blob, headers: { 'Content-Type': blob.type } });
+            patchSession({ avatar: data.avatar, avatar_fallbacks: undefined });
+            await loadProfile();
+        }
+
+        $('upload-btn').addEventListener('click', async () => {
+            const input = $('custom-avatar-input');
+            if (!input.files.length) { toast('Selecciona una imagen primero.', true); return; }
+            try {
+                await sendAvatar(input.files[0]);
+                input.value = '';
+                toast('Avatar actualizado.');
+            } catch (e) { toast(e.message, true); }
+        });
+
+        $('remove-avatar-btn').addEventListener('click', async () => {
+            if (!confirm('¿Quitar tu avatar?')) return;
+            try {
+                await api('/avatar', { method: 'DELETE' });
+                patchSession({ avatar: undefined, avatar_fallbacks: undefined });
+                await loadProfile();
+                toast('Avatar eliminado.');
+            } catch (e) { toast(e.message, true); }
+        });
+
+        // ---------- Avatares predefinidos ----------
+        // Se localiza avatar1 probando carpeta y extensión; el resto sigue el mismo patrón. Al elegir uno se sube
+        // como avatar propio, así que se ve igual en toda la web (inicio, amigos...) sin depender de la carpeta estática.
+        const PRESET_COUNT = 10;
+        const PRESET_BASES = ['public/assets/avatars/', 'assets/avatars/', '/public/assets/avatars/'];
+        const PRESET_EXTS = ['jpeg', 'jpg', 'png', 'webp'];
+
+        const canLoad = (url) => new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(true);
+            img.onerror = () => resolve(false);
+            img.src = url;
+        });
+
+        // Reduce la imagen ya cargada a 256x256 (JPEG): evita el límite de 1 MB y formatos raros
+        function shrinkToBlob(img) {
+            return new Promise((resolve, reject) => {
+                if (!img.naturalWidth) { reject(new Error('La imagen no está cargada.')); return; }
+                const size = 256;
+                const side = Math.min(img.naturalWidth, img.naturalHeight);
+                const sx = (img.naturalWidth - side) / 2, sy = (img.naturalHeight - side) / 2;
+                const canvas = document.createElement('canvas');
+                canvas.width = canvas.height = size;
+                canvas.getContext('2d').drawImage(img, sx, sy, side, side, 0, 0, size, size);
+                canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('No se pudo procesar la imagen.'))), 'image/jpeg', 0.9);
+            });
+        }
+
+        async function setupPresets() {
+            let pattern = null;
+            for (const base of PRESET_BASES) {
+                for (const ext of PRESET_EXTS) {
+                    if (await canLoad(`${base}avatar1.${ext}`)) { pattern = { base, ext }; break; }
+                }
+                if (pattern) break;
+            }
+            if (!pattern) return; // no hay predefinidos en el servidor: se oculta el bloque
+
+            const grid = $('predefined-avatars-grid');
+            for (let i = 1; i <= PRESET_COUNT; i++) {
+                const url = `${pattern.base}avatar${i}.${pattern.ext}`;
+                const btn = el('button', 'hover:scale-105 transition border border-[#8c6d36] rounded-lg overflow-hidden focus:border-[#ffd700] bg-[#0f0a06]');
+                btn.type = 'button';
+                btn.title = 'Avatar ' + i;
+                const img = el('img', 'w-full h-16 object-cover');
+                img.alt = 'Avatar predefinido ' + i;
+                img.src = url;
+                img.addEventListener('error', () => btn.remove());
+                btn.append(img);
+                btn.addEventListener('click', async () => {
+                    try {
+                        await sendAvatar(await shrinkToBlob(img));
+                        toast('Avatar actualizado.');
+                    } catch (e) { toast(e.message, true); }
+                });
+                grid.append(btn);
+            }
+            $('presets-block').classList.remove('hidden');
+        }
+
+        // ---------- Resumen de la colección ----------
+        // Mismos endpoints que usa hub.js: totales del informe y nº de contenedores.
+        // Si el servidor no reconoce el username, se reintenta con el login de 42 (igual que hub.js).
+        async function collectionGet(path) {
+            const request = (id) => fetch(API + path, { headers: { Accept: 'application/json', 'X-Username': id } });
+            let res = await request(session.username);
+            if (res.status === 401 && session.user_login && session.user_login !== session.username) {
+                res = await request(session.user_login);
+            }
+            return res;
+        }
+
+        async function loadCollection() {
+            const note = $('collection-note');
+            const showNote = (text, isError) => {
+                note.textContent = text;
+                note.className = 'text-xs mt-3 ' + (isError ? 'text-red-400' : 'text-[#9ca3af] italic');
+            };
+            try {
+                const [rep, cont] = await Promise.all([
+                    collectionGet('/api/reports/collection?page_size=1'),
+                    collectionGet('/api/containers/'),
+                ]);
+                if (!rep.ok) throw new Error('informe ' + rep.status);
+                const r = await rep.json();
+                const list = cont.ok ? await cont.json() : null;
+                const values = {
+                    copies: r.total_copies,
+                    cards: r.total_cards,
+                    containers: Array.isArray(list) ? list.length : null,
+                };
+                for (const [key, value] of Object.entries(values)) {
+                    document.querySelectorAll(`[data-stat="${key}"]`).forEach((n) => {
+                        n.textContent = value == null ? '—' : Number(value).toLocaleString('es-ES');
+                    });
+                }
+                if (!r.total_copies) showNote('Aún no tienes cartas guardadas. Añade la primera desde Mi colección.', false);
+            } catch (e) {
+                console.warn('No se pudo cargar el resumen de la colección:', e);
+                showNote('No se pudo cargar el resumen de tu colección.', true);
+            }
+        }
+
+        // ---------- Social ----------
+        function actionBtn(label, kind, onClick) {
+            const styles = {
+                primary: 'btn-fantasy text-xs !py-1 !px-3',
+                danger: 'bg-red-900/80 border border-red-700 text-white font-bold px-3 py-1 rounded-lg text-xs hover:bg-red-800 transition',
+                ghost: 'border border-[#8c6d36] text-[#d4af37] px-3 py-1 rounded-lg text-xs hover:bg-[#2c1d0f] transition',
+            };
+            const b = el('button', styles[kind] || styles.ghost, label);
+            b.type = 'button';
+            b.addEventListener('click', async () => {
+                b.disabled = true;
+                try { await onClick(); } catch (e) { toast(e.message, true); } finally { b.disabled = false; }
+            });
+            return b;
+        }
+
+        function userRow(user, note, buttons, onOpen) {
+            const row = el('div', 'flex items-center justify-between gap-3 bg-[#0f0a06] p-2.5 rounded-lg border border-[#8c6d36]');
+            const left = el('div', 'flex items-center gap-3 min-w-0');
+            left.append(avatarNode(user.avatar, user.username, 36));
+            const text = el('div', 'min-w-0');
+            text.append(el('p', 'text-sm font-bold text-[#f3f4f6] truncate', user.username));
+            if (note) text.append(el('p', 'text-xs text-[#9ca3af]', note));
+            left.append(text);
+            if (onOpen) {
+                left.classList.add('cursor-pointer', 'hover:opacity-80', 'transition');
+                left.tabIndex = 0;
+                left.setAttribute('role', 'button');
+                left.title = 'Ver perfil y mensajes';
+                left.addEventListener('click', onOpen);
+                left.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onOpen(); } });
+            }
+            const right = el('div', 'flex flex-wrap gap-2 justify-end');
+            buttons.forEach((b) => right.append(b));
+            row.append(left, right);
+            return row;
+        }
+
+        async function act(path, opts, okMessage) {
+            const data = await api(path, opts);
+            toast(okMessage || (data && data.message) || 'Hecho.');
+            await Promise.all([loadSocial(), runSearch()]);
+        }
+
+        const request = (u) => act('/friends/request', { method: 'POST', json: { username: u } });
+        const accept = (u) => act('/friends/accept', { method: 'POST', json: { username: u } });
+        const reject = (u) => act('/friends/reject', { method: 'POST', json: { username: u } });
+        const removeFriend = (u) => act('/friends/' + encodeURIComponent(u), { method: 'DELETE' });
+        const unblock = (u) => act('/block/' + encodeURIComponent(u), { method: 'DELETE' });
+        const block = async (u) => {
+            if (!confirm(`¿Seguro que deseas bloquear a ${u}? Se eliminará cualquier amistad o solicitud con esa persona.`)) return;
+            await act('/block', { method: 'POST', json: { username: u } });
+        };
+
+        function section(title, items, emptyText, build) {
+            const box = el('div');
+            box.append(el('h4', 'text-sm font-semibold font-magic text-[#f3f4f6] mb-2', `${title} (${items.length})`));
+            const list = el('div', 'space-y-2 max-h-56 overflow-y-auto pr-1');
+            if (!items.length) list.append(el('p', 'text-xs text-[#9ca3af] italic', emptyText));
+            items.forEach((u) => list.append(build(u)));
+            box.append(list);
+            return box;
+        }
+
+        async function loadSocial() {
+            const box = $('social-lists');
+            try {
+                const s = await api('/friends');
+                box.replaceChildren(
+                    section('Solicitudes recibidas', s.incoming, 'No tienes solicitudes pendientes.', (u) =>
+                        userRow(u, 'quiere ser tu amigo', [actionBtn('Aceptar', 'primary', () => accept(u.username)), actionBtn('Rechazar', 'ghost', () => reject(u.username))])),
+                    section('Solicitudes enviadas', s.outgoing, 'No has enviado ninguna solicitud.', (u) =>
+                        userRow(u, 'pendiente de respuesta', [actionBtn('Cancelar', 'ghost', () => reject(u.username))])),
+                    section('Amigos', s.friends, 'Aún no tienes amigos añadidos.', (u) =>
+                        userRow(u, null, [actionBtn('Mensaje', 'primary', () => openFriend(u)), actionBtn('Eliminar', 'ghost', () => removeFriend(u.username)), actionBtn('Bloquear', 'danger', () => block(u.username))], () => openFriend(u))),
+                    section('Bloqueados', s.blocked, 'No has bloqueado a nadie.', (u) =>
+                        userRow(u, null, [actionBtn('Desbloquear', 'ghost', () => unblock(u.username))]))
+                );
+            } catch (e) {
+                if (e.message !== 'Sesión caducada') box.replaceChildren(el('p', 'text-xs text-red-400', 'No se pudo cargar la lista: ' + e.message));
+            }
+        }
+
+        // Búsqueda con resultados accionables
+        const searchInput = $('search-input');
+        let searchTimer = null;
+        let searchSeq = 0;
+
+        async function runSearch() {
+            const q = searchInput.value.trim();
+            const box = $('search-results');
+            if (q.length < 2) { box.replaceChildren(); return; }
+            const mine = ++searchSeq;
+            try {
+                const { results } = await api('/search?q=' + encodeURIComponent(q));
+                if (mine !== searchSeq) return;
+                if (!results.length) { box.replaceChildren(el('p', 'text-xs text-[#9ca3af] italic', 'Ningún usuario coincide.')); return; }
+                box.replaceChildren(...results.map((u) => {
+                    const buttons = {
+                        friend: [el('span', 'text-xs text-green-400', '✔ Ya sois amigos')],
+                        pending_out: [el('span', 'text-xs text-yellow-400', 'Solicitud enviada')],
+                        pending_in: [actionBtn('Aceptar', 'primary', () => accept(u.username))],
+                        blocked: [actionBtn('Desbloquear', 'ghost', () => unblock(u.username))],
+                    }[u.relation] || [actionBtn('Añadir', 'primary', () => request(u.username)), actionBtn('Bloquear', 'danger', () => block(u.username))];
+                    return userRow(u, null, buttons);
+                }));
+            } catch (e) { /* el aviso de sesión ya lo muestra api() */ }
+        }
+
+        searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 300); });
+        searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('send-request-btn').click(); } });
+        $('send-request-btn').addEventListener('click', async () => {
+            const name = searchInput.value.trim();
+            if (!name) { toast('Escribe el nombre de usuario.', true); return; }
+            try {
+                await act('/friends/request', { method: 'POST', json: { username: name } });
+                searchInput.value = '';
+                $('search-results').replaceChildren();
+            } catch (e) { toast(e.message, true); }
+        });
+
+        // ---------- Perfil de amigo y mensajes directos ----------
+        // El chat consulta el servidor cada 3 s mientras la ventana está abierta (sin WebSocket).
+        const fm = { user: null, lastId: 0, timer: null, queue: Promise.resolve(), pending: 0 };
+        const fmBox = $('fm-messages');
+        const socialApi = (path, opts = {}) => api(path, { ...opts, base: '/api/social' });
+
+        function fmBubble(m) {
+            const wrap = el('div', 'flex ' + (m.mine ? 'justify-end' : 'justify-start'));
+            const b = el('div', 'max-w-[80%] px-3 py-2 rounded-lg text-sm break-words border ' +
+                (m.mine ? 'bg-[#2c1d0f] border-[#b39258] text-amber-100' : 'bg-[#0f0a06] border-[#8c6d36] text-[#f3f4f6]'));
+            b.append(el('p', 'whitespace-pre-wrap', m.message)); // textContent: nunca se interpreta HTML
+            const t = new Date(m.created_at);
+            b.append(el('p', 'text-[10px] text-[#9ca3af] mt-1 text-right',
+                isNaN(t) ? null : t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
+            wrap.append(b);
+            return wrap;
+        }
+
+        function appendDm(list) {
+            if (!list.length) {
+                if (!fm.lastId && !fmBox.children.length) {
+                    fmBox.append(el('p', 'text-xs text-[#9ca3af] italic text-center py-6', 'Aún no habéis hablado. Escribe el primer mensaje.'));
+                }
+                return;
+            }
+            if (!fm.lastId) fmBox.replaceChildren(); // quita el aviso de "sin mensajes"
+            const nearBottom = fmBox.scrollHeight - fmBox.scrollTop - fmBox.clientHeight < 60;
+            list.forEach((m) => { fmBox.append(fmBubble(m)); fm.lastId = Math.max(fm.lastId, m.id); });
+            if (nearBottom || list.length > 1) fmBox.scrollTop = fmBox.scrollHeight;
+        }
+
+        async function doPoll(first) {
+            const who = fm.user;
+            if (!who) return;
+            try {
+                const data = await socialApi('/dm/' + encodeURIComponent(who) + '?after_id=' + fm.lastId);
+                if (fm.user === who) appendDm(data.messages || []);
+            } catch (e) {
+                if (first && e.message !== 'Sesión caducada') toast(e.message, true);
+            }
+        }
+
+        // Las consultas se encolan para que no se solapen ni dupliquen mensajes
+        function pollDm(first) {
+            if (!first && fm.pending) return fm.queue; // los avisos del temporizador no se acumulan
+            fm.pending++;
+            fm.queue = fm.queue.then(() => doPoll(first)).finally(() => { fm.pending--; });
+            return fm.queue;
+        }
+
+        async function openFriend(u) {
+            clearInterval(fm.timer);
+            const who = u.username;
+            fm.user = who;
+            fm.lastId = 0;
+            $('fm-name').textContent = who;
+            $('fm-avatar').replaceChildren(avatarNode(u.avatar, who, 64));
+            $('fm-badge').classList.add('hidden');
+            document.querySelectorAll('[data-fm-stat]').forEach((n) => { n.textContent = '—'; });
+            fmBox.replaceChildren();
+            $('fm-modal').classList.remove('hidden');
+            $('fm-input').focus();
+            fm.timer = setInterval(() => { if (!document.hidden) pollDm(false); }, 3000);
+            pollDm(true);
+            try {
+                const p = await socialApi('/user/' + encodeURIComponent(who));
+                if (fm.user !== who) return;
+                $('fm-avatar').replaceChildren(avatarNode(p.avatar, who, 64));
+                if (p.badge) {
+                    $('fm-badge').textContent = p.badge;
+                    $('fm-badge').classList.remove('hidden');
+                }
+                const c = p.collection || {};
+                document.querySelectorAll('[data-fm-stat]').forEach((n) => {
+                    const v = c[n.dataset.fmStat];
+                    n.textContent = v == null ? '—' : Number(v).toLocaleString('es-ES');
+                });
+            } catch (e) {
+                if (fm.user === who && e.message !== 'Sesión caducada') toast(e.message, true);
+            }
+        }
+
+        function closeFriend() {
+            clearInterval(fm.timer);
+            fm.user = null;
+            $('fm-modal').classList.add('hidden');
+        }
+
+        $('fm-close').addEventListener('click', closeFriend);
+        $('fm-modal').addEventListener('click', (e) => { if (e.target === $('fm-modal')) closeFriend(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && fm.user) closeFriend(); });
+
+        $('fm-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const input = $('fm-input');
+            const text = input.value.trim();
+            if (!text || !fm.user) return;
+            try {
+                await socialApi('/dm/' + encodeURIComponent(fm.user), { method: 'POST', json: { message: text } });
+                input.value = '';
+                await pollDm(true);
+            } catch (err) {
+                if (err.message !== 'Sesión caducada') toast(err.message, true);
+            }
+        });
+
+        // ---------- Enlaces desde la campana del inicio: #chat=usuario y #solicitudes ----------
+        function handleHash() {
+            let h = '';
+            try { h = decodeURIComponent(location.hash.slice(1)); } catch (e) {}
+            if (h.startsWith('chat=') && h.length > 5) openFriend({ username: h.slice(5), avatar: null });
+            else if (h === 'solicitudes') $('social-panel').scrollIntoView({ behavior: 'smooth' });
+            if (h) history.replaceState(null, '', location.pathname + location.search);
+        }
+
+        // ---------- Arranque ----------
+        if (!session) {
+            showNoSession('No hay sesión iniciada.');
+        } else {
+            loadProfile().then(() => {
+                loadCollection(); loadSocial().finally(handleHash); setupPresets();
+            }).catch((e) => {
+                if (e.message !== 'Sesión caducada') {
+                    $('username-display').textContent = 'Error de sincronización';
+                    $('email-display').textContent = e.message;
+                }
+            });
+        }
+    })();
+    </script>
+</body>
+</html>

@@ -2,7 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import json
-from backend.routers import cards, containers, auth, chat, game, pong_game, achievements, reports, access
+from backend.routers import cards, containers, auth, chat, game, pong_game, achievements, reports, access, profile, social
 
 app = FastAPI(title="Card Binder Pro API", version="1.0")
 
@@ -36,31 +36,6 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-# --- ENDPOINT WEBSOCKET DIRECTO EN APP ---
-@app.websocket("/api/chat/ws/chat")
-async def websocket_chat_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
-    try:
-        while True:
-            data_text = await websocket.receive_text()
-            data = json.loads(data_text)
-            
-            message_payload = {
-                "username": data.get("username", "Conjurador"),
-                "user_login": data.get("user_login", "guest"),
-                "badge_type": data.get("badge_type", "civil_homebrewer"),
-                "message": data.get("message", ""),
-                "created_at": data.get("created_at", None) or "2026-08-09T20:00:00Z"
-            }
-            
-            await manager.broadcast(message_payload)
-            
-    except WebSocketDisconnect:
-        manager.disconnect(websocket)
-    except Exception as e:
-        print(f"❌ Excepción en WebSocket: {e}")
-        manager.disconnect(websocket)
-
 # --- INCLUSIÓN DE ROUTERS ---
 app.include_router(cards.router)
 app.include_router(containers.router)
@@ -71,3 +46,5 @@ app.include_router(pong_game.router)
 app.include_router(achievements.router)
 app.include_router(reports.router)
 app.include_router(access.router)
+app.include_router(profile.router)
+app.include_router(social.router)

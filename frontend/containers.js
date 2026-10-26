@@ -55,7 +55,7 @@ form.addEventListener('submit', async (e) => {
     }
 
     try {
-        const response = await fetch('http://localhost:8000/api/containers/', {
+        const response = await fetch('/api/containers/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 

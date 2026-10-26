@@ -379,12 +379,14 @@ def get_random_card_with_options():
         correct_name = correct["name"]
         image_uri = correct["image_uri"]
 
+        # Tres nombres distintos al azar. Antes: SELECT DISTINCT sobre un subselect ORDER BY RANDOM();
+        # el DISTINCT reordena los nombres y descarta el azar, así que el LIMIT 3 devolvía
+        # siempre los mismos (los primeros por orden interno). Ahora el azar se aplica DESPUÉS de agrupar.
         cursor.execute("""
-            SELECT DISTINCT name FROM (
-                SELECT name FROM cards 
-                WHERE LOWER(name) != LOWER(%s)
-                ORDER BY RANDOM()
-            ) sub 
+            SELECT name FROM cards
+            WHERE LOWER(name) != LOWER(%s)
+            GROUP BY name
+            ORDER BY RANDOM()
             LIMIT 3;
         """, (correct_name,))
         distractors = [row["name"] for row in cursor.fetchall()]

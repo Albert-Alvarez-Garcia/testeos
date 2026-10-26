@@ -1,7 +1,7 @@
 -- Habilitar la extensión para UUIDs si no está activa
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 0. Tabla de usuarios (Soporte multiusuario, cuentas locales/42 y sellos nobiliarios)
+-- 0. Tabla de usuarios (Soporte multiusuario, cuentas locales/42, sellos y avatares)
 CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     username VARCHAR(100) NOT NULL,
@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS users (
     intra_id VARCHAR(50) UNIQUE,              -- ID único oficial de la Intra de 42 (si aplica)
     auth_type VARCHAR(20) DEFAULT 'local',    -- 'local' o '42'
     badge_type VARCHAR(30) DEFAULT 'civil_homebrewer', -- 'official_42', 'civil_homebrewer', etc.
+    avatar_path VARCHAR(255) DEFAULT 'avatar1.jpg', -- Avatar por defecto (predeterminado o subido)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -93,5 +94,31 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Índice para ordenar y recuperar rápidamente los últimos mensajes cronológicamente
 CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages (created_at DESC);
+
+-- 8. Tabla de Amistades (Solicitudes: 'pending', 'accepted')
+CREATE TABLE IF NOT EXISTS friendships (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    friend_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_friendship UNIQUE (user_id, friend_id),
+    CONSTRAINT check_different_users CHECK (user_id <> friend_id)
+);
+
+-- 9. Tabla de Usuarios Bloqueados (Unidireccional)
+CREATE TABLE IF NOT EXISTS blocked_users (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,      -- Usuario que bloquea
+    blocked_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE, -- Usuario bloqueado
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT unique_block UNIQUE (user_id, blocked_id),
+    CONSTRAINT check_different_block CHECK (user_id <> blocked_id)
+);
+
+-- Índices para acelerar el sistema social y de bloqueos
+CREATE INDEX IF NOT EXISTS idx_friendships_user ON friendships (user_id, status);
+CREATE INDEX IF NOT EXISTS idx_friendships_friend ON friendships (friend_id, status);
+CREATE INDEX IF NOT EXISTS idx_blocked_users_user ON blocked_users (user_id);
+CREATE INDEX IF NOT EXISTS idx_blocked_users_blocked ON blocked_users (blocked_id);

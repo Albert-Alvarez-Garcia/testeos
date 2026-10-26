@@ -19,7 +19,7 @@
 body.hub-body {
     font-family: 'Inter', system-ui, sans-serif;
     color: var(--hub-text);
-    padding: 16px;
+    padding: 88px 16px 16px;
     display: flex;
     flex-direction: column;
     align-items: center;

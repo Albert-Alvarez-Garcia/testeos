@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel
 from typing import List
@@ -34,6 +36,15 @@ class ConnectionManager:
 manager = ConnectionManager()
 
 
+def _iso_utc(value) -> str:
+    """Fecha en ISO 8601 UTC con 'Z' (JavaScript la convierte a la hora local de cada usuario)."""
+    if isinstance(value, datetime):
+        if value.tzinfo is None:  # sin zona: se asume UTC
+            value = value.replace(tzinfo=timezone.utc)
+        return value.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
+    return str(value)
+
+
 @router.get("/history")
 async def get_chat_history():
     """Devuelve los últimos 50 mensajes de la sala global ordenados cronológicamente."""
@@ -42,9 +53,13 @@ async def get_chat_history():
     try:
         cursor.execute("""
             SELECT id, username, user_login, badge_type, message, created_at
-            FROM chat_messages
-            ORDER BY created_at ASC
-            LIMIT 50;
+            FROM (
+                SELECT id, username, user_login, badge_type, message, created_at
+                FROM chat_messages
+                ORDER BY created_at DESC
+                LIMIT 50
+            ) AS ultimos
+            ORDER BY created_at ASC;
         """)
         messages = cursor.fetchall()
         
@@ -52,11 +67,9 @@ async def get_chat_history():
         for msg in messages:
             msg_dict = dict(msg)
             if msg_dict.get("created_at"):
-                dt_val = msg_dict["created_at"]
-                dt_str = dt_val.isoformat() if hasattr(dt_val, "isoformat") else str(dt_val)
-                if not dt_str.endswith("Z") and "+" not in dt_str and "-" not in dt_str[10:]:
-                    dt_str += "Z"
-                msg_dict["created_at"] = dt_str
+                msg_dict["created_at"] = _iso_utc(msg_dict["created_at"])
+            if msg_dict.get("id") is not None:
+                msg_dict["id"] = str(msg_dict["id"])
             result.append(msg_dict)
             
         return result
@@ -72,9 +85,7 @@ async def get_chat_history():
 async def chat_websocket(websocket: WebSocket):
     """Endpoint WebSocket para la comunicación en tiempo real de la sala global."""
     await manager.connect(websocket)
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    
+
     try:
         while True:
             data = await websocket.receive_json()
@@ -86,21 +97,28 @@ async def chat_websocket(websocket: WebSocket):
             if not message:
                 continue
 
-            # Guardar en base de datos
-            cursor.execute("""
-                INSERT INTO chat_messages (username, user_login, badge_type, message)
-                VALUES (%s, %s, %s, %s)
-                RETURNING id, username, user_login, badge_type, message, created_at;
-            """, (username, user_login, badge_type, message))
-            
-            new_msg = cursor.fetchone()
-            conn.commit()
+            # Guardar en base de datos. La hora la fija aquí la aplicación (UTC) en cada mensaje:
+            # así no depende de CURRENT_TIMESTAMP (que es la hora de INICIO de la transacción) ni de
+            # una conexión que se mantenga abierta todo el rato que dura el WebSocket.
+            sent_at = datetime.now(timezone.utc)
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            try:
+                cursor.execute("""
+                    INSERT INTO chat_messages (username, user_login, badge_type, message, created_at)
+                    VALUES (%s, %s, %s, %s, %s)
+                    RETURNING id, username, user_login, badge_type, message, created_at;
+                """, (username, user_login, badge_type, message, sent_at))
+                new_msg = cursor.fetchone()
+                conn.commit()
+            except Exception:
+                conn.rollback()
+                raise
+            finally:
+                cursor.close()
+                conn.close()
 
-            # Asegurar formato ISO con 'Z' (UTC) para que JavaScript interprete la zona horaria correctamente
-            created_at_val = new_msg["created_at"]
-            created_at_str = created_at_val.isoformat() if hasattr(created_at_val, "isoformat") else str(created_at_val)
-            if not created_at_str.endswith("Z") and "+" not in created_at_str and "-" not in created_at_str[10:]:
-                created_at_str += "Z"
+            created_at_str = _iso_utc(new_msg["created_at"])
 
             # Estructura del mensaje para difundir a todos los clientes conectados
             message_payload = {
@@ -119,6 +137,3 @@ async def chat_websocket(websocket: WebSocket):
     except Exception as e:
         print(f"❌ Excepción en WebSocket de chat: {e}")
         manager.disconnect(websocket)
-    finally:
-        cursor.close()
-        conn.close()

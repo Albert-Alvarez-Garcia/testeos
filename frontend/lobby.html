@@ -10,6 +10,7 @@
         body { font-family: 'Inter', sans-serif; background-color: #0b0705; color: #fef3c7; }
         .magic-title { font-family: 'Cinzel', serif; }
     </style>
+    <script src="theme.js"></script>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4">
 
@@ -85,7 +86,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            const API_HOST = "localhost:8000";
+            const API_HOST = location.host;
 
             const roomStatus = document.getElementById("room-status");
             const playerCount = document.getElementById("player-count");
@@ -125,7 +126,7 @@
 
             // ---------------- WebSocket con reconexión ----------------
             function connectLobbyWebSocket() {
-                ws = new WebSocket(`ws://${API_HOST}/api/game/ws/lobby/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
+                ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${API_HOST}/api/game/ws/lobby/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
 
                 ws.onopen = () => {
                     roomStatus.textContent = "🟢 Conectado al vestíbulo";

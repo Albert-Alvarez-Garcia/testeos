@@ -273,7 +273,7 @@
                 return div;
             }
 
-            const API_BASE = 'http://localhost:8000';
+            const API_BASE = '';
 
             // El backend descarga el avatar y lo sirve desde /api/auth/avatar/<usuario>; las URLs
             // de 42 quedan como alternativa. Se prueban en orden y, si ninguna carga, se usa la inicial.
@@ -538,7 +538,7 @@
 
         async function loadChatHistory() {
             try {
-                const response = await fetch('http://localhost:8000/api/chat/history');
+                const response = await fetch('/api/chat/history');
                 if (!response.ok) throw new Error('Error al cargar historial');
                 const messages = await response.json();
                 messages.forEach(msg => appendChatMessage(msg));
@@ -550,7 +550,7 @@
         function connectChatWebSocket() {
             if (ws && ws.readyState === WebSocket.OPEN) return;
 
-            ws = new WebSocket('ws://localhost:8000/api/chat/ws/chat');
+            ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/api/chat/ws/chat');
 
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);

@@ -8,6 +8,12 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Enlace a la hoja de estilos externa -->
     <link rel="stylesheet" href="portal.css">
+    <style>
+        /* El logo de 42 se pinta en blanco sea cual sea el color original del SVG (si ya lo quieres tal cual, quita el filter) */
+        #logo-42 img { filter: brightness(0) invert(1); }
+    </style>
+    <!-- Tema azulado de 42 (fondo y colores): lo activa theme.js si el usuario es de 42 -->
+    <script src="theme.js"></script>
 </head>
 <body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-hidden">
 
@@ -91,6 +97,11 @@
 
     <!-- ESPACIADOR INFERIOR -->
     <div class="h-10"></div>
+
+    <!-- Logo de 42 (solo para usuarios de 42), abajo a la derecha -->
+    <div id="logo-42" class="hidden fixed bottom-6 right-6 z-30 p-2.5 rounded-xl bg-[#140e09]/80 border border-[#b39258]/50 shadow-2xl backdrop-blur-md pointer-events-none">
+        <img src="public/assets/42_Logo.svg" alt="42" class="h-9 w-auto block">
+    </div>
 
     <!-- 💬 COMPONENTE DE SALA DE CHAT GLOBAL (OCULTO POR DEFECTO) -->
     <div id="chat-box" class="fixed bottom-24 right-6 w-80 md:w-96 h-[450px] bg-[#140e09]/95 border-2 border-[#b39258] rounded-2xl shadow-2xl backdrop-blur-md hidden flex-col z-50 overflow-hidden font-sans">
@@ -210,6 +221,17 @@
         }
 
         // ==========================================
+        // TEMA 42: fondo propio y logo para los usuarios que entraron con 42
+        // ==========================================
+        const isFortyTwo = (u) => !!u && (u.auth_type === '42' || /42/.test(String(u.badge || '')));
+        function applyTheme(on) {
+            if (on && window.cbEnableTheme42) window.cbEnableTheme42();
+            const logo = document.getElementById('logo-42');
+            if (logo) logo.classList.toggle('hidden', !on);
+        }
+        applyTheme(isFortyTwo(userData));
+
+        // ==========================================
         // PINTAR USUARIO
         // ==========================================
         if (userMenuContainer) {
@@ -280,7 +302,7 @@
                 return div;
             }
 
-            const API_BASE = 'http://localhost:8000';
+            const API_BASE = '';
 
             // El backend descarga el avatar y lo sirve desde /api/auth/avatar/<usuario>; las URLs
             // de 42 quedan como alternativa. Se prueban en orden y, si ninguna carga, se usa la inicial.
@@ -341,6 +363,8 @@
                     });
                     if (!res.ok) return;
                     const me = await res.json();
+                    // El servidor confirma el tipo de cuenta (por si el badge no lo indicara)
+                    applyTheme(me.auth_type === '42' || isFortyTwo(userData));
                     if (me.avatar) {
                         if (me.avatar === userData.avatar) return;
                         userData.avatar = me.avatar;
@@ -646,7 +670,7 @@
 
         async function loadChatHistory() {
             try {
-                const response = await fetch('http://localhost:8000/api/chat/history');
+                const response = await fetch('/api/chat/history');
                 if (!response.ok) throw new Error('Error al cargar historial');
                 const messages = await response.json();
                 messages.forEach(msg => appendChatMessage(msg));
@@ -658,7 +682,7 @@
         function connectChatWebSocket() {
             if (ws && ws.readyState === WebSocket.OPEN) return;
 
-            ws = new WebSocket('ws://localhost:8000/api/chat/ws/chat');
+            ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/api/chat/ws/chat');
 
             ws.onmessage = (event) => {
                 const data = JSON.parse(event.data);

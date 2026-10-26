@@ -10,7 +10,7 @@ async function realizarBusqueda() {
     }
 
     try {
-        const response = await fetch(`http://localhost:8000/api/cards/filter?name=${encodeURIComponent(query)}`);
+        const response = await fetch(`/api/cards/filter?name=${encodeURIComponent(query)}`);
         
         if (!response.ok) {
             if (response.status === 404) {
@@ -67,7 +67,7 @@ addCardBtn.addEventListener('click', async () => {
 
     try {
         // Preparando el envío al backend (crearemos el endpoint si hace falta o usamos el modelo)
-        const response = await fetch(`http://localhost:8000/api/cards/`, {
+        const response = await fetch(`/api/cards/`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

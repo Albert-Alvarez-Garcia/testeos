@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="default">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro — Mi colección</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="hub.css">
+    <script src="user-menu.js"></script> 
+</head>
+<body class="hub-body" data-hub="coleccion">
+
+    <header class="hub-header">
+        <a class="hub-logo" href="index.html" title="Volver al inicio">
+            <img src="public/assets/logomagic.png" alt="Card Binder Pro">
+        </a>
+        <nav class="hub-crumbs" aria-label="Ruta">
+            <a href="index.html">Inicio</a><span aria-hidden="true">›</span><span aria-current="page">Mi colección</span>
+        </nav>
+    </header>
+
+    <main class="hub-main">
+        <h1>Mi colección</h1>
+        <p class="hub-lead">Mira qué cartas tienes y dónde están, añade las nuevas y organiza tus contenedores.</p>
+
+        <div class="hub-grid">
+            <a class="hub-card primary" href="report.html">
+                <span class="hub-orb metal-orb" aria-hidden="true">📚</span>
+                <span>
+                    <h2>Todas mis cartas</h2>
+                    <p>Busca, filtra y ordena toda tu colección. Cada carta muestra sus artes y el contenedor en el que está.</p>
+                    <dl class="hub-stats">
+                        <div><dt>Copias</dt><dd data-stat="copies">—</dd></div>
+                        <div><dt>Cartas distintas</dt><dd data-stat="cards">—</dd></div>
+                        <div><dt>Contenedores</dt><dd data-stat="containers">—</dd></div>
+                    </dl>
+                </span>
+            </a>
+
+            <a class="hub-card" href="visor-containers.html">
+                <span class="hub-orb metal-orb" aria-hidden="true">🗃️</span>
+                <span>
+                    <h2>Contenedores</h2>
+                    <p>Abre un binder, un mazo o una caja y mira sus cartas hueco a hueco.</p>
+                </span>
+            </a>
+
+            <a class="hub-card" href="visor-admin-25d.html">
+                <span class="hub-orb metal-orb" aria-hidden="true">🔎</span>
+                <span>
+                    <h2>Añadir cartas</h2>
+                    <p>Busca una carta, elige su arte y guárdala en un contenedor.</p>
+                </span>
+            </a>
+
+            <a class="hub-card" href="containers.html">
+                <span class="hub-orb metal-orb" aria-hidden="true">📦</span>
+                <span>
+                    <h2>Crear contenedor</h2>
+                    <p>Prepara un binder, un mazo o una caja nuevos.</p>
+                </span>
+            </a>
+        </div>
+    </main>
+
+    <script src="hub.js"></script>
+</body>
+</html>

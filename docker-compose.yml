@@ -28,6 +28,9 @@ services:
       - DB_NAME=card_binder_db
       - DB_USER=binder_user
       - DB_PASSWORD=binder_password
+      - AVATAR_DIR=/data/avatars
+    volumes:
+      - avatars:/data/avatars
     depends_on:
       - postgres_db
     env_file:
@@ -41,8 +44,12 @@ services:
     restart: always
     ports:
       - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./certs:/etc/nginx/certs:ro
     depends_on:
       - backend
 
 volumes:
   pgdata:
+  avatars:

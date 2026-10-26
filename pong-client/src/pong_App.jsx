@@ -36,6 +36,26 @@ function readSession() {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
+// Botón fijo para volver al inicio del portal (mismo aspecto que "Volver al Portal" del resto de la web).
+// Usa una ruta absoluta porque Pong vive bajo /pong/. Al navegar se desmonta la app y se cierra el WebSocket.
+const HOME_URL = "/index.html";
+const HOME_BUTTON_STYLE = {
+  position: "fixed", top: 16, left: 16, zIndex: 1000,
+  display: "inline-flex", alignItems: "center", gap: 6,
+  padding: "8px 16px", borderRadius: 12, textDecoration: "none",
+  fontFamily: "system-ui, sans-serif", fontSize: 12, fontWeight: 600,
+  color: "#fde68a", background: "rgba(20, 14, 9, 0.9)", border: "1px solid rgba(179, 146, 88, 0.6)",
+  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.5)", backdropFilter: "blur(6px)",
+};
+
+function HomeButton() {
+  return (
+    <a href={HOME_URL} style={HOME_BUTTON_STYLE} title="Volver al inicio">
+      <span aria-hidden="true">←</span> Volver al Inicio
+    </a>
+  );
+}
+
 export default function PongApp() {
   const [username, setUsername] = useState(readInitialName);
   const [session, setSession] = useState(readSession);
@@ -69,17 +89,20 @@ export default function PongApp() {
     setSession(null);
   }, [session]);
 
-  if (session) {
-    return <PongGame session={session} onExit={leaveGame} />;
-  }
-
   return (
-    <PongLobby
-      username={username}
-      onUsernameChange={changeUsername}
-      initialJoin={lastJoin}
-      onStartGame={handleStartGame}
-    />
+    <>
+      <HomeButton />
+      {session ? (
+        <PongGame session={session} onExit={leaveGame} />
+      ) : (
+        <PongLobby
+          username={username}
+          onUsernameChange={changeUsername}
+          initialJoin={lastJoin}
+          onStartGame={handleStartGame}
+        />
+      )}
+    </>
   );
 }
 

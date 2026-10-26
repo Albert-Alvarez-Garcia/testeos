@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- 1. Cargar contenedores ---
     async function cargarContenedores() {
         try {
-            const response = await fetch('http://localhost:8000/api/containers/');
+            const response = await fetch('/api/containers/');
             if (!response.ok) throw new Error('Error al listar contenedores');
             
             allContainersList = await response.json();
@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
         visualWorkspace.innerHTML = `<div class="placeholder-msg" style="text-align: center; margin-top: 15vh;"><p style="color: var(--text-muted);">Cargando estructura física...</p></div>`;
         
         try {
-            const response = await fetch(`http://localhost:8000/api/containers/${containerId}/slots`);
+            const response = await fetch(`/api/containers/${containerId}/slots`);
             if (!response.ok) throw new Error('Error al obtener los slots');
             
             const slots = await response.json();

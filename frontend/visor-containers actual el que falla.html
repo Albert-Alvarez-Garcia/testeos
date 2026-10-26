@@ -101,7 +101,7 @@
         // --- CARGA DE CONTENEDORES ---
         async function cargarContenedores() {
             try {
-                const response = await fetch('http://localhost:8000/api/containers/');
+                const response = await fetch('/api/containers/');
                 if (!response.ok) throw new Error('Error al listar contenedores');
                 allContainers = await response.json();
                 actualizarDesplegableVisorGrafico();
@@ -175,7 +175,7 @@
             visualWorkspace.innerHTML = `<div class="placeholder-msg"><p style="color: var(--text-muted);">Cargando estructura física...</p></div>`;
             
             try {
-                const response = await fetch(`http://localhost:8000/api/containers/${containerId}/slots`);
+                const response = await fetch(`/api/containers/${containerId}/slots`);
                 if (!response.ok) throw new Error('Error al obtener los slots');
                 
                 const slots = await response.json();
@@ -294,7 +294,7 @@
                         notes: s.notes || null
                     }));
 
-                    const response = await fetch(`http://localhost:8000/api/containers/${currentContainerData.id}/slots`, {
+                    const response = await fetch(`/api/containers/${currentContainerData.id}/slots`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -402,7 +402,7 @@
                             newConfirm.disabled = true;
 
                             try {
-                                const response = await fetch(`http://localhost:8000/api/containers/move-cross-container`, {
+                                const response = await fetch(`/api/containers/move-cross-container`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({
@@ -694,7 +694,7 @@
                             notes: s.notes || null
                         }));
 
-                        const response = await fetch(`http://localhost:8000/api/containers/${currentContainerData.id}/slots`, {
+                        const response = await fetch(`/api/containers/${currentContainerData.id}/slots`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify(payload)
@@ -801,7 +801,7 @@
                                 newConfirm.disabled = true;
 
                                 try {
-                                    const response = await fetch(`http://localhost:8000/api/containers/move-cross-container`, {
+                                    const response = await fetch(`/api/containers/move-cross-container`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' },
                                         body: JSON.stringify({

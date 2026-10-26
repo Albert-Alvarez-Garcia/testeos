@@ -39,6 +39,17 @@ FORTYTWO_REDIRECT_URI = os.getenv(
     "http://localhost:8080/api/auth/42/callback"
 )
 
+
+def _redirect_uri(request: Request) -> str:
+    """URL de retorno de 42 según el host con el que se entró (localhost, IP del PC...).
+    Cada una debe estar dada de alta en la app de 42. PUBLIC_BASE_URL la fija a mano si se define."""
+    base = os.getenv("PUBLIC_BASE_URL", "").rstrip("/")
+    if not base:
+        scheme = request.headers.get("x-forwarded-proto") or request.url.scheme
+        host = request.headers.get("host") or request.url.netloc
+        base = f"{scheme}://{host}"
+    return f"{base}/api/auth/42/callback"
+
 # --- AVATARES ---
 # La API descarga el avatar de 42 al iniciar sesión y lo sirve ella misma, para que el
 # navegador no dependa del CDN (que a veces falla o es bloqueado por ORB al enlazarlo).
@@ -69,6 +80,16 @@ def _detect_image_ext(data: bytes):
         return "gif"
     if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
         return "webp"
+    return None
+
+
+def _local_avatar_path(username: str):
+    """Ruta del avatar ya guardado del usuario (el suyo o uno anterior de 42) o None."""
+    safe = _safe_avatar_name(username)
+    for ext in AVATAR_MEDIA_TYPES:
+        path = os.path.join(AVATAR_DIR, f"{safe}.{ext}")
+        if os.path.isfile(path):
+            return path
     return None
 
 
@@ -244,7 +265,7 @@ async def login_user(credentials: UserLogin):
 
 
 @router.get("/42/login")
-async def login_with_42():
+async def login_with_42(request: Request):
     """Inicia OAuth2 Authorization Code Flow contra 42."""
     if not FORTYTWO_CLIENT_ID or not FORTYTWO_CLIENT_SECRET:
         raise HTTPException(
@@ -255,7 +276,7 @@ async def login_with_42():
     state = secrets.token_urlsafe(32)
     params = {
         "client_id": FORTYTWO_CLIENT_ID,
-        "redirect_uri": FORTYTWO_REDIRECT_URI,
+        "redirect_uri": _redirect_uri(request),
         "response_type": "code",
         "scope": "public",
         "state": state,
@@ -308,7 +329,7 @@ async def callback_42(
             "client_id": FORTYTWO_CLIENT_ID,
             "client_secret": FORTYTWO_CLIENT_SECRET,
             "code": code,
-            "redirect_uri": FORTYTWO_REDIRECT_URI,
+            "redirect_uri": _redirect_uri(request),
         },
         headers={"Accept": "application/json"},
         timeout=15,
@@ -403,7 +424,12 @@ async def callback_42(
         if isinstance(url, str) and url.startswith("https://") and url not in avatar_urls:
             avatar_urls.append(url)
 
-    if avatar_urls:
+    existing_avatar = _local_avatar_path(final_user["username"])
+    if existing_avatar:
+        # Ya tiene avatar guardado (el que eligió o uno anterior de 42): no se vuelve a descargar ni se pisa
+        safe_name = _safe_avatar_name(final_user["username"])
+        payload["avatar"] = f"/api/auth/avatar/{safe_name}?v={int(os.path.getmtime(existing_avatar))}"
+    elif avatar_urls:
         # Primero se intenta descargar y servir el avatar desde esta API. Las URLs de 42
         # quedan como alternativa por si el archivo local desapareciera.
         local_avatar = save_avatar_locally(final_user["username"], avatar_urls)
@@ -429,7 +455,7 @@ async def callback_42(
     const params = new URLSearchParams();
     params.set('auth42', btoa(unescape(encodeURIComponent(JSON.stringify(user)))));
 
-    window.location.replace('http://localhost:8080/index.html?' + params.toString());
+    window.location.replace('/index.html?' + params.toString());
     </script>
 
     <p>Autenticación correcta. Redirigiendo...</p>

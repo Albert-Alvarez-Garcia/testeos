@@ -12,6 +12,7 @@
         body { font-family: 'Inter', sans-serif; color: #fef3c7; }
         .magic-title { font-family: 'Cinzel', serif; }
     </style>
+    <script src="theme.js"></script>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-4 pt-20 md:pt-4 relative">
 
@@ -90,7 +91,7 @@
 
             async function fetchActiveRooms() {
                 try {
-                    const response = await fetch("http://localhost:8000/api/game/rooms");
+                    const response = await fetch("/api/game/rooms");
                     const data = await response.json();
                     renderRooms(data.rooms);
                 } catch (error) {

@@ -68,6 +68,7 @@
             border: 1px solid var(--border-color, #333);
         }
     </style>
+    <script src="theme.js"></script>
 </head>
 <body>
 
@@ -213,7 +214,7 @@
             if (!authHeader['X-Username']) return;
 
             try {
-                const response = await fetch('http://localhost:8000/api/containers/', {
+                const response = await fetch('/api/containers/', {
                     headers: {
                         'Content-Type': 'application/json',
                         ...authHeader
@@ -233,7 +234,7 @@
                 // Consultar slots para saber los ocupados reales
                 allContainers = await Promise.all(containersRaw.map(async c => {
                     try {
-                        const slotRes = await fetch(`http://localhost:8000/api/containers/${c.id}/slots`, {
+                        const slotRes = await fetch(`/api/containers/${c.id}/slots`, {
                             headers: { 
                                 'Content-Type': 'application/json',
                                 ...authHeader 
@@ -337,7 +338,7 @@
             }
 
             try {
-                const response = await fetch('http://localhost:8000/api/containers/', {
+                const response = await fetch('/api/containers/', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',

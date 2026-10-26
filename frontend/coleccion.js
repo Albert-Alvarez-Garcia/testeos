@@ -9,7 +9,7 @@
 (() => {
     'use strict';
 
-    const API_BASE_URL = 'http://localhost:8000/api';
+    const API_BASE_URL = '/api';
     const NOCAPI = 'public/assets/nocapi.png';
 
     const DEFAULTS = {

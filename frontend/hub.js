@@ -7,7 +7,7 @@
 (() => {
     'use strict';
 
-    const API = 'http://localhost:8000/api';
+    const API = '/api';
 
     function getUser() {
         try { return JSON.parse(localStorage.getItem('cardbinder_user')); } catch (e) { return null; }
