@@ -1,5 +1,12 @@
-/* >>> PALETA (generado por unify_css.py) >>> */
-/* Cada color es un trío R G B para poder usar rgb(var(--c-x) / transparencia). El tema 42 solo cambia estos valores. */
+/* ==========================================================================
+   portal.css · estilos compartidos de Card Binder Pro
+   Índice: 1 Paleta · 2 Variables y base · 3 Decoración · 4 Avatar y medallas
+           5 Paneles, inputs y botones · 6 Barra de sección · 7 Chat flotante
+   Los colores se escriben SIEMPRE como rgb(var(--c-x) / alfa). El tema de 42
+   (css/theme-42.css) solo redefine los --c-*; no hay que tocar nada más.
+   ========================================================================== */
+
+/* --- 1. PALETA (tríos R G B) --- */
 :root {
     --c-bg-app: 8 5 3;
     --c-ink: 11 7 5;
@@ -29,11 +36,8 @@
     --c-amber-800: 146 64 14;
     --c-amber-900: 120 53 15;
 }
-.font-ui { font-family: 'Inter', sans-serif; color: rgb(var(--c-cream)); }
-.magic-title { font-family: 'Cinzel', serif; }
-/* <<< PALETA <<< */
 
-/* --- 1. IMPORTACIÓN Y CONFIGURACIÓN BASE --- */
+/* --- 2. VARIABLES SEMÁNTICAS Y BASE --- */
 @font-face {
     font-family: 'MagicTheGathering';
     src: url('../public/assets/MAGIC.TTF') format('truetype');
@@ -48,10 +52,15 @@
     --border-hover: rgb(var(--c-accent-hi));
     --text-main: #f3f4f6;
     --text-muted: #9ca3af;
+    --danger: #f87171;
     --accent: rgb(var(--c-accent));
     --accent-glow: rgb(var(--c-accent) / 0.4);
     --transition: all 0.2s ease-in-out;
 }
+
+/* Tipografías de página: .font-ui (cuerpo) y .magic-title (títulos) */
+.font-ui { font-family: 'Inter', sans-serif; color: rgb(var(--c-cream)); }
+.magic-title { font-family: 'Cinzel', serif; }
 
 body {
     min-height: 100vh;
@@ -72,7 +81,7 @@ body {
     letter-spacing: 1px;
 }
 
-/* --- 2. ELEMENTOS DECORATIVOS Y NAVEGACIÓN --- */
+/* --- 3. ELEMENTOS DECORATIVOS Y NAVEGACIÓN --- */
 .metal-orb {
     background: radial-gradient(circle at 30% 30%, rgb(var(--c-bronze)) 0%, rgb(var(--c-bronze-deep)) 70%);
     border: 2px solid rgb(var(--c-gold));
@@ -86,7 +95,7 @@ body {
     box-shadow: 0 0 15px var(--accent-glow), inset 0 2px 6px rgba(255,255,255,0.4);
 }
 
-/* --- 2b. AVATAR DE USUARIO Y MEDALLAS --- */
+/* --- 4. AVATAR DE USUARIO Y MEDALLAS --- */
 .avatar-img,
 .avatar-initial {
     width: 2rem;
@@ -243,10 +252,10 @@ body {
 }
 
 .medal-msg-error {
-    color: #f87171;
+    color: var(--danger);
 }
 
-/* --- 3. COMPONENTES COMUNES DE PANEL (Paneles, Inputs y Botones) --- */
+/* --- 5. PANELES, INPUTS Y BOTONES --- */
 /* Paneles de administración / contenedores con la misma textura oscura */
 .fantasy-panel {
     background: var(--bg-card);
@@ -298,3 +307,51 @@ select:focus {
     box-shadow: 0 4px 12px var(--accent-glow);
     transform: translateY(-1px);
 }
+
+
+/* --- 6. BARRA DE SECCIÓN (section-nav.js) --- */
+.sn-bar {
+    box-sizing: border-box; position: relative; z-index: 20;
+    width: min(80rem, calc(100% - 24px)); margin: 10px auto 12px; padding: 6px 12px;
+    display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
+    background: rgb(var(--c-panel) / 0.94); border: 1px solid rgb(var(--c-gold) / 0.32); border-radius: 12px;
+    font: 500 0.85rem/1.3 'Inter', system-ui, sans-serif; color: rgb(var(--c-cream));
+}
+.sn-bar a { color: inherit; text-decoration: none; padding: 6px 10px; border-radius: 8px; }
+.sn-bar a:hover { background: rgb(var(--c-raised-2)); color: rgb(var(--c-amber-300)); }
+.sn-bar a:focus-visible { outline: 2px solid rgb(var(--c-amber-400)); outline-offset: 1px; }
+.sn-home, .sn-sep { color: rgb(var(--c-amber-200) / 0.68); }
+.sn-sep { padding: 0 2px; }
+.sn-section { font-weight: 600; color: rgb(var(--c-amber-400)); }
+.sn-tabs { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
+.sn-tabs a[aria-current="page"] { background: rgb(var(--c-amber-700)); color: #fff; font-weight: 600; cursor: default; }
+@media (max-width: 720px) { .sn-tabs { margin-left: 0; width: 100%; } }
+@media print { .sn-bar { display: none; } }
+
+/* --- 7. CHAT FLOTANTE (chat.js) --- */
+.chat-msg {
+    background: rgb(var(--c-panel)); padding: 8px 12px; border-radius: 8px;
+    border: 1px solid rgb(var(--c-gold) / 0.3); margin-bottom: 8px;
+}
+.chat-msg-head {
+    display: flex; justify-content: space-between; gap: 8px;
+    font-size: 11px; color: rgb(var(--c-amber-400)); margin-bottom: 4px;
+}
+.chat-msg-time { color: rgb(var(--c-cream) / 0.5); }
+.chat-msg-body { color: rgb(var(--c-cream)); word-break: break-word; font-size: 12px; }
+.chat-gif {
+    display: inline-block; width: 7rem; height: 7rem; object-fit: cover;
+    border-radius: 0.5rem; margin-top: 0.25rem; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+}
+.chat-hint {
+    grid-column: 1 / -1; text-align: center; padding: 1rem 0;
+    font-size: 10px; color: rgb(var(--c-amber-200) / 0.5);
+}
+.chat-hint.is-active { color: rgb(var(--c-amber-200)); }
+.chat-hint.is-error { color: var(--danger); }
+.chat-gif-btn {
+    height: 4rem; padding: 0; overflow: hidden; border-radius: 0.25rem; cursor: pointer;
+    background: rgb(var(--c-panel)); border: 1px solid rgb(var(--c-gold) / 0.3); transition: transform 0.15s;
+}
+.chat-gif-btn:hover { transform: scale(1.05); }
+.chat-gif-btn img { display: block; width: 100%; height: 100%; object-fit: cover; }

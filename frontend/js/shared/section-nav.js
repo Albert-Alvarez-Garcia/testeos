@@ -4,10 +4,11 @@
  *   las subpáginas sin volver siempre a la página intermedia.
  *
  * Uso: en cada subpágina, antes de </body>:
- *   <script src="section-nav.js" data-section="coleccion"></script>
- *   <script src="section-nav.js" data-section="juegos"></script>
+ *   <script src="js/shared/section-nav.js" data-section="coleccion"></script>
+ *   <script src="js/shared/section-nav.js" data-section="juegos"></script>
  *
  * Para añadir una página a una sección, basta con añadirla a SECTIONS.
+ * Requiere css/portal.css en la página (ahí están los estilos .sn-*).
  ********************************************************************************/
 (() => {
     'use strict';
@@ -46,23 +47,7 @@
         ? location.pathname.startsWith(item.href)
         : [item.href, ...(item.also || [])].includes(here));
 
-    const style = document.createElement('style');
-    style.textContent = `
-        .sn-bar { box-sizing: border-box; position: relative; z-index: 20; width: min(80rem, calc(100% - 24px));
-            margin: 10px auto 12px; padding: 6px 12px; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px;
-            background: rgba(20, 14, 9, .94); border: 1px solid rgba(179, 146, 88, .32); border-radius: 12px;
-            font: 500 .85rem/1.3 'Inter', system-ui, sans-serif; color: #fef3c7; }
-        .sn-bar a { color: inherit; text-decoration: none; padding: 6px 10px; border-radius: 8px; }
-        .sn-bar a:hover { background: #1e140d; color: #fcd34d; }
-        .sn-bar a:focus-visible { outline: 2px solid #fbbf24; outline-offset: 1px; }
-        .sn-home, .sn-sep { color: rgba(253, 230, 138, .68); }
-        .sn-sep { padding: 0 2px; }
-        .sn-section { font-weight: 600; color: #fbbf24; }
-        .sn-tabs { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; flex-wrap: wrap; gap: 4px; }
-        .sn-tabs a[aria-current="page"] { background: #b45309; color: #fff; font-weight: 600; cursor: default; }
-        @media (max-width: 720px) { .sn-tabs { margin-left: 0; width: 100%; } }
-        @media print { .sn-bar { display: none; } }`;
-    document.head.appendChild(style);
+    // Los estilos (.sn-*) están en css/portal.css
 
     const nav = document.createElement('nav');
     nav.className = 'sn-bar';

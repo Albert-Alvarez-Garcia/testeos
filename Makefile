@@ -70,8 +70,9 @@ down:
 
 # Limpieza profunda de contenedores detenidos, redes y caché de Docker sin usar
 prune:
-	docker system prune -f --volumes
+	docker system prune -f
 	@echo "💀 Se hizo la purga de contenedores."
+
 
 # Reinicia los contenedores y fuerza la compilación de React con Vite
 restart:
@@ -86,7 +87,5 @@ logs:
 
 # Limpia contenedores y borra el volumen de datos
 clean:
-	docker compose down -v
-	docker igamegs -q | xargs -r dpcker rmi -f
-	docker volume ls -q | xargs -r dpcker volume rm -f
-	@echo "⚠️ Contenedores y volumen de datos eliminados."
+	docker compose down -v --rmi local
+	@echo "⚠️ Contenedores, volúmenes e imágenes del proyecto eliminados."

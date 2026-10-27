@@ -1,5 +1,5 @@
 /* theme.js · Activa el tema azulado de 42 si la sesión guardada es de un usuario de 42.
-   Incluir en el <head> de cada página:  <script src="theme.js"></script>  (después de los enlaces a CSS). */
+   Incluir en el <head> de cada página:  <script src="js/shared/theme.js"></script>  (después de los enlaces a CSS). */
 (function () {
     var cssHref = new URL('css/theme-42.css', document.baseURI).href;
 
