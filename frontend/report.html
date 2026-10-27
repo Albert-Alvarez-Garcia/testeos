@@ -9,7 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Estilos Unificados -->
-    <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="css/portal.css">
 
     <!-- Fuentes opcionales para la tipografía de títulos e interfaz -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,9 +24,9 @@
             border-radius: 50%; color: #1b130c; border: 1px solid rgba(0, 0, 0, 0.45);
             box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.28), inset 0 1px 2px rgba(255, 255, 255, 0.4);
         }
-        .mana-w { background: #f3efdc; } .mana-u { background: #6bb2ec; } .mana-b { background: #6e5a80; color: #f4ecff; }
+        .mana-w { background: rgb(var(--c-cream-2)); } .mana-u { background: #6bb2ec; } .mana-b { background: #6e5a80; color: #f4ecff; }
         .mana-r { background: #ee6a50; } .mana-g { background: #55b374; } .mana-c, .mana-n { background: #c8c2b4; }
-        .mana-h { background: linear-gradient(135deg, #f3efdc 0 50%, #6bb2ec 50% 100%); }
+        .mana-h { background: linear-gradient(135deg, rgb(var(--c-cream-2)) 0 50%, #6bb2ec 50% 100%); }
         .mana-sep { margin: 0 4px; font-size: 0.8125rem; color: #9ca3af; }
 
         .prints-grid {
@@ -36,42 +36,42 @@
         }
         .skeleton-loader {
             height: 180px;
-            background: rgba(179, 146, 88, 0.08);
+            background: rgb(var(--c-gold) / 0.08);
             border-radius: 12px;
             animation: pulse 1.4s ease-in-out infinite;
         }
         @keyframes pulse { 50% { opacity: 0.4; } }
     </style>
-    <script src="theme.js"></script>
+    <script src="js/shared/theme.js"></script>
 </head>
 <body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 font-sans select-none">
 
     <!-- 🔙 BOTÓN DE RETORNO AL PORTAL Y CHIP DE USUARIO -->
     <header class="w-full max-w-7xl mx-auto flex items-center justify-between gap-4 mb-6 z-40">
-        <a href="index.html" class="bg-[#140e09]/90 border border-[#b39258]/60 px-4 py-2 rounded-xl text-amber-200 text-xs font-semibold hover:bg-[#b39258]/30 transition-colors shadow-2xl backdrop-blur-md flex items-center space-x-2">
+        <a href="index.html" class="bg-[rgb(var(--c-panel)/0.9)] border border-[rgb(var(--c-gold)/0.6)] px-4 py-2 rounded-xl text-[rgb(var(--c-amber-200))] text-xs font-semibold hover:bg-[rgb(var(--c-gold)/0.3)] transition-colors shadow-2xl backdrop-blur-md flex items-center space-x-2">
             <span>← Volver al Portal</span>
         </a>
-        <h1 class="font-magic text-2xl md:text-3xl font-bold text-amber-300 tracking-wider drop-shadow-md text-center flex-1">
+        <h1 class="font-magic text-2xl md:text-3xl font-bold text-[rgb(var(--c-amber-300))] tracking-wider drop-shadow-md text-center flex-1">
             Informe de Colección
         </h1>
-        <div id="user-chip" class="fantasy-panel px-3 py-1.5 flex items-center gap-2 text-xs text-amber-200 border border-[#b39258]/40"></div>
+        <div id="user-chip" class="fantasy-panel px-3 py-1.5 flex items-center gap-2 text-xs text-[rgb(var(--c-amber-200))] border border-[rgb(var(--c-gold)/0.4)]"></div>
     </header>
 
     <!-- 🎬 CONTENEDOR PRINCIPAL -->
     <main class="w-full max-w-7xl mx-auto flex-1 flex flex-col gap-6 relative z-20">
 
         <!-- RESUMEN DE LA COLECCIÓN -->
-        <p id="summary" class="text-sm text-amber-200/70" role="status" aria-live="polite"></p>
+        <p id="summary" class="text-sm text-[rgb(var(--c-amber-200)/0.7)]" role="status" aria-live="polite"></p>
 
         <!-- BARRA DE HERRAMIENTAS (Buscador + Orden + Paginación) -->
-        <section class="fantasy-panel p-4 flex flex-wrap items-end gap-4 border border-[#b39258]/30" aria-label="Búsqueda y orden">
+        <section class="fantasy-panel p-4 flex flex-wrap items-end gap-4 border border-[rgb(var(--c-gold)/0.3)]" aria-label="Búsqueda y orden">
             <div class="flex-1 min-w-[260px] flex flex-col gap-1">
-                <label for="q" class="text-xs text-amber-200/60 font-semibold">Buscar por nombre, set o tipo</label>
+                <label for="q" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Buscar por nombre, set o tipo</label>
                 <input id="q" type="search" autocomplete="off" placeholder="Por ejemplo: bolt, alpha o legendary" class="w-full">
             </div>
 
             <div class="flex flex-col gap-1 min-w-[160px]">
-                <label for="sort" class="text-xs text-amber-200/60 font-semibold">Ordenar por</label>
+                <label for="sort" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Ordenar por</label>
                 <select id="sort" class="w-full">
                     <option value="name">Nombre</option>
                     <option value="type">Tipo</option>
@@ -85,22 +85,22 @@
             <button id="dir" class="btn-fantasy py-2.5 text-xs h-[42px]" type="button">Ascendente</button>
 
             <div class="flex flex-col gap-1 min-w-[160px]">
-                <label for="type" class="text-xs text-amber-200/60 font-semibold">Tipo de carta</label>
+                <label for="type" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Tipo de carta</label>
                 <select id="type" class="w-full"><option value="">Cualquier tipo...</option></select>
             </div>
 
             <div class="flex flex-col gap-1 min-w-[160px]">
-                <label for="subtype" class="text-xs text-amber-200/60 font-semibold">Subtipo</label>
+                <label for="subtype" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Subtipo</label>
                 <select id="subtype" class="w-full" disabled><option value="">Cualquier subtipo...</option></select>
             </div>
 
             <div class="flex flex-col gap-1 min-w-[200px]">
-                <label for="container" class="text-xs text-amber-200/60 font-semibold">Contenedor</label>
+                <label for="container" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Contenedor</label>
                 <select id="container" class="w-full"><option value="">Todos los contenedores</option></select>
             </div>
 
             <div class="flex flex-col gap-1 min-w-[120px]">
-                <label for="size" class="text-xs text-amber-200/60 font-semibold">Cartas por página</label>
+                <label for="size" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Cartas por página</label>
                 <select id="size" class="w-full">
                     <option value="12">12</option>
                     <option value="24">24</option>
@@ -116,22 +116,22 @@
         <!-- LISTADO DE RESULTADOS DE CARTAS -->
         <section id="results" class="flex-1 flex flex-col gap-6" tabindex="-1" aria-label="Resultados" aria-busy="true">
             <div id="entries" class="flex flex-col gap-6"></div>
-            <nav id="pager" class="fantasy-panel p-4 flex flex-wrap items-center justify-between gap-4 border border-[#b39258]/30"></nav>
+            <nav id="pager" class="fantasy-panel p-4 flex flex-wrap items-center justify-between gap-4 border border-[rgb(var(--c-gold)/0.3)]"></nav>
         </section>
 
     </main>
 
     <!-- VISOR AMPLIADO (LIGHTBOX) -->
-    <dialog id="lightbox" class="fantasy-panel p-0 max-w-md w-full border-2 border-[#b39258] rounded-2xl overflow-hidden backdrop:bg-black/80">
+    <dialog id="lightbox" class="fantasy-panel p-0 max-w-md w-full border-2 border-[rgb(var(--c-gold))] rounded-2xl overflow-hidden backdrop:bg-black/80">
         <img id="lightbox-img" class="w-full h-auto block" alt="">
-        <div class="p-4 flex items-center justify-between gap-4 bg-[#140e09]">
-            <p id="lightbox-caption" class="text-xs text-amber-200/80 font-semibold"></p>
+        <div class="p-4 flex items-center justify-between gap-4 bg-[rgb(var(--c-panel))]">
+            <p id="lightbox-caption" class="text-xs text-[rgb(var(--c-amber-200)/0.8)] font-semibold"></p>
             <button id="lightbox-close" class="btn-fantasy text-xs py-1.5 px-3" type="button">Cerrar</button>
         </div>
     </dialog>
 
-    <script src="section-nav.js" data-section="coleccion"></script>
-    <noscript><p class="p-6 text-center text-amber-200">Este informe necesita JavaScript para funcionar.</p></noscript>
+    <script src="js/shared/section-nav.js" data-section="coleccion"></script>
+    <noscript><p class="p-6 text-center text-[rgb(var(--c-amber-200))]">Este informe necesita JavaScript para funcionar.</p></noscript>
 
     <!-- LÓGICA DE INTERACCIÓN -->
     <script>
@@ -172,7 +172,7 @@
             window.location.href = 'login.html';
             return;
         }
-        el.userChip.innerHTML = `<span>👤 <b>${escapeHtml(user.username)}</b></span>` + (user.badge ? `<span class="bg-[#b39258]/20 px-2 py-0.5 rounded border border-[#b39258]/40 text-[10px] text-amber-300">${escapeHtml(user.badge)}</span>` : '');
+        el.userChip.innerHTML = `<span>👤 <b>${escapeHtml(user.username)}</b></span>` + (user.badge ? `<span class="bg-[rgb(var(--c-gold)/0.2)] px-2 py-0.5 rounded border border-[rgb(var(--c-gold)/0.4)] text-[10px] text-[rgb(var(--c-amber-300))]">${escapeHtml(user.badge)}</span>` : '');
 
         class ApiError extends Error {
             constructor(message, status) { super(message); this.status = status; }
@@ -276,64 +276,64 @@
                 ? `<button type="button" class="print-img relative w-20 h-28 flex-shrink-0 rounded overflow-hidden border border-black group cursor-zoom-in" data-src="${escapeHtml(img)}" data-caption="${escapeHtml(caption)}">
                        <img src="${escapeHtml(img)}" alt="" loading="lazy" class="w-full h-full object-cover">
                    </button>`
-                : `<div class="w-20 h-28 flex-shrink-0 flex items-center justify-center text-center text-[10px] text-amber-200/50 bg-[#140e09] border border-dashed border-[#b39258]/30 rounded">Sin foto</div>`;
+                : `<div class="w-20 h-28 flex-shrink-0 flex items-center justify-center text-center text-[10px] text-[rgb(var(--c-amber-200)/0.5)] bg-[rgb(var(--c-panel))] border border-dashed border-[rgb(var(--c-gold)/0.3)] rounded">Sin foto</div>`;
             
-            const foil = pr.foil_quantity ? `<span class="ml-2 px-1.5 py-0.5 text-[10px] font-bold text-black rounded bg-gradient-to-r from-purple-300 via-sky-300 to-amber-200">${pr.foil_quantity} foil</span>` : '';
+            const foil = pr.foil_quantity ? `<span class="ml-2 px-1.5 py-0.5 text-[10px] font-bold text-black rounded bg-gradient-to-r from-purple-300 via-sky-300 to-[rgb(var(--c-amber-200))]">${pr.foil_quantity} foil</span>` : '';
             const where = pr.containers.map((c) => `
-                <li class="flex items-center justify-between text-xs text-amber-200/80">
+                <li class="flex items-center justify-between text-xs text-[rgb(var(--c-amber-200)/0.8)]">
                     <span class="truncate">${escapeHtml(c.name)}</span>
-                    <span class="text-[10px] text-amber-200/50 ml-1">(${containerKind(c.type)})</span>
-                    <span class="font-bold text-amber-400 ml-2">×${c.quantity}</span>
+                    <span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)] ml-1">(${containerKind(c.type)})</span>
+                    <span class="font-bold text-[rgb(var(--c-amber-400))] ml-2">×${c.quantity}</span>
                 </li>`).join('');
 
             return `
-                <div class="flex gap-3 p-3 bg-[#0d0906] border border-[#b39258]/30 rounded-xl">
+                <div class="flex gap-3 p-3 bg-[rgb(var(--c-ink-2))] border border-[rgb(var(--c-gold)/0.3)] rounded-xl">
                     ${media}
                     <div class="flex-1 min-w-0 flex flex-col gap-1">
-                        <p class="text-xs font-bold text-amber-100 truncate">${escapeHtml(pr.set_name)}</p>
-                        <p class="text-[11px] text-amber-200/60 flex items-center gap-2">
-                            <span class="bg-[#b39258]/20 px-1 rounded font-mono font-bold text-amber-300">${escapeHtml(String(pr.set_code || '').toUpperCase())}</span>
+                        <p class="text-xs font-bold text-[rgb(var(--c-amber-100))] truncate">${escapeHtml(pr.set_name)}</p>
+                        <p class="text-[11px] text-[rgb(var(--c-amber-200)/0.6)] flex items-center gap-2">
+                            <span class="bg-[rgb(var(--c-gold)/0.2)] px-1 rounded font-mono font-bold text-[rgb(var(--c-amber-300))]">${escapeHtml(String(pr.set_code || '').toUpperCase())}</span>
                             <span>Nº ${escapeHtml(pr.collector_number)}</span>
                         </p>
-                        <p class="text-xs text-amber-200 mt-1">
-                            <b class="text-amber-400">${pr.quantity}</b> ${pr.quantity === 1 ? 'copia' : 'copias'}${foil}
+                        <p class="text-xs text-[rgb(var(--c-amber-200))] mt-1">
+                            <b class="text-[rgb(var(--c-amber-400))]">${pr.quantity}</b> ${pr.quantity === 1 ? 'copia' : 'copias'}${foil}
                         </p>
-                        <ul class="flex flex-col gap-1 mt-2 pt-2 border-t border-[#b39258]/20">${where}</ul>
+                        <ul class="flex flex-col gap-1 mt-2 pt-2 border-t border-[rgb(var(--c-gold)/0.2)]">${where}</ul>
                     </div>
                 </div>`;
         }
 
         function entryHtml(item) {
             const tags = item.containers.map((c) =>
-                `<li class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs bg-[#0d0906] border border-[#b39258]/30 rounded-lg">
-                    <span class="text-amber-100">${escapeHtml(c.name)}</span>
-                    <small class="text-[10px] text-amber-200/50">${containerKind(c.type)}</small>
-                    <b class="text-amber-400">×${c.quantity}</b>
+                `<li class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs bg-[rgb(var(--c-ink-2))] border border-[rgb(var(--c-gold)/0.3)] rounded-lg">
+                    <span class="text-[rgb(var(--c-amber-100))]">${escapeHtml(c.name)}</span>
+                    <small class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">${containerKind(c.type)}</small>
+                    <b class="text-[rgb(var(--c-amber-400))]">×${c.quantity}</b>
                 </li>`).join('');
 
             const oracle = item.oracle_text
-                ? `<details class="mt-3"><summary class="cursor-pointer text-xs text-amber-300 hover:underline">Texto de la carta</summary><p class="mt-2 text-xs text-amber-200/70 border-l-2 border-[#b39258]/40 pl-3 leading-relaxed">${escapeHtml(item.oracle_text).replace(/\n/g, '<br>')}</p></details>` : '';
+                ? `<details class="mt-3"><summary class="cursor-pointer text-xs text-[rgb(var(--c-amber-300))] hover:underline">Texto de la carta</summary><p class="mt-2 text-xs text-[rgb(var(--c-amber-200)/0.7)] border-l-2 border-[rgb(var(--c-gold)/0.4)] pl-3 leading-relaxed">${escapeHtml(item.oracle_text).replace(/\n/g, '<br>')}</p></details>` : '';
 
             return `
-                <article class="fantasy-panel p-5 border border-[#b39258]/40 flex flex-col gap-4">
+                <article class="fantasy-panel p-5 border border-[rgb(var(--c-gold)/0.4)] flex flex-col gap-4">
                     <header class="flex flex-wrap justify-between items-start gap-4">
                         <div class="flex flex-col gap-1">
                             <div class="flex items-center gap-3">
-                                <h2 class="font-magic text-xl font-bold text-amber-200 tracking-wide">${escapeHtml(item.name)}</h2>
+                                <h2 class="font-magic text-xl font-bold text-[rgb(var(--c-amber-200))] tracking-wide">${escapeHtml(item.name)}</h2>
                                 ${manaHtml(item.mana_cost)}
                             </div>
-                            <p class="text-xs text-amber-200/60">${escapeHtml(item.type_line)}</p>
+                            <p class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">${escapeHtml(item.type_line)}</p>
                         </div>
                         <div class="flex gap-4 text-xs">
-                            <div class="flex flex-col text-right"><span class="text-[10px] text-amber-200/50">Copias</span><b class="text-amber-300 font-bold">${item.copies}</b></div>
-                            <div class="flex flex-col text-right"><span class="text-[10px] text-amber-200/50">Artes</span><b class="text-amber-300 font-bold">${item.printings_count}</b></div>
-                            <div class="flex flex-col text-right"><span class="text-[10px] text-amber-200/50">Contenedores</span><b class="text-amber-300 font-bold">${item.containers_count}</b></div>
-                            <div class="flex flex-col text-right"><span class="text-[10px] text-amber-200/50">Última alta</span><b class="text-amber-200">${fmtDate(item.last_added)}</b></div>
+                            <div class="flex flex-col text-right"><span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">Copias</span><b class="text-[rgb(var(--c-amber-300))] font-bold">${item.copies}</b></div>
+                            <div class="flex flex-col text-right"><span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">Artes</span><b class="text-[rgb(var(--c-amber-300))] font-bold">${item.printings_count}</b></div>
+                            <div class="flex flex-col text-right"><span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">Contenedores</span><b class="text-[rgb(var(--c-amber-300))] font-bold">${item.containers_count}</b></div>
+                            <div class="flex flex-col text-right"><span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">Última alta</span><b class="text-[rgb(var(--c-amber-200))]">${fmtDate(item.last_added)}</b></div>
                         </div>
                     </header>
 
                     <div class="flex items-center gap-2">
-                        <span class="text-xs text-amber-200/50">Está en:</span>
+                        <span class="text-xs text-[rgb(var(--c-amber-200)/0.5)]">Está en:</span>
                         <ul class="flex flex-wrap gap-2">${tags}</ul>
                     </div>
 
@@ -348,8 +348,8 @@
         function renderEntries(data) {
             if (!data.items.length) {
                 el.entries.innerHTML = hasFilters()
-                    ? `<div class="fantasy-panel p-8 text-center text-amber-200 flex flex-col items-center gap-3"><h2 class="font-magic text-lg">Ninguna carta coincide</h2><p class="text-xs text-amber-200/60">Prueba con otros filtros o con otro término de búsqueda.</p><button type="button" class="btn-fantasy text-xs" data-action="clear-all">Quitar filtros</button></div>`
-                    : `<div class="fantasy-panel p-8 text-center text-amber-200 flex flex-col items-center gap-3"><h2 class="font-magic text-lg">Tu colección está vacía</h2><p class="text-xs text-amber-200/60">Añade cartas a tus contenedores para ver el informe.</p></div>`;
+                    ? `<div class="fantasy-panel p-8 text-center text-[rgb(var(--c-amber-200))] flex flex-col items-center gap-3"><h2 class="font-magic text-lg">Ninguna carta coincide</h2><p class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">Prueba con otros filtros o con otro término de búsqueda.</p><button type="button" class="btn-fantasy text-xs" data-action="clear-all">Quitar filtros</button></div>`
+                    : `<div class="fantasy-panel p-8 text-center text-[rgb(var(--c-amber-200))] flex flex-col items-center gap-3"><h2 class="font-magic text-lg">Tu colección está vacía</h2><p class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">Añade cartas a tus contenedores para ver el informe.</p></div>`;
                 return;
             }
             el.entries.innerHTML = data.items.map(entryHtml).join('');
@@ -357,9 +357,9 @@
 
         function renderSummary(data) {
             if (!hasFilters()) {
-                el.summary.innerHTML = `Posees <strong class="text-amber-300">${plural(data.total_cards, 'carta distinta', 'cartas distintas')}</strong> y <strong class="text-amber-300">${plural(data.total_copies, 'copia', 'copias')}</strong> en total.`;
+                el.summary.innerHTML = `Posees <strong class="text-[rgb(var(--c-amber-300))]">${plural(data.total_cards, 'carta distinta', 'cartas distintas')}</strong> y <strong class="text-[rgb(var(--c-amber-300))]">${plural(data.total_copies, 'copia', 'copias')}</strong> en total.`;
             } else {
-                el.summary.innerHTML = `Se han encontrado <strong class="text-amber-300">${plural(data.total_cards, 'carta', 'cartas')}</strong> con <strong class="text-amber-300">${plural(data.total_copies, 'copia', 'copias')}</strong> con los filtros aplicados.`;
+                el.summary.innerHTML = `Se han encontrado <strong class="text-[rgb(var(--c-amber-300))]">${plural(data.total_cards, 'carta', 'cartas')}</strong> con <strong class="text-[rgb(var(--c-amber-300))]">${plural(data.total_copies, 'copia', 'copias')}</strong> con los filtros aplicados.`;
             }
         }
 
@@ -369,10 +369,10 @@
             const to = Math.min(data.total_cards, data.page * data.page_size);
 
             el.pager.innerHTML = `
-                <p class="text-xs text-amber-200/60">Mostrando ${from} a ${to} de ${plural(data.total_cards, 'carta', 'cartas')}</p>
+                <p class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">Mostrando ${from} a ${to} de ${plural(data.total_cards, 'carta', 'cartas')}</p>
                 <div class="flex items-center gap-2">
                     <button type="button" class="btn-fantasy text-xs py-1 px-3" data-page="${data.page - 1}" ${data.page <= 1 ? 'disabled' : ''}>Anterior</button>
-                    <span class="text-xs text-amber-300 font-bold px-2">${data.page} / ${data.total_pages}</span>
+                    <span class="text-xs text-[rgb(var(--c-amber-300))] font-bold px-2">${data.page} / ${data.total_pages}</span>
                     <button type="button" class="btn-fantasy text-xs py-1 px-3" data-page="${data.page + 1}" ${data.page >= data.total_pages ? 'disabled' : ''}>Siguiente</button>
                 </div>`;
         }
@@ -387,11 +387,11 @@
                 state.subtype && ['subtype', `Subtipo: ${state.subtype}`],
                 state.cont && ['cont', `Contenedor: ${contName}`],
             ].filter(Boolean);
-            const chip = ([key, text]) => `<button type="button" class="bg-[#b39258]/20 border border-[#b39258] px-3 py-1 rounded-full text-xs text-amber-200 flex items-center gap-2" data-clear="${key}">
-                    ${escapeHtml(text)} <span class="text-amber-400 font-bold" aria-label="Quitar">✕</span>
+            const chip = ([key, text]) => `<button type="button" class="bg-[rgb(var(--c-gold)/0.2)] border border-[rgb(var(--c-gold))] px-3 py-1 rounded-full text-xs text-[rgb(var(--c-amber-200))] flex items-center gap-2" data-clear="${key}">
+                    ${escapeHtml(text)} <span class="text-[rgb(var(--c-amber-400))] font-bold" aria-label="Quitar">✕</span>
                 </button>`;
             el.chips.innerHTML = list.map(chip).join('') + (list.length > 1
-                ? '<button type="button" class="text-xs text-amber-300 hover:underline px-2" data-action="clear-all">Quitar todos</button>' : '');
+                ? '<button type="button" class="text-xs text-[rgb(var(--c-amber-300))] hover:underline px-2" data-action="clear-all">Quitar todos</button>' : '');
         }
 
         function fillSubtypes() {
@@ -459,9 +459,9 @@
                 if (error.status === 401) { window.location.href = 'login.html'; return; }
                 el.pager.innerHTML = '';
                 el.summary.textContent = '';
-                el.entries.innerHTML = `<div class="fantasy-panel p-8 text-center text-amber-200 flex flex-col items-center gap-3" role="alert">
+                el.entries.innerHTML = `<div class="fantasy-panel p-8 text-center text-[rgb(var(--c-amber-200))] flex flex-col items-center gap-3" role="alert">
                     <h2 class="font-magic text-lg">No se pudo cargar el informe</h2>
-                    <p class="text-xs text-amber-200/70">${escapeHtml(error.status ? error.message : 'No hay conexión con el servidor (¿está levantada la API en ' + API_BASE + '?).')}</p>
+                    <p class="text-xs text-[rgb(var(--c-amber-200)/0.7)]">${escapeHtml(error.status ? error.message : 'No hay conexión con el servidor (¿está levantada la API en ' + API_BASE + '?).')}</p>
                     <button type="button" class="btn-fantasy text-xs" data-action="retry">Reintentar</button></div>`;
             } finally {
                 if (mine === requestId) el.results.setAttribute('aria-busy', 'false');

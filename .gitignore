@@ -4,3 +4,16 @@ visor bbdd/data/default-cards.json
 *.sqlite
 node_modules/
 .env
+
+# >>> reorganize
+_archive/
+logs/
+certs/
+*.bak
+*.env
+.env.*
+noesun.env*
+*.crdownload
+pong-client/dist/
+.DS_Store
+# <<< reorganize

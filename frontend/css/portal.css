@@ -1,0 +1,300 @@
+/* >>> PALETA (generado por unify_css.py) >>> */
+/* Cada color es un trío R G B para poder usar rgb(var(--c-x) / transparencia). El tema 42 solo cambia estos valores. */
+:root {
+    --c-bg-app: 8 5 3;
+    --c-ink: 11 7 5;
+    --c-ink-2: 13 9 6;
+    --c-ink-3: 15 10 6;
+    --c-panel: 20 14 9;
+    --c-panel-2: 26 18 11;
+    --c-raised: 44 29 15;
+    --c-raised-2: 30 20 13;
+    --c-raised-3: 42 29 19;
+    --c-gold: 179 146 88;
+    --c-gold-dark: 140 109 54;
+    --c-gold-darker: 90 69 40;
+    --c-accent: 212 175 55;
+    --c-accent-hi: 255 215 0;
+    --c-bronze: 92 67 35;
+    --c-bronze-deep: 28 19 10;
+    --c-cream: 254 243 199;
+    --c-cream-2: 243 239 220;
+    --c-amber-100: 254 243 199;
+    --c-amber-200: 253 230 138;
+    --c-amber-300: 252 211 77;
+    --c-amber-400: 251 191 36;
+    --c-amber-500: 245 158 11;
+    --c-amber-600: 217 119 6;
+    --c-amber-700: 180 83 9;
+    --c-amber-800: 146 64 14;
+    --c-amber-900: 120 53 15;
+}
+.font-ui { font-family: 'Inter', sans-serif; color: rgb(var(--c-cream)); }
+.magic-title { font-family: 'Cinzel', serif; }
+/* <<< PALETA <<< */
+
+/* --- 1. IMPORTACIÓN Y CONFIGURACIÓN BASE --- */
+@font-face {
+    font-family: 'MagicTheGathering';
+    src: url('../public/assets/MAGIC.TTF') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+:root {
+    --bg-app: rgb(var(--c-bg-app));
+    --bg-card: rgb(var(--c-panel) / 0.92);
+    --border-color: rgb(var(--c-gold-dark));
+    --border-hover: rgb(var(--c-accent-hi));
+    --text-main: #f3f4f6;
+    --text-muted: #9ca3af;
+    --accent: rgb(var(--c-accent));
+    --accent-glow: rgb(var(--c-accent) / 0.4);
+    --transition: all 0.2s ease-in-out;
+}
+
+body {
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-app);
+    background-image: url('../public/assets/fondomejorado.jpg');
+    background-size: cover;       
+    background-position: center;  
+    background-repeat: no-repeat; 
+    background-attachment: fixed; 
+    font-family: 'MagicTheGathering', serif;
+    color: var(--text-main);
+}
+
+.font-magic {
+    font-family: 'MagicTheGathering', serif;
+    letter-spacing: 1px;
+}
+
+/* --- 2. ELEMENTOS DECORATIVOS Y NAVEGACIÓN --- */
+.metal-orb {
+    background: radial-gradient(circle at 30% 30%, rgb(var(--c-bronze)) 0%, rgb(var(--c-bronze-deep)) 70%);
+    border: 2px solid rgb(var(--c-gold));
+    box-shadow: 0 4px 10px rgba(0,0,0,0.7), inset 0 2px 4px rgba(255,255,255,0.2);
+    transition: var(--transition);
+}
+
+.metal-orb:hover {
+    transform: scale(1.08);
+    border-color: var(--border-hover);
+    box-shadow: 0 0 15px var(--accent-glow), inset 0 2px 6px rgba(255,255,255,0.4);
+}
+
+/* --- 2b. AVATAR DE USUARIO Y MEDALLAS --- */
+.avatar-img,
+.avatar-initial {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(var(--c-gold) / 0.6);
+    flex-shrink: 0;
+}
+
+.avatar-img {
+    object-fit: cover;
+}
+
+.avatar-initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at 30% 30%, rgb(var(--c-bronze)) 0%, rgb(var(--c-bronze-deep)) 70%);
+    color: var(--accent);
+    font-weight: bold;
+    font-size: 0.95rem;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    user-select: none;
+}
+
+.medal-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+
+.medal {
+    position: relative;
+    padding: 0.55rem 0.3rem;
+    border-radius: 10px;
+    background: rgb(var(--c-ink-3) / 0.85);
+    border: 1px solid var(--border-color);
+    transition: var(--transition);
+    cursor: default;
+}
+
+/* Contenido de la medalla: es lo único que se atenúa, para que la tarjeta de info no herede la opacidad */
+.medal-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: var(--transition);
+}
+
+.medal.unlocked {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 10px var(--accent-glow);
+}
+
+/* Medallas sin conseguir: tenues y en gris; al pasar el ratón se ven un poco más */
+.medal.locked {
+    border-color: rgb(var(--c-gold-dark) / 0.35);
+}
+
+.medal.locked .medal-body {
+    filter: grayscale(1);
+    opacity: 0.35;
+}
+
+.medal.locked:hover .medal-body {
+    opacity: 0.7;
+}
+
+/* Tarjeta de información al pasar el ratón */
+.medal-tip {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 10rem;
+    padding: 0.5rem 0.6rem;
+    border-radius: 8px;
+    background: rgb(var(--c-panel) / 0.97);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.15s ease-in-out;
+    z-index: 60;
+}
+
+.medal:hover .medal-tip {
+    opacity: 1;
+}
+
+.medal-tip-name {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
+.medal-tip-desc {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.65rem;
+    line-height: 1.25;
+    color: var(--text-main);
+}
+
+.medal-tip-state {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+}
+
+.medal-icon {
+    font-size: 1.75rem;
+    line-height: 1.2;
+}
+
+.medal-name {
+    margin-top: 0.2rem;
+    font-size: 0.65rem;
+    line-height: 1.1;
+    color: var(--text-main);
+    min-height: 1.5em;
+}
+
+.medal-bar {
+    width: 100%;
+    height: 4px;
+    margin-top: 0.35rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+
+.medal-bar-fill {
+    height: 100%;
+    background: var(--accent);
+}
+
+.medal-progress {
+    margin-top: 0.2rem;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+}
+
+.medal-msg {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 1rem 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.medal-msg-error {
+    color: #f87171;
+}
+
+/* --- 3. COMPONENTES COMUNES DE PANEL (Paneles, Inputs y Botones) --- */
+/* Paneles de administración / contenedores con la misma textura oscura */
+.fantasy-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(6px);
+}
+
+/* Inputs y Selects unificados bajo la estética de fantasía oscura */
+input[type="text"],
+input[type="number"],
+select {
+    background: rgb(var(--c-ink-3) / 0.9);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    outline: none;
+    transition: var(--transition);
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+    border-color: var(--border-hover);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+/* Botones de acción principales */
+.btn-fantasy {
+    background: linear-gradient(135deg, rgb(var(--c-bronze)) 0%, rgb(var(--c-raised)) 100%);
+    border: 1px solid var(--border-color);
+    color: var(--accent);
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+    text-align: center;
+}
+
+.btn-fantasy:hover {
+    border-color: var(--border-hover);
+    color: #fff;
+    box-shadow: 0 4px 12px var(--accent-glow);
+    transform: translateY(-1px);
+}

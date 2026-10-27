@@ -1,0 +1,39 @@
+/* theme-42.css · Tema azulado de 42. Solo cambia las variables de paleta de portal.css (lo carga theme.js). */
+html.theme-42 {
+    --c-bg-app: 5 11 18;
+    --c-ink: 6 14 22;
+    --c-ink-2: 8 18 27;
+    --c-ink-3: 10 23 34;
+    --c-panel: 11 24 36;
+    --c-panel-2: 16 32 47;
+    --c-raised: 21 41 60;
+    --c-raised-2: 18 34 52;
+    --c-raised-3: 26 47 69;
+    --c-gold: 79 159 196;
+    --c-gold-dark: 58 124 160;
+    --c-gold-darker: 47 106 138;
+    --c-accent: 91 192 222;
+    --c-accent-hi: 143 220 240;
+    --c-bronze: 31 77 110;
+    --c-bronze-deep: 10 26 40;
+    --c-cream: 224 242 254;
+    --c-cream-2: 230 241 250;
+    --c-amber-100: 224 242 254;
+    --c-amber-200: 186 230 253;
+    --c-amber-300: 125 211 252;
+    --c-amber-400: 56 189 248;
+    --c-amber-500: 14 165 233;
+    --c-amber-600: 2 132 199;
+    --c-amber-700: 3 105 161;
+    --c-amber-800: 7 89 133;
+    --c-amber-900: 12 42 64;
+    --bg-app: #050b12;
+    --accent-glow: rgba(91, 192, 222, 0.4);
+}
+html.theme-42 body {
+    background-image: url('../public/assets/fondo_42.jpeg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    background-attachment: fixed !important;
+}

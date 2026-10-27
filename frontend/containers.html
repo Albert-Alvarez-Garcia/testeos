@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Binder Pro — Gestión de Contenedores</title>
-    <link rel="stylesheet" href="portal.css">
-    <link rel="stylesheet" href="visor-admin-25d.css">
+    <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/visor-admin-25d.css">
     <style>
         .management-layout {
             display: grid;
@@ -27,7 +27,7 @@
             transition: background 0.2s;
         }
         .container-item-row:hover {
-            background: rgba(179, 146, 88, 0.1);
+            background: rgb(var(--c-gold) / 0.1);
         }
         .container-link {
             color: var(--text-main, #fff);
@@ -36,7 +36,7 @@
             transition: color 0.2s;
         }
         .container-link:hover {
-            color: var(--accent, #b39258);
+            color: var(--accent, rgb(var(--c-gold)));
             text-decoration: underline;
         }
         /* Estilos para campos dinámicos */
@@ -68,7 +68,7 @@
             border: 1px solid var(--border-color, #333);
         }
     </style>
-    <script src="theme.js"></script>
+    <script src="js/shared/theme.js"></script>
 </head>
 <body>
 
@@ -86,7 +86,7 @@
             
             <!-- Panel Izquierdo: Crear Nuevo Contenedor con Subcampos -->
             <section class="create-container-panel fantasy-panel" style="padding: 20px; height: fit-content;">
-                <h3 style="color: var(--accent, #b39258); margin-top: 0; margin-bottom: 15px;">Crear Nuevo Contenedor</h3>
+                <h3 style="color: var(--accent, rgb(var(--c-gold))); margin-top: 0; margin-bottom: 15px;">Crear Nuevo Contenedor</h3>
                 <form id="createContainerForm">
                     <div class="form-group">
                         <label>NOMBRE DEL CONTENEDOR</label>
@@ -146,7 +146,7 @@
             <!-- Panel Derecho: Listado de Contenedores Existentes -->
             <section class="containers-list-container fantasy-panel" style="padding: 20px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
-                    <h3 style="color: var(--accent, #b39258); margin: 0;">📦 Contenedores Existentes</h3>
+                    <h3 style="color: var(--accent, rgb(var(--c-gold))); margin: 0;">📦 Contenedores Existentes</h3>
                     
                     <select id="filterContainerType" style="padding: 0.5rem; border-radius: 6px; background: var(--bg-app, #121212); color: var(--text-main, #fff); border: 1px solid var(--border-color, #333);">
                         <option value="all">Todos los tipos</option>

@@ -1,0 +1,186 @@
+==============================================================================
+PÁGINAS
+==============================================================================
+
+■ coleccion.html  (7 KB)
+   CSS local enlazado : portal.css, coleccion.css
+   Tailwind           : no   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 0 bloque(s), 0 líneas, 0 reglas
+   style="..." inline : 0   Colores hex en el fichero: 0 (0 distintos)
+   <body class="">
+
+■ containers.html  (16 KB)
+   CSS local enlazado : portal.css, visor-admin-25d.css
+   Tailwind           : no   Fuentes Google: —   theme.js: sí
+   <style> embebido   : 1 bloque(s), 62 líneas, 11 reglas
+   style="..." inline : 13   Colores hex en el fichero: 13 (6 distintos)
+   <body class="">
+
+■ gacha.html  (7 KB)
+   CSS local enlazado : portal.css
+   Tailwind           : v3 (cdn.tailwindcss.com)   Fuentes Google: —   theme.js: sí
+   <style> embebido   : 0 bloque(s), 0 líneas, 0 reglas
+   style="..." inline : 0   Colores hex en el fichero: 12 (3 distintos)
+   <body class="min-h-screen w-full bg-[#0d0906] flex flex-col justify-between py-6 px-6 relative select-n">
+
+■ game.html  (4 KB)
+   CSS local enlazado : —
+   Tailwind           : v4 (@tailwindcss/browser)   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 1 bloque(s), 30 líneas, 5 reglas
+   style="..." inline : 0   Colores hex en el fichero: 16 (6 distintos)
+   body con fondo propio en <style>: body { font-family: 'Inter', sans-serif; background-color: #0b0705; color: #fef3c7; }
+   <body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+■ gestor-contenedor.html  (7 KB)
+   CSS local enlazado : portal.css, visor-containers.css
+   Tailwind           : v4 (@tailwindcss/browser)   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 1 bloque(s), 26 líneas, 4 reglas
+   style="..." inline : 0   Colores hex en el fichero: 14 (8 distintos)
+   body con fondo propio en <style>: body { font-family: 'Inter', sans-serif; background-color: #0b0705; color: #fef3c7; }
+   <body class="min-h-screen flex flex-col items-center p-4">
+
+■ hub-coleccion.html  (2 KB)
+   CSS local enlazado : portal.css, hub.css
+   Tailwind           : no   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 0 bloque(s), 0 líneas, 0 reglas
+   style="..." inline : 0   Colores hex en el fichero: 0 (0 distintos)
+   <body class="hub-body">
+
+■ hub-juegos.html  (1 KB)
+   CSS local enlazado : portal.css, hub.css
+   Tailwind           : no   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 0 bloque(s), 0 líneas, 0 reglas
+   style="..." inline : 0   Colores hex en el fichero: 0 (0 distintos)
+   <body class="hub-body">
+
+■ index.html  (37 KB)
+   CSS local enlazado : portal.css
+   Tailwind           : v3 (cdn.tailwindcss.com)   Fuentes Google: —   theme.js: sí
+   <style> embebido   : 1 bloque(s), 4 líneas, 1 reglas
+   style="..." inline : 1   Colores hex en el fichero: 58 (6 distintos)
+   <body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-">
+
+■ lobby.html  (15 KB)
+   CSS local enlazado : —
+   Tailwind           : v4 (@tailwindcss/browser)   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 1 bloque(s), 4 líneas, 2 reglas
+   style="..." inline : 0   Colores hex en el fichero: 21 (6 distintos)
+   body con fondo propio en <style>: body { font-family: 'Inter', sans-serif; background-color: #0b0705; color: #fef3c7; }
+   <body class="min-h-screen flex flex-col items-center justify-center p-4">
+
+■ login.html  (11 KB)
+   CSS local enlazado : portal.css
+   Tailwind           : v3 (cdn.tailwindcss.com)   Fuentes Google: —   theme.js: sí
+   <style> embebido   : 1 bloque(s), 47 líneas, 8 reglas
+   style="..." inline : 0   Colores hex en el fichero: 20 (12 distintos)
+   <body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-">
+
+■ profile.html  (33 KB)
+   CSS local enlazado : portal.css
+   Tailwind           : v3 (cdn.tailwindcss.com)   Fuentes Google: —   theme.js: sí
+   <style> embebido   : 0 bloque(s), 0 líneas, 0 reglas
+   style="..." inline : 0   Colores hex en el fichero: 85 (12 distintos)
+   <body class="min-h-screen flex flex-col">
+
+■ report.html  (29 KB)
+   CSS local enlazado : portal.css
+   Tailwind           : v3 (cdn.tailwindcss.com)   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 1 bloque(s), 26 líneas, 13 reglas
+   style="..." inline : 0   Colores hex en el fichero: 33 (12 distintos)
+   <body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 font-sans select-none">
+
+■ rooms.html  (8 KB)
+   CSS local enlazado : portal.css
+   Tailwind           : v4 (@tailwindcss/browser)   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 1 bloque(s), 4 líneas, 2 reglas
+   style="..." inline : 0   Colores hex en el fichero: 14 (4 distintos)
+   <body class="min-h-screen flex flex-col items-center justify-center p-4 pt-20 md:pt-4 relative">
+
+■ visor-admin-25d.html  (6 KB)
+   CSS local enlazado : portal.css, visor-admin-25d.css
+   Tailwind           : no   Fuentes Google: —   theme.js: sí
+   <style> embebido   : 0 bloque(s), 0 líneas, 0 reglas
+   style="..." inline : 14   Colores hex en el fichero: 0 (0 distintos)
+   <body class="">
+
+■ visor-containers.html  (4 KB)
+   CSS local enlazado : portal.css, visor-containers.css
+   Tailwind           : v3 (cdn.tailwindcss.com)   Fuentes Google: Cinzel, Inter   theme.js: sí
+   <style> embebido   : 0 bloque(s), 0 líneas, 0 reglas
+   style="..." inline : 0   Colores hex en el fichero: 3 (2 distintos)
+   <body class="min-h-screen flex flex-col items-center p-4 select-none">
+
+■ visor-crud.html  (4 KB)
+   CSS local enlazado : themes.css, visor.css
+   Tailwind           : no   Fuentes Google: —   theme.js: NO
+   <style> embebido   : 1 bloque(s), 74 líneas, 10 reglas
+   style="..." inline : 5   Colores hex en el fichero: 1 (1 distintos)
+   <body class="">
+
+■ visor.html  (1 KB)
+   CSS local enlazado : visor.css
+   Tailwind           : no   Fuentes Google: —   theme.js: NO
+   <style> embebido   : 0 bloque(s), 0 líneas, 0 reglas
+   style="..." inline : 1   Colores hex en el fichero: 0 (0 distintos)
+   <body class="">
+
+==============================================================================
+HOJAS CSS
+==============================================================================
+
+■ coleccion.css  (18 KB, ~178 reglas, 18 variables CSS)
+   La usan: coleccion.html
+   Colores hex: 35 distintos ·  variables: --col-bg, --col-danger, --col-gold, --col-gold-soft, --col-line, --col-line-strong, --col-muted, --col-ok, --col-panel, --col-panel-2
+
+■ containers.css  (3 KB, ~18 reglas, 0 variables CSS)
+   La usan: gestor-contenedor.html, visor-containers.html
+   Colores hex: 0 distintos ·  variables: 
+
+■ hub.css  (4 KB, ~43 reglas, 8 variables CSS)
+   La usan: hub-coleccion.html, hub-juegos.html
+   Colores hex: 6 distintos ·  variables: --hub-gold, --hub-gold-soft, --hub-line, --hub-line-strong, --hub-muted, --hub-panel, --hub-panel-2, --hub-text
+
+■ portal.css  (5 KB, ~33 reglas, 9 variables CSS)
+   La usan: coleccion.html, containers.html, gacha.html, gestor-contenedor.html, hub-coleccion.html, hub-juegos.html, index.html, login.html, profile.html, report.html, rooms.html, visor-admin-25d.html, visor-containers.html
+   Colores hex: 12 distintos ·  variables: --accent, --accent-glow, --bg-app, --bg-card, --border-color, --border-hover, --text-main, --text-muted, --transition
+
+■ theme-42.css  (119 KB, ~1527 reglas, 7 variables CSS)
+   La usan: NINGUNA página (¿sobra?)
+   Colores hex: 26 distintos ·  variables: --accent, --accent-glow, --bg-app, --bg-card, --border-color, --border-hover, --text-main
+
+■ themes.css  (5 KB, ~27 reglas, 11 variables CSS)
+   La usan: visor-crud.html
+   Colores hex: 40 distintos ·  variables: --accent, --accent-glow, --bg-app, --bg-card, --bg-header, --border-color, --font-display, --font-sans, --text-main, --text-muted
+
+■ visor-admin-25d.css  (4 KB, ~27 reglas, 0 variables CSS)
+   La usan: containers.html, visor-admin-25d.html
+   Colores hex: 1 distintos ·  variables: 
+
+■ visor-containers.css  (9 KB, ~49 reglas, 0 variables CSS)
+   La usan: gestor-contenedor.html, visor-containers.html
+   Colores hex: 12 distintos ·  variables: 
+
+■ visor.css  (2 KB, ~9 reglas, 0 variables CSS)
+   La usan: visor-crud.html, visor.html
+   Colores hex: 6 distintos ·  variables: 
+
+■ JS con colores hex escritos (estilos generados por script): chat.js(4), game.js(5), gestor-contendor.js(2), section-nav.js(6), user-menu.js(4), visor-admin-25d.js(3), visor-containers.js(2), visor-crud.js(1)
+
+==============================================================================
+DUPLICADOS Y CONFLICTOS
+==============================================================================
+
+Reglas CSS embebidas idénticas en 2+ páginas: 2
+   [4 páginas] .magic-title{font-family:'Cinzel',serif;}
+   [3 páginas] body{font-family:'Inter',sans-serif;background-color:#0b0705;color:#fef3c7;}
+
+font-family declaradas (y cuántas veces): 'Inter', sans-serif ×4; 'Cinzel', serif ×4; inherit ×2; monospace ×1
+
+==============================================================================
+PALETA REAL (hex en HTML)
+==============================================================================
+Todos   : #b39258×99, #140e09×36, #9ca3af×22, #d4af37×19, #8c6d36×17, #0b0705×11, #0f0a06×10, #fef3c7×7, #ffd700×6, #2c1d0f×6, #f3f4f6×5, #0d0906×4, #1e140d×4, #5a4528×4
+En clases Tailwind [#xxxxxx] (candidatos a variable): #b39258×92, #140e09×35, #9ca3af×21, #d4af37×18, #8c6d36×16, #0f0a06×10, #0b0705×8, #2c1d0f×6, #f3f4f6×5, #0d0906×4, #ffd700×4, #1e140d×3
+
+Páginas SIN portal.css: game.html, lobby.html, visor-crud.html, visor.html
+Páginas SIN theme.js : visor-crud.html, visor.html

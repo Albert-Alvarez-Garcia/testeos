@@ -1,0 +1,12 @@
+# >>> reorganize
+.git
+_archive
+logs
+tools
+certs
+**/node_modules
+**/*.bak
+**/*.crdownload
+*.md
+noesun.env*
+# <<< reorganize

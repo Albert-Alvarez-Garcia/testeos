@@ -7,35 +7,35 @@
     <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Enlace a la hoja de estilos externa -->
-    <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="css/portal.css">
     <style>
         /* Estilos específicos para unificar con la temática fantasía / index */
         .auth-card {
-            background-color: rgba(20, 14, 9, 0.92);
-            border: 2px solid #b39258;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 15px rgba(179, 146, 88, 0.2);
+            background-color: rgb(var(--c-panel) / 0.92);
+            border: 2px solid rgb(var(--c-gold));
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.9), 0 0 15px rgb(var(--c-gold) / 0.2);
             backdrop-filter: blur(8px);
         }
         .fantasy-input {
             background: rgba(30, 20, 15, 0.8);
-            border: 1px solid #5a4528;
-            color: #fef3c7;
+            border: 1px solid rgb(var(--c-gold-darker));
+            color: rgb(var(--c-cream));
         }
         .fantasy-input:focus {
-            border-color: #b39258;
+            border-color: rgb(var(--c-gold));
             outline: none;
-            box-shadow: 0 0 8px rgba(179, 146, 88, 0.4);
+            box-shadow: 0 0 8px rgb(var(--c-gold) / 0.4);
         }
         .fantasy-btn-primary {
-            background: linear-gradient(to bottom, #b39258, #8c6f3d);
-            border: 1px solid #d4af37;
-            color: #140e09;
+            background: linear-gradient(to bottom, rgb(var(--c-gold)), #8c6f3d);
+            border: 1px solid rgb(var(--c-accent));
+            color: rgb(var(--c-panel));
             font-weight: bold;
             transition: all 0.2s ease;
         }
         .fantasy-btn-primary:hover {
             background: linear-gradient(to bottom, #c5a268, #9f8049);
-            box-shadow: 0 0 12px rgba(179, 146, 88, 0.6);
+            box-shadow: 0 0 12px rgb(var(--c-gold) / 0.6);
             transform: translateY(-1px);
         }
         .fantasy-btn-42 {
@@ -51,11 +51,11 @@
             transform: translateY(-1px);
         }
         .tab-btn.active {
-            border-bottom: 2px solid #b39258;
-            color: #fef3c7;
+            border-bottom: 2px solid rgb(var(--c-gold));
+            color: rgb(var(--c-cream));
         }
     </style>
-    <script src="theme.js"></script>
+    <script src="js/shared/theme.js"></script>
 </head>
 <body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-hidden">
 
@@ -77,11 +77,11 @@
         <div class="w-full max-w-md auth-card rounded-2xl p-8 text-left relative">
             
             <!-- PESTAÑAS DE NAVEGACIÓN (LOGIN / REGISTRO) -->
-            <div class="flex border-b border-[#5a4528] mb-6">
-                <button id="tabLoginBtn" onclick="switchTab('login')" class="tab-btn active flex-1 pb-3 text-center text-sm font-semibold text-amber-200 transition-colors cursor-pointer">
+            <div class="flex border-b border-[rgb(var(--c-gold-darker))] mb-6">
+                <button id="tabLoginBtn" onclick="switchTab('login')" class="tab-btn active flex-1 pb-3 text-center text-sm font-semibold text-[rgb(var(--c-amber-200))] transition-colors cursor-pointer">
                     Iniciar Sesión
                 </button>
-                <button id="tabRegisterBtn" onclick="switchTab('register')" class="tab-btn flex-1 pb-3 text-center text-sm font-semibold text-amber-500/60 hover:text-amber-200 transition-colors cursor-pointer">
+                <button id="tabRegisterBtn" onclick="switchTab('register')" class="tab-btn flex-1 pb-3 text-center text-sm font-semibold text-[rgb(var(--c-amber-500)/0.6)] hover:text-[rgb(var(--c-amber-200))] transition-colors cursor-pointer">
                     Registrarse
                 </button>
             </div>
@@ -90,11 +90,11 @@
             <div id="loginFormContainer" class="space-y-4">
                 <form id="loginForm" class="space-y-4" onsubmit="handleLogin(event)">
                     <div>
-                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Usuario / Email</label>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Usuario / Email</label>
                         <input type="text" id="loginUser" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="Introduce tu usuario...">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Contraseña</label>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Contraseña</label>
                         <input type="password" id="loginPass" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="••••••••">
                     </div>
                     <button type="submit" class="w-full py-3 rounded-lg fantasy-btn-primary text-sm uppercase tracking-wider cursor-pointer">
@@ -103,9 +103,9 @@
                 </form>
 
                 <div class="relative flex py-2 items-center">
-                    <div class="flex-grow border-t border-[#5a4528]"></div>
-                    <span class="flex-shrink mx-4 text-amber-500/60 text-xs uppercase tracking-widest">o</span>
-                    <div class="flex-grow border-t border-[#5a4528]"></div>
+                    <div class="flex-grow border-t border-[rgb(var(--c-gold-darker))]"></div>
+                    <span class="flex-shrink mx-4 text-[rgb(var(--c-amber-500)/0.6)] text-xs uppercase tracking-widest">o</span>
+                    <div class="flex-grow border-t border-[rgb(var(--c-gold-darker))]"></div>
                 </div>
 
                 <!-- BOTÓN DE INTRANET 42 -->
@@ -119,16 +119,16 @@
             <div id="registerFormContainer" class="space-y-4 hidden">
                 <form id="registerForm" class="space-y-3" onsubmit="handleRegister(event)">
                     <div>
-                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Nombre de Usuario (Alias)</label>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Nombre de Usuario (Alias)</label>
                         <input type="text" id="regUser" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="Tu alias único...">
-                        <p class="text-[10px] text-amber-400/50 mt-1">Si coincide con un shortlog oficial de 42, se aplicará el título nobiliario correspondiente.</p>
+                        <p class="text-[10px] text-[rgb(var(--c-amber-400)/0.5)] mt-1">Si coincide con un shortlog oficial de 42, se aplicará el título nobiliario correspondiente.</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Correo Electrónico</label>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Correo Electrónico</label>
                         <input type="email" id="regEmail" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="tu@correo.com">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-amber-300/80 mb-1">Contraseña</label>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Contraseña</label>
                         <input type="password" id="regPass" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="••••••••">
                     </div>
                     <button type="submit" class="w-full py-3 rounded-lg fantasy-btn-primary text-sm uppercase tracking-wider cursor-pointer mt-2">
@@ -137,7 +137,7 @@
                 </form>
 
                 <div class="text-center pt-2">
-                    <span class="text-xs text-amber-200/60">¿Eres alumno de 42? </span>
+                    <span class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">¿Eres alumno de 42? </span>
                     <a href="#" onclick="loginWith42()" class="text-xs text-[#00babc] hover:underline font-bold">Conéctate directamente aquí</a>
                 </div>
             </div>
@@ -157,18 +157,18 @@
             const registerContainer = document.getElementById('registerFormContainer');
 
             if (tab === 'login') {
-                loginBtn.classList.add('active', 'text-amber-200');
-                loginBtn.classList.remove('text-amber-500/60');
-                registerBtn.classList.remove('active', 'text-amber-200');
-                registerBtn.classList.add('text-amber-500/60');
+                loginBtn.classList.add('active', 'text-[rgb(var(--c-amber-200))]');
+                loginBtn.classList.remove('text-[rgb(var(--c-amber-500)/0.6)]');
+                registerBtn.classList.remove('active', 'text-[rgb(var(--c-amber-200))]');
+                registerBtn.classList.add('text-[rgb(var(--c-amber-500)/0.6)]');
 
                 loginContainer.classList.remove('hidden');
                 registerContainer.classList.add('hidden');
             } else {
-                registerBtn.classList.add('active', 'text-amber-200');
-                registerBtn.classList.remove('text-amber-500/60');
-                loginBtn.classList.remove('active', 'text-amber-200');
-                loginBtn.classList.add('text-amber-500/60');
+                registerBtn.classList.add('active', 'text-[rgb(var(--c-amber-200))]');
+                registerBtn.classList.remove('text-[rgb(var(--c-amber-500)/0.6)]');
+                loginBtn.classList.remove('active', 'text-[rgb(var(--c-amber-200))]');
+                loginBtn.classList.add('text-[rgb(var(--c-amber-500)/0.6)]');
 
                 registerContainer.classList.remove('hidden');
                 loginContainer.classList.add('hidden');

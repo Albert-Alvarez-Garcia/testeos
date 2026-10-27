@@ -6,21 +6,13 @@
     <title>Card Binder Pro — Gestión Carta</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="portal.css">
-    <link rel="stylesheet" href="visor-containers.css">
+    <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/visor-containers.css">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #0b0705;
-            color: #fef3c7;
-        }
-        .magic-title {
-            font-family: 'Cinzel', serif;
-        }
         .visor-mode-btn {
-            background: linear-gradient(135deg, #1e140d 0%, #2a1d13 100%);
-            border: 1px solid #8c6d36;
-            color: #fef3c7;
+            background: linear-gradient(135deg, rgb(var(--c-raised-2)) 0%, rgb(var(--c-raised-3)) 100%);
+            border: 1px solid rgb(var(--c-gold-dark));
+            color: rgb(var(--c-cream));
             padding: 0.6rem 1.2rem;
             border-radius: 8px;
             font-size: 0.85rem;
@@ -29,28 +21,28 @@
             transition: all 0.2s ease;
         }
         .visor-mode-btn:hover, .visor-mode-btn.active {
-            border-color: #ffd700;
-            color: #ffd700;
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            border-color: rgb(var(--c-accent-hi));
+            color: rgb(var(--c-accent-hi));
+            box-shadow: 0 0 10px rgb(var(--c-accent) / 0.3);
         }
     </style>
-    <script src="theme.js"></script>
+    <script src="js/shared/theme.js"></script>
 </head>
-<body class="min-h-screen flex flex-col items-center p-4">
+<body class="font-ui min-h-screen flex flex-col items-center p-4">
 
     <!-- Cabecera simplificada -->
-    <header class="w-full max-w-xl flex justify-between items-center mb-6 bg-[#140e09] border border-[#b39258]/30 p-4 rounded-xl shadow-lg">
+    <header class="w-full max-w-xl flex justify-between items-center mb-6 bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.3)] p-4 rounded-xl shadow-lg">
         <div class="flex items-center gap-4">
             <a href="index.html" title="Volver al inicio">
                 <img src="public/assets/logomagic.png" alt="Magic Logo" class="h-10 hover:scale-105 transition-transform">
             </a>
-            <span class="magic-title text-xl text-amber-400 font-bold border-l border-[#b39258]/30 pl-4">
+            <span class="magic-title text-xl text-[rgb(var(--c-amber-400))] font-bold border-l border-[rgb(var(--c-gold)/0.3)] pl-4">
                 Gestión Carta
             </span>
         </div>
   
         <div>
-            <button onclick="window.history.back()" class="bg-[#1e140d] hover:bg-[#2a1d13] text-amber-200 font-semibold px-4 py-2 rounded-xl text-xs transition-all border border-[#b39258]/40 cursor-pointer">
+            <button onclick="window.history.back()" class="bg-[rgb(var(--c-raised-2))] hover:bg-[rgb(var(--c-raised-3))] text-[rgb(var(--c-amber-200))] font-semibold px-4 py-2 rounded-xl text-xs transition-all border border-[rgb(var(--c-gold)/0.4)] cursor-pointer">
                 ⬅ Volver al Visor
             </button>
         </div>

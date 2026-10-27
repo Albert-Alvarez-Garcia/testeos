@@ -7,26 +7,26 @@
     <!-- Tailwind CSS Play CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Enlace a la hoja de estilos externa -->
-    <link rel="stylesheet" href="portal.css">
+    <link rel="stylesheet" href="css/portal.css">
     <style>
         /* El logo de 42 se pinta en blanco sea cual sea el color original del SVG (si ya lo quieres tal cual, quita el filter) */
         #logo-42 img { filter: brightness(0) invert(1); }
     </style>
     <!-- Tema azulado de 42 (fondo y colores): lo activa theme.js si el usuario es de 42 -->
-    <script src="theme.js"></script>
+    <script src="js/shared/theme.js"></script>
 </head>
 <body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-hidden">
 
     <!-- 👤 MENÚ DE USUARIO ACTIVO (SUPERIOR DERECHA) -->
-    <div id="user-menu" class="absolute top-6 right-6 z-40 flex items-center space-x-3 bg-[#140e09]/90 border border-[#b39258]/60 px-4 py-2 rounded-xl shadow-2xl backdrop-blur-md">
+    <div id="user-menu" class="absolute top-6 right-6 z-40 flex items-center space-x-3 bg-[rgb(var(--c-panel)/0.9)] border border-[rgb(var(--c-gold)/0.6)] px-4 py-2 rounded-xl shadow-2xl backdrop-blur-md">
         <!-- Se rellenará dinámicamente mediante JavaScript -->
     </div>
 
     <!-- 🏅 PANEL DE MEDALLAS / LOGROS (se abre desde el botón Logros) -->
-    <div id="achievements-panel" class="absolute top-24 right-6 z-40 w-80 hidden bg-[#140e09]/95 border-2 border-[#b39258] rounded-2xl shadow-2xl backdrop-blur-md p-4 font-sans">
+    <div id="achievements-panel" class="absolute top-24 right-6 z-40 w-80 hidden bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] rounded-2xl shadow-2xl backdrop-blur-md p-4 font-sans">
         <div class="flex justify-between items-center mb-3">
-            <h2 class="text-amber-200 font-bold text-sm tracking-wide">🏅 Medallas</h2>
-            <span id="achievements-summary" class="text-xs text-amber-300/70"></span>
+            <h2 class="text-[rgb(var(--c-amber-200))] font-bold text-sm tracking-wide">🏅 Medallas</h2>
+            <span id="achievements-summary" class="text-xs text-[rgb(var(--c-amber-300)/0.7)]"></span>
         </div>
         <div id="achievements-grid" class="medal-grid"></div>
     </div>
@@ -45,9 +45,9 @@
                 <a href="hub-coleccion.html" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Blanco">
                     <img src="public/assets/blanco-removebg-preview.png" alt="White Mana" class="w-full h-full object-contain drop-shadow-md">
                 </a>
-                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-200))] text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
                     Mi colección: ver, añadir y organizar tus cartas.
-                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[rgb(var(--c-panel))] border-t-2 border-l-2 border-[rgb(var(--c-gold))] rotate-45"></div>
                 </div>
             </div>
             
@@ -56,9 +56,9 @@
                 <a href="hub-juegos.html" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5 inline-block" title="Azul">
                     <img src="public/assets/azul-removebg-preview.png" alt="Blue Mana" class="w-full h-full object-contain drop-shadow-md">
                 </a>
-                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-200))] text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
                     Juegos: Adivina la carta y Pong.
-                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[rgb(var(--c-panel))] border-t-2 border-l-2 border-[rgb(var(--c-gold))] rotate-45"></div>
                 </div>
             </div>
 
@@ -67,9 +67,9 @@
                 <button class="metal-orb w-24 h-24 rounded-full flex items-center justify-center pointer-events-none transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Rojo">
                     <img src="public/assets/rojo-removebg-preview.png" alt="Red Mana" class="w-full h-full object-contain drop-shadow-md">
                 </button>
-                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-200))] text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
                     Abrir sobres.
-                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[rgb(var(--c-panel))] border-t-2 border-l-2 border-[rgb(var(--c-gold))] rotate-45"></div>
                 </div>
             </a>
             
@@ -78,9 +78,9 @@
                 <button id="chat-toggle-btn" class="metal-orb w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all duration-300 hover:scale-110 overflow-hidden p-1.5" title="Sala Global de Chat">
                     <img src="public/assets/verde-removebg-preview.png" alt="Green Mana" class="w-full h-full object-contain drop-shadow-md">
                 </button>
-                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[#140e09]/95 border-2 border-[#b39258] text-amber-200 text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
+                <div class="absolute top-14 left-1/2 -translate-x-1/2 w-48 bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-200))] text-xs p-2.5 rounded-lg shadow-2xl text-center pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 font-sans z-50">
                     Abrir Sala de Chat Global.
-                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[#140e09] border-t-2 border-l-2 border-[#b39258] rotate-45"></div>
+                    <div class="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-[rgb(var(--c-panel))] border-t-2 border-l-2 border-[rgb(var(--c-gold))] rotate-45"></div>
                 </div>
             </div>
 
@@ -99,52 +99,52 @@
     <div class="h-10"></div>
 
     <!-- Logo de 42 (solo para usuarios de 42), abajo a la derecha -->
-    <div id="logo-42" class="hidden fixed bottom-6 right-6 z-30 p-2.5 rounded-xl bg-[#140e09]/80 border border-[#b39258]/50 shadow-2xl backdrop-blur-md pointer-events-none">
+    <div id="logo-42" class="hidden fixed bottom-6 right-6 z-30 p-2.5 rounded-xl bg-[rgb(var(--c-panel)/0.8)] border border-[rgb(var(--c-gold)/0.5)] shadow-2xl backdrop-blur-md pointer-events-none">
         <img src="public/assets/42_Logo.svg" alt="42" class="h-9 w-auto block">
     </div>
 
     <!-- 💬 COMPONENTE DE SALA DE CHAT GLOBAL (OCULTO POR DEFECTO) -->
-    <div id="chat-box" class="fixed bottom-24 right-6 w-80 md:w-96 h-[450px] bg-[#140e09]/95 border-2 border-[#b39258] rounded-2xl shadow-2xl backdrop-blur-md hidden flex-col z-50 overflow-hidden font-sans">
+    <div id="chat-box" class="fixed bottom-24 right-6 w-80 md:w-96 h-[450px] bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] rounded-2xl shadow-2xl backdrop-blur-md hidden flex-col z-50 overflow-hidden font-sans">
         <!-- Cabecera del Chat -->
-        <div class="bg-[#1a120b] border-b border-[#b39258]/40 px-4 py-3 flex justify-between items-center text-amber-100">
+        <div class="bg-[rgb(var(--c-panel-2))] border-b border-[rgb(var(--c-gold)/0.4)] px-4 py-3 flex justify-between items-center text-[rgb(var(--c-amber-100))]">
             <div class="flex items-center space-x-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span>
                 <span class="font-bold tracking-wide text-sm">Sala Global de Conjuradores 🌐</span>
             </div>
-            <button id="chat-close-btn" class="text-amber-400 hover:text-white transition-colors cursor-pointer text-lg font-bold px-1">✕</button>
+            <button id="chat-close-btn" class="text-[rgb(var(--c-amber-400))] hover:text-white transition-colors cursor-pointer text-lg font-bold px-1">✕</button>
         </div>
 
         <!-- Contenedor de Mensajes -->
-        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col space-y-3 bg-[#0d0906]/60 text-sm">
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col space-y-3 bg-[rgb(var(--c-ink-2)/0.6)] text-sm">
             <!-- Los mensajes se inyectarán dinámicamente aquí -->
         </div>
 
         <!-- Formulario de Entrada -->
-        <form id="chat-form" class="bg-[#1a120b] border-t border-[#b39258]/40 p-3 flex items-center space-x-2 relative">
+        <form id="chat-form" class="bg-[rgb(var(--c-panel-2))] border-t border-[rgb(var(--c-gold)/0.4)] p-3 flex items-center space-x-2 relative">
             
             <!-- 🌟 BOTÓN Y PANEL FLOTANTE DE GIPHY SEARCH -->
             <div class="relative">
-                <button type="button" id="sticker-toggle-btn" class="bg-[#b39258]/20 hover:bg-[#b39258]/40 border border-[#b39258]/60 text-amber-200 px-2.5 py-2 rounded-xl text-xs transition-colors cursor-pointer" title="Buscar GIF">
+                <button type="button" id="sticker-toggle-btn" class="bg-[rgb(var(--c-gold)/0.2)] hover:bg-[rgb(var(--c-gold)/0.4)] border border-[rgb(var(--c-gold)/0.6)] text-[rgb(var(--c-amber-200))] px-2.5 py-2 rounded-xl text-xs transition-colors cursor-pointer" title="Buscar GIF">
                     ✨ GIF
                 </button>
                 
                 <!-- Panel flotante del buscador de Giphy -->
-                <div id="sticker-picker" class="absolute bottom-12 left-0 w-64 bg-[#1a120b] border-2 border-[#b39258] rounded-xl p-3 shadow-2xl hidden flex flex-col space-y-2 z-50 font-sans">
-                    <input type="text" id="giphy-search-input" placeholder="Buscar GIF (ej. magic, fire)..." autocomplete="off" class="bg-[#140e09] border border-[#b39258]/60 rounded-lg px-2.5 py-1.5 text-amber-100 text-xs focus:outline-none focus:border-amber-400" />
+                <div id="sticker-picker" class="absolute bottom-12 left-0 w-64 bg-[rgb(var(--c-panel-2))] border-2 border-[rgb(var(--c-gold))] rounded-xl p-3 shadow-2xl hidden flex flex-col space-y-2 z-50 font-sans">
+                    <input type="text" id="giphy-search-input" placeholder="Buscar GIF (ej. magic, fire)..." autocomplete="off" class="bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.6)] rounded-lg px-2.5 py-1.5 text-[rgb(var(--c-amber-100))] text-xs focus:outline-none focus:border-[rgb(var(--c-amber-400))]" />
                     
                     <div id="giphy-results" class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto">
-                        <span class="text-[10px] text-amber-200/50 col-span-3 text-center py-4">Escribe algo para buscar...</span>
+                        <span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)] col-span-3 text-center py-4">Escribe algo para buscar...</span>
                     </div>
 
                     <!-- 🏷️ LOGOTIPO DE ATRIBUCIÓN OBLIGATORIO DE GIPHY -->
-                    <div class="pt-1.5 border-t border-[#b39258]/30 flex justify-center items-center">
+                    <div class="pt-1.5 border-t border-[rgb(var(--c-gold)/0.3)] flex justify-center items-center">
                         <img src="public/assets/Poweredby_100px-Black_VertLogo.png" alt="Powered by Giphy" class="h-4 opacity-75 object-contain" />
                     </div>
                 </div>
             </div>
 
-            <input type="text" id="chat-input" placeholder="Escribe un mensaje a la comunidad..." autocomplete="off" class="flex-1 bg-[#140e09] border border-[#b39258]/60 rounded-xl px-3 py-2 text-amber-100 text-xs focus:outline-none focus:border-amber-400" required />
-            <button type="submit" class="bg-[#b39258]/30 hover:bg-[#b39258]/60 border border-[#b39258] text-amber-200 px-4 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer">
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje a la comunidad..." autocomplete="off" class="flex-1 bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.6)] rounded-xl px-3 py-2 text-[rgb(var(--c-amber-100))] text-xs focus:outline-none focus:border-[rgb(var(--c-amber-400))]" required />
+            <button type="submit" class="bg-[rgb(var(--c-gold)/0.3)] hover:bg-[rgb(var(--c-gold)/0.6)] border border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-200))] px-4 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer">
                 Enviar
             </button>
         </form>
@@ -236,32 +236,32 @@
         // ==========================================
         if (userMenuContainer) {
             userMenuContainer.innerHTML = `
-                <div class="flex items-center space-x-2 text-amber-100 text-sm font-sans">
-                    <span class="font-semibold text-amber-400">
+                <div class="flex items-center space-x-2 text-[rgb(var(--c-amber-100))] text-sm font-sans">
+                    <span class="font-semibold text-[rgb(var(--c-amber-400))]">
                         ${escapeHtml(userData.username)}
                     </span>
                     <span class="text-xs px-2 py-0.5 rounded
-                        bg-[#b39258]/20
-                        border border-[#b39258]/40
-                        text-amber-300">
+                        bg-[rgb(var(--c-gold)/0.2)]
+                        border border-[rgb(var(--c-gold)/0.4)]
+                        text-[rgb(var(--c-amber-300))]">
                         (${escapeHtml(userData.badge)})
                     </span>
                 </div>
-                <div class="flex items-center space-x-2 pl-2 border-l border-[#b39258]/40">
+                <div class="flex items-center space-x-2 pl-2 border-l border-[rgb(var(--c-gold)/0.4)]">
                     <div class="relative">
                         <button id="notif-btn" type="button" aria-label="Notificaciones" aria-expanded="false"
-                            class="relative px-1.5 text-lg text-amber-300 hover:text-amber-100 transition-colors cursor-pointer">
+                            class="relative px-1.5 text-lg text-[rgb(var(--c-amber-300))] hover:text-[rgb(var(--c-amber-100))] transition-colors cursor-pointer">
                             🔔
                             <span id="notif-count" class="hidden absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-bold items-center justify-center"></span>
                         </button>
-                        <div id="notif-menu" class="hidden absolute right-0 top-full mt-3 w-72 max-h-80 overflow-y-auto bg-[#140e09]/95 border-2 border-[#b39258] rounded-2xl shadow-2xl backdrop-blur-md p-3 space-y-2 font-sans z-50"></div>
+                        <div id="notif-menu" class="hidden absolute right-0 top-full mt-3 w-72 max-h-80 overflow-y-auto bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] rounded-2xl shadow-2xl backdrop-blur-md p-3 space-y-2 font-sans z-50"></div>
                     </div>
                     <button
                         id="profile-btn"
                         class="px-2.5 py-1 text-xs font-medium rounded
-                        bg-[#b39258]/30
-                        hover:bg-[#b39258]/50
-                        text-amber-200
+                        bg-[rgb(var(--c-gold)/0.3)]
+                        hover:bg-[rgb(var(--c-gold)/0.5)]
+                        text-[rgb(var(--c-amber-200))]
                         transition-colors
                         cursor-pointer">
                         Logros
@@ -269,9 +269,9 @@
                     <a
                         href="profile.html"
                         class="px-2.5 py-1 text-xs font-medium rounded
-                        bg-[#b39258]/30
-                        hover:bg-[#b39258]/50
-                        text-amber-200
+                        bg-[rgb(var(--c-gold)/0.3)]
+                        hover:bg-[rgb(var(--c-gold)/0.5)]
+                        text-[rgb(var(--c-amber-200))]
                         transition-colors
                         cursor-pointer">
                         Perfil
@@ -395,12 +395,12 @@
             function notifRow(name, text, href) {
                 const a = document.createElement('a');
                 a.href = href;
-                a.className = 'block bg-[#0f0a06] p-2 rounded-lg border border-[#b39258]/60 hover:bg-[#2c1d0f] transition-colors';
+                a.className = 'block bg-[rgb(var(--c-ink-3))] p-2 rounded-lg border border-[rgb(var(--c-gold)/0.6)] hover:bg-[rgb(var(--c-raised))] transition-colors';
                 const p1 = document.createElement('p');
-                p1.className = 'text-sm font-bold text-amber-100 truncate';
+                p1.className = 'text-sm font-bold text-[rgb(var(--c-amber-100))] truncate';
                 p1.textContent = name;
                 const p2 = document.createElement('p');
-                p2.className = 'text-xs text-amber-200/70';
+                p2.className = 'text-xs text-[rgb(var(--c-amber-200)/0.7)]';
                 p2.textContent = text;
                 a.append(p1, p2);
                 return a;
@@ -423,7 +423,7 @@
                 ];
                 if (!rows.length) {
                     const empty = document.createElement('p');
-                    empty.className = 'text-xs text-amber-200/60 italic';
+                    empty.className = 'text-xs text-[rgb(var(--c-amber-200)/0.6)] italic';
                     empty.textContent = 'No tienes notificaciones.';
                     rows.push(empty);
                 }
@@ -604,20 +604,20 @@
                 clearTimeout(searchTimeout);
 
                 if (!query) {
-                    giphyResults.innerHTML = '<span class="text-[10px] text-amber-200/50 col-span-3 text-center py-4">Escribe algo para buscar...</span>';
+                    giphyResults.innerHTML = '<span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)] col-span-3 text-center py-4">Escribe algo para buscar...</span>';
                     return;
                 }
 
                 searchTimeout = setTimeout(async () => {
                     try {
-                        giphyResults.innerHTML = '<span class="text-[10px] text-amber-200 col-span-3 text-center py-4">Buscando...</span>';
+                        giphyResults.innerHTML = '<span class="text-[10px] text-[rgb(var(--c-amber-200))] col-span-3 text-center py-4">Buscando...</span>';
                         
                         // API Key personal y soporte de idioma en español
                         const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=uYe3zQDwYQ8ZaDrzjdbgSr5Uwm3TOZ6O&q=${encodeURIComponent(query)}&limit=9&lang=es`);
                         const data = await response.json();
 
                         if (!data.data || data.data.length === 0) {
-                            giphyResults.innerHTML = '<span class="text-[10px] text-amber-200/50 col-span-3 text-center py-4">No se encontraron GIFs</span>';
+                            giphyResults.innerHTML = '<span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)] col-span-3 text-center py-4">No se encontraron GIFs</span>';
                             return;
                         }
 
@@ -626,7 +626,7 @@
                             const imgUrl = gif.images.fixed_height_small.url;
                             const btn = document.createElement('button');
                             btn.type = 'button';
-                            btn.className = 'hover:scale-105 transition-transform overflow-hidden rounded cursor-pointer h-16 bg-[#140e09] border border-[#b39258]/30';
+                            btn.className = 'hover:scale-105 transition-transform overflow-hidden rounded cursor-pointer h-16 bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.3)]';
                             btn.innerHTML = `<img src="${imgUrl}" class="w-full h-full object-cover" alt="GIF"/>`;
                             
                             btn.addEventListener('click', () => {
@@ -662,7 +662,7 @@
                 ws.send(JSON.stringify(payload));
                 stickerPicker.classList.add('hidden');
                 giphySearchInput.value = '';
-                giphyResults.innerHTML = '<span class="text-[10px] text-amber-200/50 col-span-3 text-center py-4">Escribe algo para buscar...</span>';
+                giphyResults.innerHTML = '<span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)] col-span-3 text-center py-4">Escribe algo para buscar...</span>';
             } else {
                 alert('No hay conexión activa con el servidor de chat.');
             }
@@ -732,18 +732,18 @@
 
         function appendChatMessage(data) {
             const msgDiv = document.createElement('div');
-            msgDiv.className = 'bg-[#140e09] border border-[#b39258]/30 rounded-xl p-2.5 shadow-sm';
+            msgDiv.className = 'bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.3)] rounded-xl p-2.5 shadow-sm';
 
             const timeStr = new Date(data.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const isHtmlMessage = data.message && data.message.includes('<img');
             const contentRendered = isHtmlMessage ? data.message : escapeHtml(data.message);
 
             msgDiv.innerHTML = `
-                <div class="flex justify-between items-center text-[11px] text-amber-400 mb-1">
+                <div class="flex justify-between items-center text-[11px] text-[rgb(var(--c-amber-400))] mb-1">
                     <span class="font-bold">👤 ${escapeHtml(data.username)}</span>
-                    <span class="text-amber-200/50">${timeStr}</span>
+                    <span class="text-[rgb(var(--c-amber-200)/0.5)]">${timeStr}</span>
                 </div>
-                <div class="text-amber-100 text-xs break-words font-sans">${contentRendered}</div>
+                <div class="text-[rgb(var(--c-amber-100))] text-xs break-words font-sans">${contentRendered}</div>
             `;
 
             messagesContainer.appendChild(msgDiv);
