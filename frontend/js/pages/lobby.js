@@ -17,8 +17,8 @@
 
         // ---- Sesión: si no hay usuario guardado, se genera UNA vez y se persiste,
         // para que game.html use exactamente el mismo nombre ----
-        let userSession = JSON.parse(localStorage.getItem("user_session")) ||
-                          JSON.parse(localStorage.getItem("cardbinder_user"));
+        let userSession = JSON.parse(localStorage.getItem("cardbinder_user")) ||
+                  JSON.parse(localStorage.getItem("user_session"));
         if (!userSession || !userSession.username) {
             userSession = { username: "Conjurador_" + Math.floor(Math.random() * 1000) };
         }

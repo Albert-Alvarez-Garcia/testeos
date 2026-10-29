@@ -1164,6 +1164,8 @@ async def lobby_websocket(websocket: WebSocket, room_id: str):
         await websocket.close(code=4401)
         return
     username = clean_username(username, "Conjurador")
+    print(f"[pong] lobby room={room_id} user={username!r}", flush=True)
+    print(f"[pong] lobby room={room_id} user={username!r}", flush=True)
     if not await manager.connect_lobby(websocket, room_id, username):
         return
 
@@ -1200,6 +1202,8 @@ async def game_websocket(websocket: WebSocket, room_id: str):
         await websocket.close(code=4401)
         return
     username = clean_username(username, "Jugador")
+    print(f"[pong] game  room={room_id} user={username!r}", flush=True)
+    print(f"[pong] game  room={room_id} user={username!r}", flush=True)
     room = await manager.connect_game(websocket, room_id, username, dict(websocket.query_params))
     if room is None:
         return
