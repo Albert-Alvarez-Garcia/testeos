@@ -1,0 +1,4 @@
+/* index.css · Página principal (index.html) */
+
+/* El logo de 42 se pinta en blanco sea cual sea el color original del SVG (si ya lo quieres tal cual, quita el filter) */
+#logo-42 img { filter: brightness(0) invert(1); }

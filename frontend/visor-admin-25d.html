@@ -4,60 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Binder Pro — Workspace y Visor 2.5D</title>
-    <!-- 1. Cargamos primero tu CSS principal con la estética oscura -->
     <link rel="stylesheet" href="css/portal.css">
-    <!-- 2. Cargamos el CSS específico de este layout y el visor -->
     <link rel="stylesheet" href="css/visor-admin-25d.css">
     <script src="js/shared/theme.js"></script>
 </head>
-<script>
-        function getAuthHeader() {
-            let username = 'admin';
-            try {
-                const userData = JSON.parse(localStorage.getItem('cardbinder_user'));
-                if (userData && userData.username) {
-                    username = userData.username;
-                }
-            } catch (e) {
-                console.error("Error leyendo cardbinder_user:", e);
-            }
-            return { 'X-Username': username };
-        }
-    </script>
-
 <body>
 
     <header>
         <div class="logo-container">
-            <a href="index.html" title="Ir al Inicio" style="display: flex; align-items: center; text-decoration: none;">
-                <img src="public/assets/logomagic.png" alt="Logo" style="height: 64px; width: auto;">
+            <a href="index.html" title="Ir al Inicio" class="logo-link">
+                <img src="public/assets/logomagic.png" alt="Logo">
             </a>
             <span class="app-subtitle">Binder Pro</span>
         </div>
-  
+
         <div class="header-search-container">
           <input type="text" id="searchInput" placeholder="Buscar carta...">
-          
-          <select id="macroCategorySelect" style="max-width: 140px;">
+
+          <select id="macroCategorySelect">
               <option value="">Cualquier tipo...</option>
           </select>
-  
-          <select id="subtypeSelect" disabled style="max-width: 140px;">
+
+          <select id="subtypeSelect" disabled>
               <option value="">Cualquier subtipo...</option>
           </select>
-  
-          <!-- Aprovechamos tu clase btn-fantasy -->
+
           <button id="searchBtn" class="btn-fantasy">Buscar</button>
         </div>
     </header>
 
     <main>
         <div class="workspace-grid">
-            
-            <!-- Columna Izquierda: Le añadimos la clase fantasy-panel de tu portal.css -->
+
+            <!-- Columna izquierda: visor 2.5D -->
             <div class="visor-column fantasy-panel">
-                
-                <!-- Aplicamos btn-fantasy -->
+
                 <button id="toggleMagnifierBtn" class="visor-mode-btn btn-fantasy">
                     🔍 Modo Lupa: <span id="modeStatus">DESACTIVADO</span>
                 </button>
@@ -69,26 +50,26 @@
                     <div class="card-magnifier" id="cardMagnifier"></div>
                 </div>
 
-                <div class="visor-card-details" id="visorCardDetails" style="padding: 0.85rem 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color); width: 100%; box-sizing: border-box;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
-                        <span id="visorCardName" style="font-weight: 600;">Selecciona una carta</span>
-                        <span id="visorCardMana" style="font-family: monospace; color: var(--accent);"></span>
+                <div class="visor-card-details" id="visorCardDetails">
+                    <div class="visor-card-head">
+                        <span id="visorCardName">Selecciona una carta</span>
+                        <span id="visorCardMana"></span>
                     </div>
-                    <div id="visorCardType" style="font-size: 0.8rem; color: var(--text-muted);">—</div>
+                    <div id="visorCardType">—</div>
                 </div>
             </div>
 
-            <!-- Columna Derecha: Le añadimos la clase fantasy-panel -->
+            <!-- Columna derecha: resultados e inventario -->
             <div class="details-column fantasy-panel">
                 <h2>📋 Resultados de Búsqueda</h2>
                 <div class="results-list" id="resultsList">
-                    <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0;">Realiza una búsqueda arriba para listar cartas...</p>
+                    <p>Realiza una búsqueda arriba para listar cartas...</p>
                 </div>
 
                 <h2>⚙️ Gestión de Inventario y Estado</h2>
                 <div class="inventory-form">
-                    
-                    <div style="display: grid; grid-template-columns: 200px 1fr auto; gap: 1rem; align-items: end;">
+
+                    <div class="inv-row inv-row-location">
                         <div>
                             <label for="filterContainerType">Filtrar contenedores</label>
                             <select id="filterContainerType">
@@ -105,13 +86,11 @@
                             </select>
                         </div>
                         <div>
-                            <a href="containers.html" target="_blank" style="display: inline-flex; align-items: center; height: 38px; padding: 0 0.75rem; font-size: 0.85rem; color: var(--accent); text-decoration: none;">
-                                ⚙️ Gestionar
-                            </a>
+                            <a href="containers.html" target="_blank" rel="noopener" class="inv-manage-link">⚙️ Gestionar</a>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 130px 110px 1fr; gap: 1rem;">
+                    <div class="inv-row inv-row-state">
                         <div>
                             <label for="cardOwned">¿En posesión?</label>
                             <select id="cardOwned">
@@ -133,14 +112,15 @@
                         </div>
                     </div>
 
-                    <!-- Aplicamos btn-fantasy -->
-                    <button class="btn-fantasy" id="saveInventoryBtn" style="width: 100%; margin-top: 0.5rem;">Guardar Cambios de Inventario</button>
+                    <button class="btn-fantasy btn-save" id="saveInventoryBtn">Guardar Cambios de Inventario</button>
                 </div>
             </div>
 
         </div>
     </main>
 
+    <script src="js/shared/auth.js"></script>
     <script src="js/pages/visor-admin-25d.js"></script>
+    <script src="js/shared/footer.js"></script>
 </body>
 </html>

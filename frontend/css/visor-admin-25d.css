@@ -2,6 +2,9 @@
    VISOR 2.5D LAYOUT (Se apoya en portal.css para el diseño base)
    ========================================================================== */
 
+/* Color de éxito (toast de guardado) */
+:root { --ok: #10b981; }
+
 /* --- CABECERA --- */
 header {
     display: flex;
@@ -27,6 +30,9 @@ header {
     width: auto;
 }
 
+.logo-container .logo-link { display: flex; align-items: center; text-decoration: none; }
+.logo-container .logo-link img { height: 64px; }
+
 .app-subtitle {
     font-family: 'MagicTheGathering', serif;
     color: var(--accent);
@@ -43,6 +49,8 @@ header {
     max-width: 500px;
     justify-content: flex-end;
 }
+
+.header-search-container select { max-width: 140px; }
 
 /* --- LAYOUT PRINCIPAL --- */
 main {
@@ -152,6 +160,25 @@ main {
     opacity: 1 !important;
 }
 
+/* Ficha de la carta seleccionada, bajo el visor */
+.visor-card-details {
+    padding: 0.85rem 1rem;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    width: 100%;
+    box-sizing: border-box;
+}
+.visor-card-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.35rem;
+}
+#visorCardName { font-weight: 600; }
+#visorCardMana { font-family: monospace; color: var(--accent); }
+#visorCardType { font-size: 0.8rem; color: var(--text-muted); }
+
 /* --- LISTA DE RESULTADOS --- */
 .results-list {
     display: grid;
@@ -164,6 +191,9 @@ main {
 }
 
 .results-list > p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    text-align: center;
     grid-column: 1 / -1;
     display: flex;
     align-items: center;
@@ -210,6 +240,14 @@ main {
     display: block;
 }
 
+.results-list > p.msg-error { color: var(--danger); }
+
+.result-card-item small {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}
+
 /* --- INVENTARIO --- */
 .inventory-form {
     display: flex;
@@ -230,3 +268,36 @@ main {
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
+/* Filas del formulario (más específicas que ".inventory-form div") */
+.inventory-form .inv-row { display: grid; gap: 1rem; flex-direction: initial; }
+.inventory-form .inv-row-location { grid-template-columns: 200px 1fr auto; align-items: end; }
+.inventory-form .inv-row-state { grid-template-columns: 130px 110px 1fr; }
+
+.inv-manage-link {
+    display: inline-flex;
+    align-items: center;
+    height: 38px;
+    padding: 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.inventory-form .btn-save { width: 100%; margin-top: 0.5rem; }
+
+/* Aviso flotante al guardar */
+.toast-notification {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--ok);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 10000;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: opacity 0.3s ease-in-out;
+}
+.toast-notification.is-hiding { opacity: 0; }

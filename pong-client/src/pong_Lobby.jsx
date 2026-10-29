@@ -94,18 +94,20 @@ function Entry({ username, onJoin }) {
   }
 
   return (
-    <main className="lobby" style={accentVars(DEFAULT_CONFIG.ball_mana)}>
-      <section className="lobby-stage">
+    <main className="scene scene-entry" style={accentVars(DEFAULT_CONFIG.ball_mana)}>
+      <section className="stage">
+        <div className="stage-title">
+          <h1 className="title">Pong isométrico</h1>
+          <p className="stage-motto">Duelo de orbes de maná</p>
+        </div>
         <IsoPreview mana={DEFAULT_CONFIG.ball_mana} table={DEFAULT_CONFIG.table_theme} />
       </section>
 
-      <section className="lobby-panel">
-        <header className="lobby-head">
-          <h1 className="title">Pong isométrico</h1>
-          <p className="lead">Elige cómo quieres jugar.</p>
-        </header>
-
+      <section className="console plate" aria-labelledby="entry-title">
         <form className="block" onSubmit={submit}>
+          <h2 id="entry-title" className="block-title">Antes del duelo</h2>
+          <p className="lead">Elige cómo quieres jugar.</p>
+
           <div className="field">
             <label className="field-label" htmlFor="player-name">Tu nombre</label>
             <input
@@ -147,7 +149,7 @@ function Entry({ username, onJoin }) {
                 onChange={(e) => setRoomInput(e.target.value)}
               />
 
-              <h2 className="sub-title">Salas abiertas</h2>
+              <h3 className="sub-title">Salas abiertas</h3>
               {roomsFailed ? (
                 <p className="note note-warn">
                   No se puede contactar con el servidor. Comprueba que el backend está en marcha.
@@ -175,7 +177,7 @@ function Entry({ username, onJoin }) {
             </div>
           )}
 
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary btn-lg">
             {mode === "local" ? "Crear partida local" : "Entrar a la sala"}
           </button>
         </form>
@@ -194,7 +196,9 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
 
   const config = lobby?.config || DEFAULT_CONFIG;
   const players = lobby?.players || [];
-  const me = players.find((p) => p.username === username);
+  // Identidad según el servidor (si no la envía, se usa el nombre local)
+  const myName = lobby?.you || username;
+  const me = players.find((p) => p.username === myName);
   const isHost = !!me?.is_host;
   const isLocal = config.mode === "local";
   const maxPlayers = lobby?.max_players || (join.mode === "local" ? 1 : 2);
@@ -212,8 +216,8 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
 
   if (status === "rejected" || status === "replaced") {
     return (
-      <main className="lobby lobby-solo" style={accentVars(config.ball_mana)}>
-        <section className="lobby-panel lobby-panel-solo">
+      <main className="scene scene-solo" style={accentVars(config.ball_mana)}>
+        <section className="plate plate-solo">
           <h1 className="title">{status === "rejected" ? "No se puede entrar" : "Sala abierta en otra pestaña"}</h1>
           <p className="lead">
             {status === "rejected"
@@ -235,10 +239,10 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
   const canStart = status === "open" && isHost && !!lobby?.can_start;
 
   return (
-    <main className="lobby" style={accentVars(config.ball_mana)}>
-      <section className="lobby-stage">
+    <main className="scene scene-room" style={accentVars(config.ball_mana)}>
+      <section className="stage">
         <IsoPreview mana={config.ball_mana} table={config.table_theme}>
-          <div className="stage-caption">
+          <div className="stage-caption plate plate-sm">
             <p className="stage-win">{describeWin(config)}</p>
             <p className="stage-sub">
               {isLocal ? "Jugador 1: W y S. Jugador 2: ↑ y ↓." : "Cada jugador controla su pala con W y S o con ↑ y ↓."}
@@ -247,8 +251,8 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
         </IsoPreview>
       </section>
 
-      <section className="lobby-panel">
-        <header className="lobby-head">
+      <section className="console plate">
+        <header className="console-head">
           <div className="head-row">
             <h1 className="title">{isLocal ? "Partida local" : join.roomId}</h1>
             <button type="button" className="btn btn-ghost" onClick={onLeave}>Salir de la sala</button>
@@ -265,20 +269,16 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
           </div>
         )}
 
-        <Roster players={players} maxPlayers={maxPlayers} username={username} isLocal={isLocal} />
-
         {lobby ? (
           <LobbyConfig config={config} isHost={isHost} send={send} />
         ) : (
           <p className="note">Cargando la sala…</p>
         )}
 
-        {!isLocal && <Chat messages={chat} username={username} send={send} disabled={status !== "open"} />}
-
         <div className="actions">
           <button
             type="button"
-            className="btn btn-primary"
+            className="btn btn-primary btn-lg"
             disabled={!canStart}
             onClick={() => send({ action: "START_GAME" })}
           >
@@ -286,6 +286,11 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
           </button>
         </div>
       </section>
+
+      <aside className="side" aria-label="Jugadores y chat">
+        <Roster players={players} maxPlayers={maxPlayers} username={myName} isLocal={isLocal} />
+        {!isLocal && <Chat messages={chat} username={myName} send={send} disabled={status !== "open"} />}
+      </aside>
     </main>
   );
 }
@@ -294,7 +299,7 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
 function Roster({ players, maxPlayers, username, isLocal }) {
   if (isLocal) {
     return (
-      <section className="block" aria-labelledby="roster-title">
+      <section className="block plate plate-sm" aria-labelledby="roster-title">
         <h2 id="roster-title" className="block-title">Jugadores</h2>
         <ul className="roster">
           <li className="roster-item">
@@ -312,7 +317,7 @@ function Roster({ players, maxPlayers, username, isLocal }) {
 
   const empty = Math.max(0, maxPlayers - players.length);
   return (
-    <section className="block" aria-labelledby="roster-title">
+    <section className="block plate plate-sm" aria-labelledby="roster-title">
       <h2 id="roster-title" className="block-title">Jugadores</h2>
       <ul className="roster">
         {players.map((p) => (
@@ -352,7 +357,7 @@ function Chat({ messages, username, send, disabled }) {
   }
 
   return (
-    <section className="block" aria-labelledby="chat-title">
+    <section className="block plate plate-sm" aria-labelledby="chat-title">
       <h2 id="chat-title" className="block-title">Chat</h2>
       <ul className="chat-list" ref={listRef} aria-live="polite">
         {messages.length === 0 && <li className="chat-empty">Aún no hay mensajes.</li>}

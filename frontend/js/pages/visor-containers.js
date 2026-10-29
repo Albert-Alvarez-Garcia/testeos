@@ -1,10 +1,13 @@
 /********************************************************************************
 - [MODULE]: VISOR DE CONTENEDORES Y BINDERS (visor-containers.js)
+- Requiere js/shared/auth.js (CBAuth).
 - [DESCRIPTION]: Lógica de renderizado unificada, listado inicial de contenedores
 -                del usuario, borrado persistente en BBDD y visor Lightbox integrado.
  ********************************************************************************/
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (!CBAuth.requireSession()) return;
+
     const containerSelector = document.getElementById('containerSelector');
     const containerTitle = document.getElementById('containerTitle');
     const containerStats = document.getElementById('containerStats');
@@ -38,25 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let slotsActualesCache = [];
     let renderCallbackActual = null;
 
-    function getAuthHeader() {
-        let username = 'admin';
-        try {
-            const userData = JSON.parse(localStorage.getItem('cardbinder_user')) || 
-                             JSON.parse(localStorage.getItem('user_session'));
-            if (userData && userData.username) {
-                username = userData.username;
-            }
-        } catch (e) {
-            console.error('Error leyendo usuario:', e);
-        }
-        return { 'X-Username': username };
+    // Escapa texto para usarlo dentro de innerHTML (nombres de contenedor y de carta)
+    function esc(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => (
+            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]
+        ));
     }
 
     async function cargarContenedores() {
         try {
-            const response = await fetch('/api/containers/', {
-                headers: { ...getAuthHeader() }
-            });
+            const response = await CBAuth.fetch('/api/containers/');
             if (!response.ok) throw new Error('Error al listar contenedores');
             allContainers = await response.json();
             
@@ -135,17 +129,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const icon = tipoUpper.includes('BINDER') ? '📖' : tipoUpper.includes('DECK') ? '🎴' : '📦';
             
             html += `
-                <div data-container-id="${c.id}" class="container-card fantasy-panel rounded-2xl p-5 cursor-pointer flex flex-col justify-between h-[170px]">
+                <div data-container-id="${esc(c.id)}" class="container-card fantasy-panel rounded-2xl p-5 cursor-pointer flex flex-col justify-between h-[170px]">
                     <div>
                         <div class="flex justify-between items-start mb-2">
                             <h3 class="font-magic font-bold text-[rgb(var(--c-amber-300))] text-base flex items-center gap-2">
-                                <span>${icon}</span> ${c.name || 'Sin Nombre'}
+                                <span>${icon}</span> ${esc(c.name || 'Sin Nombre')}
                             </h3>
                             <span class="bg-[rgb(var(--c-amber-500)/0.2)] text-[rgb(var(--c-amber-400))] text-[10px] px-2 py-0.5 rounded-full border border-[rgb(var(--c-amber-500)/0.3)] font-bold">
-                                ${tipoUpper}
+                                ${esc(tipoUpper)}
                             </span>
                         </div>
-                        <p class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">Capacidad Máxima: <strong class="text-[rgb(var(--c-amber-300))]">${c.max_capacity || 'N/A'}</strong> slots</p>
+                        <p class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">Capacidad Máxima: <strong class="text-[rgb(var(--c-amber-300))]">${esc(c.max_capacity || 'N/A')}</strong> slots</p>
                     </div>
 
                     <div class="flex justify-between items-center border-t border-[rgb(var(--c-gold)/0.2)] pt-3 mt-2">
@@ -210,9 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         visualWorkspace.innerHTML = `<div class="text-center text-[rgb(var(--c-amber-200)/0.5)] py-12 italic text-xs">Cargando estructura del contenedor...</div>`;
         
         try {
-            const response = await fetch(`/api/containers/${containerId}/slots`, {
-                headers: { ...getAuthHeader() }
-            });
+            const response = await CBAuth.fetch(`/api/containers/${encodeURIComponent(containerId)}/slots`);
             if (!response.ok) throw new Error('Error al obtener slots');
             
             const slots = await response.json();
@@ -261,9 +253,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 try {
                     if (copyId) {
-                        const response = await fetch(`/api/containers/items/${copyId}`, {
-                            method: 'DELETE',
-                            headers: { ...getAuthHeader() }
+                        const response = await CBAuth.fetch(`/api/containers/items/${encodeURIComponent(copyId)}`, {
+                            method: 'DELETE'
                         });
                         if (!response.ok) throw new Error('Error al eliminar copia en BBDD');
                     }
@@ -322,9 +313,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentBinderPage > totalPages) currentBinderPage = 1;
 
         visualWorkspace.innerHTML = `
-            <div class="binder-navigation-controls" style="display: flex; justify-content: space-between; align-items: center; width: 100%; position: relative; margin-bottom: 10px;">
+            <div class="binder-navigation-controls">
                 <div></div>
-                <div class="page-indicator" style="position: absolute; left: 50%; transform: translateX(-50%);">
+                <div class="page-indicator">
                     Página <strong id="currentPageNum">${currentBinderPage}</strong> de ${totalPages}
                 </div>
                 <div></div>
@@ -348,12 +339,12 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (slot.is_occupied && slot.image_uri) {
                 slotDiv.innerHTML = `
-                    <img src="${slot.image_uri}" alt="${slot.card_name}" loading="lazy">
+                    <img src="${esc(slot.image_uri)}" alt="${esc(slot.card_name)}" loading="lazy">
                     <div class="slot-overlay-info">
-                        <span class="slot-badge">${slot.condition || 'NM'}</span>
+                        <span class="slot-badge">${esc(slot.condition || 'NM')}</span>
                         ${slot.is_foil ? '<span class="foil-badge">Foil</span>' : ''}
                     </div>
-                    <button class="delete-slot-btn" title="Eliminar carta" style="position: absolute; bottom: 6px; left: 6px; background: rgba(239, 68, 68, 0.9); border: none; color: #fff; border-radius: 4px; padding: 4px 8px; cursor: pointer; font-size: 0.75rem; z-index: 10;">🗑️ Borrar</button>
+                    <button class="delete-slot-btn" title="Eliminar carta">🗑️ Borrar</button>
                 `;
 
                 const deleteBtn = slotDiv.querySelector('.delete-slot-btn');
@@ -408,7 +399,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const allSlotsCombined = [...allMainSlots, ...allSideSlots];
 
         visualWorkspace.innerHTML = `
-            <div class="deck-controls-bar" style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 15px;">
+            <div class="deck-controls-bar">
                 <div class="deck-counters">
                     <span>Ocupados: ${allSlotsCombined.filter(s => s.is_occupied).length}/${allSlotsCombined.length}</span>
                 </div>
@@ -416,7 +407,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="deck-scroll-container">
                 ${isDeck ? '<div class="deck-section-title">Mainboard</div>' : ''}
                 <div class="deck-compact-row" id="mainGrid"></div>
-                ${allSideSlots.length > 0 ? '<div class="deck-section-title" style="margin-top: 2rem;">Sideboard</div><div class="deck-compact-row" id="sideGrid"></div>' : ''}
+                ${allSideSlots.length > 0 ? '<div class="deck-section-title is-spaced">Sideboard</div><div class="deck-compact-row" id="sideGrid"></div>' : ''}
             </div>
         `;
 
@@ -429,9 +420,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (slot.is_occupied && slot.image_uri) {
                 item.innerHTML = `
-                    <img src="${slot.image_uri}" alt="${slot.card_name}" loading="lazy">
+                    <img src="${esc(slot.image_uri)}" alt="${esc(slot.card_name)}" loading="lazy">
                     <span class="compact-slot-badge">#${slot.slot_index}</span>
-                    <button class="delete-deck-btn" title="Borrar" style="position: absolute; top: 2px; right: 2px; background: rgba(239, 68, 68, 0.9); border: none; color: #fff; border-radius: 50%; width: 20px; height: 20px; font-size: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;">✕</button>
+                    <button class="delete-deck-btn" title="Borrar">✕</button>
                 `;
 
                 item.querySelector('.delete-deck-btn').addEventListener('click', (e) => {

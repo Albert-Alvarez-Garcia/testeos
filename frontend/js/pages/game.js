@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const username = sessionStorage.getItem("cb_tab_user") || userSession.username || "Jugador";
     const roomId = urlParams.get("room") || "sala-1";
 
-    console.info("Adivina la Carta · cliente v2 · usuario:", username, "· sala:", roomId);
+    console.info("Adivina la Carta · cliente v3 · usuario:", username, "· sala:", roomId);
 
     // ---- Estado local (el reloj REAL vive en el servidor) ----
     let ws = null;
@@ -39,24 +39,19 @@ document.addEventListener("DOMContentLoaded", () => {
     let locked = true;
     let gameEnded = false;
 
-    const BTN_BASE = "option-btn py-3 px-4 rounded-lg text-sm font-medium text-left border transition-all ";
-    const BTN_STATES = {
-        idle: "bg-[rgb(var(--c-raised-2))] hover:bg-[rgb(var(--c-raised-3))] border-[rgb(var(--c-gold)/0.3)] text-[rgb(var(--c-amber-100))] cursor-pointer hover:border-[rgb(var(--c-amber-400))]",
-        pending: "bg-[rgb(var(--c-amber-900)/0.6)] border-[rgb(var(--c-amber-500))] text-[rgb(var(--c-amber-100))] cursor-not-allowed",
-        wrong: "bg-red-950/80 border-red-600 text-[rgb(var(--c-amber-200))] cursor-not-allowed",
-        right: "bg-emerald-900/80 border-emerald-400 text-white cursor-not-allowed"
-    };
-
+    // Los estilos de cada estado están en css/game.css ([data-state="..."])
     function setBtnState(btn, state) {
         btn.dataset.state = state;
-        btn.className = BTN_BASE + BTN_STATES[state];
+        btn.className = "option-btn";
     }
 
     const norm = (s) => String(s || "").trim().toLowerCase();
 
+    let leftGame = false;
+
     // ---------------- WebSocket ----------------
     function connectGameWebSocket() {
-        if (gameEnded) return;
+        if (gameEnded || leftGame) return;
         ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${API_HOST}/api/game/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
 
         ws.onopen = () => {
@@ -75,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         ws.onclose = () => {
-            if (gameEnded) return;
+            if (gameEnded || leftGame) return;
             if (roomStatus) roomStatus.textContent = "🔴 Desconectado. Reintentando...";
             lockOptions();
             setTimeout(connectGameWebSocket, 2000);
@@ -122,10 +117,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function lockOptions() {
         locked = true;
-        optionsContainer.querySelectorAll("button").forEach(b => {
-            b.disabled = true;
-            if (b.dataset.state === "idle") b.classList.add("opacity-50", "cursor-not-allowed");
-        });
+        optionsContainer.querySelectorAll("button").forEach(b => { b.disabled = true; });
     }
 
     function handlePlayerClick(optionText, btn) {
@@ -198,8 +190,7 @@ document.addEventListener("DOMContentLoaded", () => {
         if (timerBar) {
             const pct = (Math.max(0, remaining) / roundDuration) * 100;
             timerBar.style.width = `${pct}%`;
-            const color = remaining <= 5 ? "bg-red-500" : remaining <= 10 ? "bg-[rgb(var(--c-amber-500))]" : "bg-emerald-500";
-            timerBar.className = `${color} h-full transition-[width] duration-100 ease-linear`;
+            timerBar.dataset.level = remaining <= 5 ? "danger" : remaining <= 10 ? "warn" : "ok";
         }
     }
 
@@ -288,6 +279,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 1000);
         if (ws) ws.close();
     }
+
+    const leaveBtn = document.getElementById('leave-game-btn');
+    if (leaveBtn) leaveBtn.addEventListener('click', () => {
+        if (!confirm('¿Abandonar la partida?')) return;
+        leftGame = true;
+        if (ws) ws.close();
+        window.location.href = 'rooms.html';
+    });
+    window.addEventListener('pagehide', () => { leftGame = true; if (ws) ws.close(); });
+    window.addEventListener('pageshow', (e) => { if (e.persisted) window.location.reload(); });
 
     connectGameWebSocket();
 });

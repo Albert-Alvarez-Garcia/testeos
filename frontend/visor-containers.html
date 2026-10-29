@@ -6,7 +6,7 @@
     <title>Card Binder Pro — Visor de Contenedores</title>
     
     <!-- Tailwind CSS Play CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     
     <!-- Fuentes globales -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -72,7 +72,7 @@
     </main>
 
     <!-- Modal de Confirmación de Borrado -->
-    <div id="deleteConfirmModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] p-4 backdrop-blur-sm">
+    <div id="deleteConfirmModal" class="hidden fixed inset-0 bg-black/80 flex items-center justify-center z-[2000] p-4 backdrop-blur-xs">
         <div class="fantasy-panel border-red-600/50 p-6 max-w-md w-full text-center">
             <h3 class="font-magic text-xl text-red-500 mb-2 font-bold">⚠️ Confirmar Borrado</h3>
             <p id="deleteModalText" class="text-[rgb(var(--c-amber-100)/0.8)] text-xs mb-6">¿Deseas retirar esta carta del contenedor?</p>
@@ -97,6 +97,7 @@
         </div>
     </dialog>
 
+    <script src="js/shared/auth.js"></script>
     <script src="js/pages/visor-containers.js"></script>
 </body>
 </html>

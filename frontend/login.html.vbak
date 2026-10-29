@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder - Acceso de Usuario</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Enlace a la hoja de estilos externa -->
+    <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/login.css">
+    <script src="js/shared/theme.js"></script>
+</head>
+<body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 relative select-none overflow-hidden">
+
+    <!-- ILUSTRACIÓN CENTRAL DECORATIVA (DECO1) -->
+    <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0 overflow-hidden opacity-40">
+        <img src="public/assets/deco1.png" alt="Decorative Character" class="hero-illustration h-full max-h-[90vh] w-auto object-contain">
+    </div>
+
+    <!-- HEADER / LOGO PEQUEÑO CON ENLACE A INDEX -->
+    <div class="w-full flex justify-center items-center z-30 pt-2">
+        <a href="index.html" class="flex items-center space-x-3 cursor-pointer group">
+            <img src="public/assets/logomagic.png" alt="Card Binder Logo" class="h-12 w-auto object-contain drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] transition-transform duration-300 group-hover:scale-105">
+        </a>
+    </div>
+
+    <!-- CENTRO: Formulario de Autenticación / Registro -->
+    <div class="my-auto text-center relative z-25 flex flex-col items-center">
+        
+        <div class="w-full max-w-md auth-card rounded-2xl p-8 text-left relative">
+            
+            <!-- PESTAÑAS DE NAVEGACIÓN (LOGIN / REGISTRO) -->
+            <div class="flex border-b border-[rgb(var(--c-gold-darker))] mb-6">
+                <button id="tabLoginBtn" type="button" data-tab="login" class="tab-btn active">
+                    Iniciar Sesión
+                </button>
+                <button id="tabRegisterBtn" type="button" data-tab="register" class="tab-btn">
+                    Registrarse
+                </button>
+            </div>
+
+            <!-- FORMULARIO DE INICIO DE SESIÓN -->
+            <div id="loginFormContainer" class="space-y-4">
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Usuario / Email</label>
+                        <input type="text" id="loginUser" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="Introduce tu usuario...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Contraseña</label>
+                        <input type="password" id="loginPass" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-lg fantasy-btn-primary text-sm uppercase tracking-wider cursor-pointer">
+                        Entrar al Grimorio
+                    </button>
+                </form>
+
+                <div class="relative flex py-2 items-center">
+                    <div class="grow border-t border-[rgb(var(--c-gold-darker))]"></div>
+                    <span class="shrink mx-4 text-[rgb(var(--c-amber-500)/0.6)] text-xs uppercase tracking-widest">o</span>
+                    <div class="grow border-t border-[rgb(var(--c-gold-darker))]"></div>
+                </div>
+
+                <!-- BOTÓN DE INTRANET 42 -->
+                <button type="button" data-action="login42" class="w-full py-3 rounded-lg fantasy-btn-42 text-sm uppercase tracking-wider flex items-center justify-center space-x-2 cursor-pointer shadow-lg">
+                    <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                    <span>Identificarse con 42</span>
+                </button>
+            </div>
+
+            <!-- FORMULARIO DE REGISTRO (CIVIL / LOCAL) -->
+            <div id="registerFormContainer" class="space-y-4 hidden">
+                <form id="registerForm" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Nombre de Usuario (Alias)</label>
+                        <input type="text" id="regUser" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="Tu alias único...">
+                        <p class="text-[10px] text-[rgb(var(--c-amber-400)/0.5)] mt-1">Si coincide con un shortlog oficial de 42, se aplicará el título nobiliario correspondiente.</p>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Correo Electrónico</label>
+                        <input type="email" id="regEmail" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="tu@correo.com">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-[rgb(var(--c-amber-300)/0.8)] mb-1">Contraseña</label>
+                        <input type="password" id="regPass" required class="w-full px-4 py-2.5 rounded-lg fantasy-input text-sm" placeholder="••••••••">
+                    </div>
+                    <button type="submit" class="w-full py-3 rounded-lg fantasy-btn-primary text-sm uppercase tracking-wider cursor-pointer mt-2">
+                        Crear Cuenta Civil
+                    </button>
+                </form>
+
+                <div class="text-center pt-2">
+                    <span class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">¿Eres alumno de 42? </span>
+                    <a href="#" data-action="login42" class="link-42">Conéctate directamente aquí</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ESPACIADOR INFERIOR -->
+    <div class="h-10"></div>
+
+    <!-- SCRIPT DE CONTROL DE PESTAÑAS Y AUTENTICACIÓN -->
+    <script src="js/pages/login.js"></script>
+    <script src="js/shared/footer.js"></script>
+</body>
+</html>

@@ -5,6 +5,8 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from backend.database import get_db_connection
+from backend.security import ws_username
+from backend.routers.stats import save_game_result
 
 router = APIRouter(
     prefix="/api/game",
@@ -303,6 +305,10 @@ class GameManager:
                 leader = max(room.players.items(), key=lambda kv: kv[1]["score"], default=None)
                 if leader and leader[1]["score"] >= WIN_SCORE:
                     room.finished = True
+                    try:
+                        await asyncio.to_thread(save_game_result, "guess_card", room.room_id, room.ranking(), leader[0])
+                    except Exception as e:
+                        print(f"⚠️ No se pudo guardar el resultado: {e}")
                     await room.broadcast({
                         "type": "GAME_OVER",
                         "winner": leader[0],
@@ -424,7 +430,10 @@ def get_active_rooms():
 # --- WEBSOCKET DEL LOBBY ---
 @router.websocket("/ws/lobby/{room_id}")
 async def lobby_websocket(websocket: WebSocket, room_id: str):
-    username = websocket.query_params.get("username", "Conjurador")
+    username = ws_username(websocket, websocket.query_params.get("username", "Conjurador"))
+    if not username:
+        await websocket.close(code=4401)
+        return
     await manager.connect_lobby(websocket, room_id, username)
 
     try:
@@ -435,7 +444,7 @@ async def lobby_websocket(websocket: WebSocket, room_id: str):
             if action == "CHAT_MESSAGE":
                 chat_msg = {
                     "type": "CHAT_MESSAGE",
-                    "username": data.get("username", username),
+                    "username": username,
                     "message": data.get("message", "")
                 }
                 if room_id in manager.lobbies:
@@ -469,7 +478,10 @@ async def lobby_websocket(websocket: WebSocket, room_id: str):
 # --- WEBSOCKET DEL JUEGO ---
 @router.websocket("/ws/game/{room_id}")
 async def game_websocket(websocket: WebSocket, room_id: str):
-    username = websocket.query_params.get("username", "Jugador")
+    username = ws_username(websocket, websocket.query_params.get("username", "Jugador"))
+    if not username:
+        await websocket.close(code=4401)
+        return
     room = await manager.connect_game(websocket, room_id, username)
 
     try:

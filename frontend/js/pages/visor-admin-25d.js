@@ -1,10 +1,14 @@
 /**
  * ============================================================================
- * VISOR ADMIN - SCRIPT PRINCIPAL
+ * VISOR ADMIN - SCRIPT PRINCIPAL (visor-admin-25d.html)
+ * Requiere js/shared/auth.js (CBAuth).
  * ============================================================================
  */
 
 const API_BASE_URL = '/api';
+
+// Sin sesión no hay nada que hacer aquí: al login
+CBAuth.requireSession();
 
 const macroCategorySelect = document.getElementById('macroCategorySelect');
 const subtypeSelect = document.getElementById('subtypeSelect');
@@ -69,16 +73,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ============================================================================
 
 async function cargarContenedores() {
-    const authHeader = typeof getAuthHeader === 'function' ? getAuthHeader() : { 'X-Username': 'admin' };
-
     try {
-        const response = await fetch(`${API_BASE_URL}/containers/`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                ...authHeader
-            }
-        });
+        const response = await CBAuth.fetch(`${API_BASE_URL}/containers/`);
         
         if (!response.ok) {
             console.error("Error al obtener contenedores, status:", response.status);
@@ -163,7 +159,7 @@ async function realizarBusqueda() {
     const hasFilters = macroCategory !== '' || subtype !== '';
 
     if (!hasValidText && !hasFilters) {
-        resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: span 5; text-align: center;">Escribe al menos 2 caracteres o selecciona un filtro...</p>`;
+        mostrarMensajeResultados('Escribe al menos 2 caracteres o selecciona un filtro...');
         return;
     }
 
@@ -202,11 +198,18 @@ async function realizarBusqueda() {
             
             const imgSrc = cardData.image_uri ? cardData.image_uri : "public/assets/nocapi.png";
 
-            item.innerHTML = `
-                <img src="${imgSrc}" alt="${cardData.name}" loading="lazy">
-                <span>${cardData.name}</span>
-                <small style="display: block; font-size: 0.7rem; color: var(--text-muted);">${(cardData.set_code || '').toUpperCase()} ${cardData.collector_number ? '#' + cardData.collector_number : ''}</small>
-            `;
+            const img = document.createElement('img');
+            img.src = imgSrc;
+            img.alt = cardData.name || '';
+            img.loading = 'lazy';
+
+            const nameEl = document.createElement('span');
+            nameEl.textContent = cardData.name || '';
+
+            const setEl = document.createElement('small');
+            setEl.textContent = `${(cardData.set_code || '').toUpperCase()} ${cardData.collector_number ? '#' + cardData.collector_number : ''}`.trim();
+
+            item.append(img, nameEl, setEl);
             
             item.addEventListener('click', () => seleccionarCarta(cardData));
             resultsList.appendChild(item);
@@ -218,12 +221,20 @@ async function realizarBusqueda() {
 
     } catch (error) {
         console.error("Error:", error);
-        resultsList.innerHTML = `<p style="color: #ef4444; font-size: 0.9rem; grid-column: span 5; text-align: center;">Error de conexión con el servidor.</p>`;
+        mostrarMensajeResultados('Error de conexión con el servidor.', true);
     }
 }
 
+function mostrarMensajeResultados(texto, esError) {
+    resultsList.replaceChildren();
+    const p = document.createElement('p');
+    if (esError) p.className = 'msg-error';
+    p.textContent = texto;
+    resultsList.appendChild(p);
+}
+
 function manejarSinResultados() {
-    resultsList.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem; grid-column: span 5; text-align: center;">Vaya... No se ha encontrado ninguna carta. ¡Prueba otra búsqueda!</p>`;
+    mostrarMensajeResultados('Vaya... No se ha encontrado ninguna carta. ¡Prueba otra búsqueda!');
     cardImage.src = "public/assets/nocapi.png";
     currentSelectedCard = null;
     detailsColumn.classList.remove('has-selection');
@@ -244,20 +255,9 @@ async function comprobarPropiedadCarta(cardData) {
         return;
     }
 
-    const authHeader = typeof getAuthHeader === 'function'
-        ? getAuthHeader()
-        : { 'X-Username': 'admin' };
-
     try {
-        const response = await fetch(
-            `${API_BASE_URL}/cards/ownership/${encodeURIComponent(cardData.scryfall_printing_id)}`,
-            {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...authHeader
-                }
-            }
+        const response = await CBAuth.fetch(
+            `${API_BASE_URL}/cards/ownership/${encodeURIComponent(cardData.scryfall_printing_id)}`
         );
 
         if (!response.ok) {
@@ -365,7 +365,7 @@ container.addEventListener('mousemove', (e) => {
         const bgPosY = -(percentY * (cardHeight * ZOOM_SCALE)) + (MAGNIFIER_SIZE / 2);
 
         magnifier.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
-        magnifier.style.backgroundImage = `url(${cardImage.src})`;
+        magnifier.style.backgroundImage = `url("${cardImage.src}")`;
     } else {
         magnifier.classList.remove('is-visible');
     }
@@ -394,26 +394,12 @@ function mostrarNotificacionFlotante(mensaje) {
     toast.id = 'toast-notification';
     toast.textContent = mensaje;
     
-    Object.assign(toast.style, {
-        position: 'fixed',
-        bottom: '24px',
-        right: '24px',
-        backgroundColor: '#10b981',
-        color: '#ffffff',
-        padding: '12px 20px',
-        borderRadius: '8px',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
-        zIndex: '10000',
-        fontFamily: 'inherit',
-        fontSize: '0.95rem',
-        fontWeight: '500',
-        transition: 'opacity 0.3s ease-in-out'
-    });
+    toast.className = 'toast-notification';
 
     document.body.appendChild(toast);
 
     setTimeout(() => {
-        toast.style.opacity = '0';
+        toast.classList.add('is-hiding');
         setTimeout(() => toast.remove(), 300);
     }, 2500);
 }
@@ -441,7 +427,6 @@ saveInventoryBtn.addEventListener('click', async () => {
 
     const cantidadACrear = cardQuantity ? (parseInt(cardQuantity.value, 10) || 1) : 1;
 
-    const authHeader = getAuthHeader();
     const payload = {
         printing_id: printingId,
         container_id: containerId,
@@ -454,12 +439,11 @@ saveInventoryBtn.addEventListener('click', async () => {
     saveInventoryBtn.disabled = true;
 
     try {
-        const response = await fetch(`${API_BASE_URL}/containers/items`, {
+        const response = await CBAuth.fetch(`${API_BASE_URL}/containers/items`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'accept': 'application/json',
-                ...authHeader
+                'accept': 'application/json'
             },
             body: JSON.stringify(payload)
         });

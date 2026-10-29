@@ -26,11 +26,13 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Header, HTTPException
 
 from backend.services import get_user_by_username_or_email
+from fastapi import Depends
+from backend.security import session_username
 
 router = APIRouter(prefix="/api/access", tags=["Access"])
 
 
-def get_current_user(x_username: str = Header(None)):
+def get_current_user(x_username: str = Depends(session_username)):
     if not x_username:
         raise HTTPException(
             status_code=401,

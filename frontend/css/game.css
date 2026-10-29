@@ -1,0 +1,70 @@
+/* game.css · Adivina la Carta (game.html). Usa la paleta de portal.css. */
+
+/* ---- Carta con título tapado y desenfoque que se va quitando ---- */
+.card-wrapper {
+    position: relative;
+    width: 224px;  /* w-56 */
+    height: 320px; /* h-80 */
+}
+#game-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(6px) brightness(0.8);
+    transition: filter 0.15s linear;
+}
+.title-black-box {
+    position: absolute;
+    top: 10px;
+    left: 12px;
+    width: 200px;
+    height: 32px;
+    background-color: #000;
+    border-radius: 4px;
+    z-index: 50;
+    display: block;
+}
+
+/* ---- Barra de tiempo: game.js pone data-level (ok / warn / danger) y el ancho ---- */
+#timer-bar {
+    width: 100%;
+    height: 100%;
+    background: #10b981;
+    transition: width 0.1s linear;
+}
+#timer-bar[data-level="warn"] { background: rgb(var(--c-amber-500)); }
+#timer-bar[data-level="danger"] { background: #ef4444; }
+
+/* ---- Botones de respuesta: game.js pone data-state (idle / pending / wrong / right) ---- */
+.option-btn {
+    padding: 0.75rem 1rem;
+    border: 1px solid rgb(var(--c-gold) / 0.3);
+    border-radius: 0.5rem;
+    background: rgb(var(--c-raised-2));
+    color: rgb(var(--c-amber-100));
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+.option-btn:disabled { cursor: not-allowed; }
+.option-btn[data-state="idle"]:hover:not(:disabled) {
+    background: rgb(var(--c-raised-3));
+    border-color: rgb(var(--c-amber-400));
+}
+.option-btn[data-state="idle"]:disabled { opacity: 0.5; }
+.option-btn[data-state="pending"] {
+    background: rgb(var(--c-amber-900) / 0.6);
+    border-color: rgb(var(--c-amber-500));
+}
+.option-btn[data-state="wrong"] {
+    background: rgba(69, 10, 10, 0.8);
+    border-color: #dc2626;
+    color: rgb(var(--c-amber-200));
+}
+.option-btn[data-state="right"] {
+    background: rgba(6, 78, 59, 0.8);
+    border-color: #34d399;
+    color: #fff;
+}

@@ -9,7 +9,7 @@ import bcrypt
 import requests
 from fastapi import APIRouter, HTTPException, status, Request
 from fastapi.responses import RedirectResponse, HTMLResponse, FileResponse
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from passlib.context import CryptContext
 
 from backend.services import (
@@ -19,6 +19,9 @@ from backend.services import (
     create_42_user,
     update_user_auth_type_to_42,
 )
+
+from fastapi import Response
+from backend.security import set_session_cookie, clear_session_cookie
 
 router = APIRouter(
     prefix="/api/auth",
@@ -200,14 +203,17 @@ async def get_avatar(username: str):
 
 
 class UserRegister(BaseModel):
-    username: str
+    username: str = Field(..., min_length=3, max_length=30)
     email: EmailStr
-    password: str
+    password: str = Field(..., min_length=8, max_length=128)
 
 
 class UserLogin(BaseModel):
-    username_or_email: str
-    password: str
+    username_or_email: str = Field(..., min_length=1, max_length=254)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+USERNAME_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 
 
 # Función para encriptar la contraseña
@@ -224,7 +230,11 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 
 
 @router.post("/register")
-async def register_user(user: UserRegister):
+async def register_user(user: UserRegister, request: Request, response: Response):
+    if not USERNAME_RE.fullmatch(user.username):
+        raise HTTPException(status_code=400, detail="El usuario solo puede contener letras, números, punto, guion y guion bajo.")
+    if len(str(user.email)) > 254:
+        raise HTTPException(status_code=400, detail="El correo es demasiado largo.")
     hashed_pass = get_password_hash(user.password)
     result = register_new_user(user.username, user.email, hashed_pass)
 
@@ -234,6 +244,7 @@ async def register_user(user: UserRegister):
             detail="El nombre de usuario o el correo electrónico ya están registrados."
         )
 
+    set_session_cookie(response, request, (result.get("user") or {}).get("username") or user.username)
     return {
         "message": "¡Cuenta civil creada con éxito!",
         "user": result["user"]
@@ -241,7 +252,7 @@ async def register_user(user: UserRegister):
 
 
 @router.post("/login")
-async def login_user(credentials: UserLogin):
+async def login_user(credentials: UserLogin, request: Request, response: Response):
     user = get_user_by_username_or_email(credentials.username_or_email)
 
     if not user or not user.get("password_hash"):
@@ -256,6 +267,7 @@ async def login_user(credentials: UserLogin):
             detail="Credenciales incorrectas. Revisa tu usuario/email y contraseña."
         )
 
+    set_session_cookie(response, request, user["username"])
     return {
         "message": "¡Inicio de sesión exitoso!",
         "username": user["username"],
@@ -463,5 +475,13 @@ async def callback_42(
     </html>"""
 
     response = HTMLResponse(content=html, status_code=200)
+    set_session_cookie(response, request, final_user["username"])
     response.delete_cookie("oauth42_state", path="/api/auth/42")
     return response
+
+
+@router.post("/logout")
+async def logout_user(response: Response):
+    """Borra la cookie de sesión."""
+    clear_session_cookie(response)
+    return {"message": "Sesión cerrada."}

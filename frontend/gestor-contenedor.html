@@ -7,25 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/portal.css">
-    <link rel="stylesheet" href="css/visor-containers.css">
-    <style>
-        .visor-mode-btn {
-            background: linear-gradient(135deg, rgb(var(--c-raised-2)) 0%, rgb(var(--c-raised-3)) 100%);
-            border: 1px solid rgb(var(--c-gold-dark));
-            color: rgb(var(--c-cream));
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-        .visor-mode-btn:hover, .visor-mode-btn.active {
-            border-color: rgb(var(--c-accent-hi));
-            color: rgb(var(--c-accent-hi));
-            box-shadow: 0 0 10px rgb(var(--c-accent) / 0.3);
-        }
-    </style>
+    <link rel="stylesheet" href="css/gestor-contenedor.css">
     <script src="js/shared/theme.js"></script>
 </head>
 <body class="font-ui min-h-screen flex flex-col items-center p-4">
@@ -42,7 +24,7 @@
         </div>
   
         <div>
-            <button onclick="window.history.back()" class="bg-[rgb(var(--c-raised-2))] hover:bg-[rgb(var(--c-raised-3))] text-[rgb(var(--c-amber-200))] font-semibold px-4 py-2 rounded-xl text-xs transition-all border border-[rgb(var(--c-gold)/0.4)] cursor-pointer">
+            <button id="backBtn" class="bg-[rgb(var(--c-raised-2))] hover:bg-[rgb(var(--c-raised-3))] text-[rgb(var(--c-amber-200))] font-semibold px-4 py-2 rounded-xl text-xs transition-all border border-[rgb(var(--c-gold)/0.4)] cursor-pointer">
                 ⬅ Volver al Visor
             </button>
         </div>
@@ -62,137 +44,8 @@
         </div>
     </main>
 
-    <script>
-      window.addEventListener('DOMContentLoaded', () => {
-        const savedTheme = localStorage.getItem('preferred-mana-theme') || 'default';
-        document.documentElement.setAttribute('data-theme', savedTheme);
-
-        const params = new URLSearchParams(window.location.search);
-
-        const cardId = params.get('card_id');
-        const printingId = params.get('printing_id');
-        const imageUrl = params.get('img');
-        const cardName = params.get('name');
-
-        const card = document.getElementById('interactiveCard');
-        const cardContainer = document.getElementById('cardContainer');
-        const cardImage = document.getElementById('dynamicCardImg');
-        const magnifier = document.getElementById('cardMagnifier');
-        const toggleBtn = document.getElementById('toggleMagnifierBtn');
-        const modeStatus = document.getElementById('modeStatus');
-
-        let magnifierEnabled = false;
-
-        const ZOOM_SCALE = 2;
-        const MAGNIFIER_SIZE = 160;
-
-        if (imageUrl && cardImage) {
-          cardImage.src = decodeURIComponent(imageUrl);
-          cardImage.alt = cardName ? decodeURIComponent(cardName) : 'Carta';
-        } else if (cardImage) {
-          cardImage.src = 'public/assets/nocapi.png';
-        }
-
-        if (cardImage) {
-            cardImage.dataset.cardId = cardId || '';
-            cardImage.dataset.printingId = printingId || '';
-        }
-
-        function actualizarLupa() {
-          if (!cardImage || !card || !magnifier) return;
-
-          const width = card.offsetWidth;
-          const height = card.offsetHeight;
-
-          if (width <= 0 || height <= 0) return;
-
-          magnifier.style.width = MAGNIFIER_SIZE + 'px';
-          magnifier.style.height = MAGNIFIER_SIZE + 'px';
-          magnifier.style.backgroundSize = `${width * ZOOM_SCALE}px ${height * ZOOM_SCALE}px`;
-
-          magnifier.style.backgroundImage = `url("${cardImage.src}")`;
-          magnifier.style.backgroundRepeat = 'no-repeat';
-        }
-
-        if (cardImage) {
-          cardImage.addEventListener('load', () => {
-            actualizarLupa();
-          });
-        }
-
-        if (toggleBtn) {
-          toggleBtn.addEventListener('click', () => {
-            magnifierEnabled = !magnifierEnabled;
-
-            toggleBtn.classList.toggle('active', magnifierEnabled);
-
-            if (modeStatus) {
-              modeStatus.textContent = magnifierEnabled ? 'ACTIVADO' : 'DESACTIVADO';
-            }
-
-            if (!magnifierEnabled && magnifier) {
-              magnifier.classList.remove('is-visible');
-            }
-
-            actualizarLupa();
-          });
-        }
-
-        if (cardContainer && card && magnifier && cardImage) {
-          cardContainer.addEventListener('mousemove', (event) => {
-            const rect = cardContainer.getBoundingClientRect();
-
-            if (rect.width <= 0 || rect.height <= 0) return;
-
-            const mouseX = event.clientX - rect.left;
-            const mouseY = event.clientY - rect.top;
-
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-
-            const rotateX = -((mouseY - centerY) / centerY) * 15;
-            const rotateY = ((mouseX - centerX) / centerX) * 15;
-
-            card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05,1.05,1.05)`;
-
-            if (!magnifierEnabled) {
-              magnifier.classList.remove('is-visible');
-              return;
-            }
-
-            actualizarLupa();
-
-            const magX = mouseX - MAGNIFIER_SIZE / 2;
-            const magY = mouseY - MAGNIFIER_SIZE / 2;
-
-            magnifier.style.left = `${magX}px`;
-            magnifier.style.top = `${magY}px`;
-
-            const backgroundWidth = card.offsetWidth * ZOOM_SCALE;
-            const backgroundHeight = card.offsetHeight * ZOOM_SCALE;
-
-            const percentX = mouseX / rect.width;
-            const percentY = mouseY / rect.height;
-
-            const bgPosX = -(percentX * backgroundWidth) + MAGNIFIER_SIZE / 2;
-            const bgPosY = -(percentY * backgroundHeight) + MAGNIFIER_SIZE / 2;
-
-            magnifier.style.backgroundPosition = `${bgPosX}px ${bgPosY}px`;
-            magnifier.style.backgroundImage = `url("${cardImage.src}")`;
-
-            magnifier.classList.add('is-visible');
-          });
-
-          cardContainer.addEventListener('mouseleave', () => {
-            magnifier.classList.remove('is-visible');
-            card.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1,1,1)';
-          });
-        }
-
-        requestAnimationFrame(() => {
-          actualizarLupa();
-        });
-      });
-    </script>
+    <script src="js/shared/auth.js"></script>
+    <script src="js/pages/gestor-contenedor.js"></script>
+    <script src="js/shared/footer.js"></script>
 </body>
 </html>

@@ -1,0 +1,39 @@
+/* report.css · Informe de colección (report.html): chips de maná, rejilla de artes y esqueleto de carga. */
+:root {
+    /* Colores de los símbolos de maná: identifican el color de la carta, no cambian con el tema */
+    --mana-u: #6bb2ec;
+    --mana-b: #6e5a80;
+    --mana-b-text: #f4ecff;
+    --mana-r: #ee6a50;
+    --mana-g: #55b374;
+    --mana-c: #c8c2b4;
+}
+
+.mana-cost { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 3px; }
+.mana {
+    display: inline-grid; place-items: center; width: 21px; height: 21px; font-size: 0.7rem; font-weight: 700;
+    border-radius: 50%; color: rgb(var(--c-bronze-deep)); border: 1px solid rgba(0, 0, 0, 0.45);
+    box-shadow: inset 0 -2px 3px rgba(0, 0, 0, 0.28), inset 0 1px 2px rgba(255, 255, 255, 0.4);
+}
+.mana-w { background: rgb(var(--c-cream-2)); }
+.mana-u { background: var(--mana-u); }
+.mana-b { background: var(--mana-b); color: var(--mana-b-text); }
+.mana-r { background: var(--mana-r); }
+.mana-g { background: var(--mana-g); }
+.mana-c, .mana-n { background: var(--mana-c); }
+.mana-h { background: linear-gradient(135deg, rgb(var(--c-cream-2)) 0 50%, var(--mana-u) 50% 100%); }
+.mana-sep { margin: 0 4px; font-size: 0.8125rem; color: var(--text-muted); }
+
+.prints-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.skeleton-loader {
+    height: 180px;
+    background: rgb(var(--c-gold) / 0.08);
+    border-radius: 12px;
+    animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse { 50% { opacity: 0.4; } }

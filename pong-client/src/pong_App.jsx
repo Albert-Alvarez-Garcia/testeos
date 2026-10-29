@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DEFAULT_CONFIG, DEFAULT_PADDLE_COLORS, MANA, TABLES, accentVars, describeWin, formatTime, gameWsUrl } from "./pong_config.js";
 import PongLobby from "./pong_Lobby.jsx";
+import { probeOrb } from "./pong_orbs.js";
 
 const SESSION_KEY = "pong_session";
 const NAME_KEY = "pong_username";
@@ -39,18 +40,9 @@ function readSession() {
 // Botón fijo para volver al inicio del portal (mismo aspecto que "Volver al Portal" del resto de la web).
 // Usa una ruta absoluta porque Pong vive bajo /pong/. Al navegar se desmonta la app y se cierra el WebSocket.
 const HOME_URL = "/index.html";
-const HOME_BUTTON_STYLE = {
-  position: "fixed", top: 16, left: 16, zIndex: 1000,
-  display: "inline-flex", alignItems: "center", gap: 6,
-  padding: "8px 16px", borderRadius: 12, textDecoration: "none",
-  fontFamily: "system-ui, sans-serif", fontSize: 12, fontWeight: 600,
-  color: "#fde68a", background: "rgba(20, 14, 9, 0.9)", border: "1px solid rgba(179, 146, 88, 0.6)",
-  boxShadow: "0 8px 20px rgba(0, 0, 0, 0.5)", backdropFilter: "blur(6px)",
-};
-
 function HomeButton() {
   return (
-    <a href={HOME_URL} style={HOME_BUTTON_STYLE} title="Volver al inicio">
+    <a href={HOME_URL} className="btn btn-ghost home-link" title="Volver al inicio">
       <span aria-hidden="true">←</span> Volver al Inicio
     </a>
   );
@@ -75,7 +67,7 @@ export default function PongApp() {
         config: payload.config,
         host: payload.host,
         players: payload.players,
-        username,
+        username: payload.you || username,
       };
       writeStorage(sessionStorage, SESSION_KEY, JSON.stringify(next));
       setSession(next);
@@ -147,6 +139,8 @@ function PongGame({ session, onExit }) {
     let lastSent = "";
     const keys = new Set();
     const GAME_KEYS = new Set(["w", "s", "arrowup", "arrowdown"]);
+    let orbImage = null;
+    probeOrb(cfg.ball_mana).then((img) => { orbImage = img; });
 
     // ---------- Entradas: solo se envían cuando cambian (+ refresco mientras se mueve) ----------
     const dir = (up, down) => (keys.has(up) ? -1 : 0) + (keys.has(down) ? 1 : 0);
@@ -359,14 +353,19 @@ function PongGame({ session, onExit }) {
         ctx.arc(bp.x, bp.y - lift, 36, 0, Math.PI * 2);
         ctx.fill();
         ctx.globalCompositeOperation = "source-over";
-        const orb = ctx.createRadialGradient(bp.x - 3, bp.y - lift - 4, 1, bp.x, bp.y - lift, 12);
-        orb.addColorStop(0, m.hi);
-        orb.addColorStop(0.45, m.base);
-        orb.addColorStop(1, m.dark);
-        ctx.beginPath();
-        ctx.arc(bp.x, bp.y - lift, 11, 0, Math.PI * 2);
-        ctx.fillStyle = orb;
-        ctx.fill();
+        if (orbImage) {
+          const r = 17;
+          ctx.drawImage(orbImage, bp.x - r, bp.y - lift - r, r * 2, r * 2);
+        } else {
+          const orb = ctx.createRadialGradient(bp.x - 3, bp.y - lift - 4, 1, bp.x, bp.y - lift, 12);
+          orb.addColorStop(0, m.hi);
+          orb.addColorStop(0.45, m.base);
+          orb.addColorStop(1, m.dark);
+          ctx.beginPath();
+          ctx.arc(bp.x, bp.y - lift, 11, 0, Math.PI * 2);
+          ctx.fillStyle = orb;
+          ctx.fill();
+        }
       };
       [
         { d: 24 + shown.paddles[0], draw: () => box(17, shown.paddles[0] - 45, 31, shown.paddles[0] + 45, 14, DEFAULT_PADDLE_COLORS[0]) },
@@ -391,54 +390,64 @@ function PongGame({ session, onExit }) {
   }, [roomId, mode, username, t, m]);
 
   return (
-    <main className="lobby lobby-solo" style={accentVars(cfg.ball_mana)}>
-      <section className="lobby-panel lobby-panel-solo pong-panel">
-        <div className="pong-head">
-          <div>
-            <h1 className="title" style={{ fontSize: "1.5rem" }}>Duelo Isométrico · {roomId}</h1>
+    <main className="scene scene-game" style={accentVars(cfg.ball_mana)}>
+      <div className="arena">
+        <header className="pong-head">
+          <div className="pong-room">
+            <h1 className="title">Duelo Isométrico · {roomId}</h1>
             <p className="status status-open">{roomStatus}</p>
           </div>
           <button type="button" className="btn btn-ghost" onClick={onExit}>Abandonar</button>
-        </div>
+        </header>
 
-        <div className="pong-scoreboard">
-          <div>
+        <div className="pong-scoreboard plate plate-sm">
+          <div className="pong-side" style={{ "--pip": DEFAULT_PADDLE_COLORS[0] }}>
             <span className="pong-label">Jugador 1</span>
-            <span className="pong-score" style={{ color: DEFAULT_PADDLE_COLORS[0] }}>{scoreLeft}</span>
+            <span className="pong-score">{scoreLeft}</span>
           </div>
           <div className="pong-center">
             <span className="pong-vs">VS</span>
             <span className="pong-rule">{timeLeft != null ? formatTime(timeLeft) : describeWin(cfg)}</span>
           </div>
-          <div>
+          <div className="pong-side" style={{ "--pip": DEFAULT_PADDLE_COLORS[1] }}>
             <span className="pong-label">Jugador 2</span>
-            <span className="pong-score" style={{ color: DEFAULT_PADDLE_COLORS[1] }}>{scoreRight}</span>
+            <span className="pong-score">{scoreRight}</span>
           </div>
         </div>
 
-        <div className="pong-stage">
-          <canvas ref={canvasRef} width="900" height="500" className="pong-canvas" />
+        <div className="pong-stage plate plate-frame">
+          <div className="pong-window">
+            <canvas ref={canvasRef} width="900" height="500" className="pong-canvas" />
+          </div>
         </div>
 
         <div className="pong-banner" role="status">
-          {phase === "countdown" && `¡Comienza en ${Math.ceil(countdown)}!`}
-          {phase === "paused" && "PARTIDA PAUSADA (Esperando jugador...)"}
+          {phase === "countdown" && <span key={Math.ceil(countdown)}>{`¡Comienza en ${Math.ceil(countdown)}!`}</span>}
+          {phase === "paused" && <span>PARTIDA PAUSADA (Esperando jugador...)</span>}
         </div>
 
         <p className="pong-hint">
-          {mode === "local" ? "Jugador 1: W y S · Jugador 2: Flechas ↑ y ↓" : "Controles: W y S o Flechas"}
+          {mode === "local" ? (
+            <>
+              <span><kbd>W</kbd> <kbd>S</kbd> Jugador 1</span>
+              <span><kbd>↑</kbd> <kbd>↓</kbd> Jugador 2</span>
+            </>
+          ) : (
+            <span><kbd>W</kbd> <kbd>S</kbd> o <kbd>↑</kbd> <kbd>↓</kbd> para mover tu pala</span>
+          )}
         </p>
+      </div>
 
-        {gameOverData && (
-          <div className="pong-overlay">
-            <div className="pong-modal">
-              <h2 className="title" style={{ fontSize: "1.6rem" }}>🏆 ¡Duelo Finalizado!</h2>
-              <p className="lead">Ganador: {gameOverData.winner || "Empate"}</p>
-              <button type="button" className="btn btn-primary" onClick={onExit}>Volver al lobby</button>
-            </div>
+      {gameOverData && (
+        <div className="pong-overlay">
+          <div className="pong-modal plate" role="dialog" aria-modal="true" aria-labelledby="over-title">
+            <h2 id="over-title" className="title">Duelo finalizado</h2>
+            <p className="pong-winner-label">Vencedor</p>
+            <p className="pong-winner">{gameOverData.winner || "Empate"}</p>
+            <button type="button" className="btn btn-primary btn-lg" onClick={onExit}>Volver al lobby</button>
           </div>
-        )}
-      </section>
+        </div>
+      )}
     </main>
   );
 }

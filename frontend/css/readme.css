@@ -1,0 +1,53 @@
+/* readme.css · Página "Sobre el proyecto" (readme.html). Paleta y variables vienen de portal.css. */
+
+.readme-page { max-width: 62rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
+
+.readme-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.readme-back {
+    display: inline-flex; align-items: center; gap: .5rem; text-decoration: none;
+    padding: .5rem 1rem; border-radius: .75rem; font-size: .8rem; font-weight: 600; font-family: 'Inter', sans-serif;
+    color: rgb(var(--c-amber-200)); background: rgb(var(--c-panel) / .9);
+    border: 1px solid rgb(var(--c-gold) / .6); transition: background .2s;
+}
+.readme-back:hover { background: rgb(var(--c-gold) / .3); }
+.readme-logo { height: 3rem; width: auto; }
+
+.readme-card {
+    background: rgb(var(--c-panel) / .93);
+    border: 1px solid rgb(var(--c-gold) / .5);
+    border-radius: 1rem;
+    padding: 2rem 2.25rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, .6);
+    backdrop-filter: blur(8px);
+    color: rgb(var(--c-amber-100) / .9);
+    font-family: 'Inter', sans-serif; line-height: 1.65; font-size: .95rem;
+}
+
+.readme-card h1, .readme-card h2, .readme-card h3 { font-family: 'Cinzel', serif; color: rgb(var(--c-amber-400)); line-height: 1.25; }
+.readme-card h1 { font-size: 2rem; margin: 0 0 1rem; }
+.readme-card h2 { font-size: 1.35rem; margin: 2.25rem 0 .75rem; padding-bottom: .4rem; border-bottom: 1px solid rgb(var(--c-gold) / .35); }
+.readme-card h3 { font-size: 1.05rem; margin: 1.5rem 0 .5rem; color: rgb(var(--c-amber-300)); }
+.readme-card p { margin: .75rem 0; }
+.readme-card a { color: rgb(var(--c-amber-300)); }
+.readme-card strong { color: rgb(var(--c-amber-200)); }
+.readme-card hr { border: 0; border-top: 1px solid rgb(var(--c-gold) / .3); margin: 2rem 0; }
+.readme-card ul, .readme-card ol { padding-left: 1.4rem; }
+.readme-card li { margin: .35rem 0; }
+
+.readme-card code {
+    font-family: ui-monospace, 'SFMono-Regular', Menlo, monospace; font-size: .85em;
+    background: rgb(var(--c-ink-3)); color: rgb(var(--c-amber-200));
+    padding: .1rem .4rem; border-radius: .3rem;
+}
+.readme-card pre {
+    background: rgb(var(--c-ink-3)); border: 1px solid rgb(var(--c-gold) / .3);
+    border-radius: .6rem; padding: 1rem 1.1rem; overflow-x: auto; line-height: 1.45;
+}
+.readme-card pre code { background: none; padding: 0; font-size: .8rem; color: rgb(var(--c-amber-100)); }
+
+.readme-card table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .88rem; display: block; overflow-x: auto; }
+.readme-card th, .readme-card td { border: 1px solid rgb(var(--c-gold) / .3); padding: .5rem .7rem; text-align: left; vertical-align: top; }
+.readme-card th { background: rgb(var(--c-gold) / .18); color: rgb(var(--c-amber-200)); }
+.readme-card tr:nth-child(even) td { background: rgb(var(--c-ink-3) / .45); }
+
+@media (max-width: 640px) { .readme-card { padding: 1.25rem 1rem; } }

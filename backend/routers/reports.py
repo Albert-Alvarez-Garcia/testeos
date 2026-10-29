@@ -15,6 +15,8 @@ from fastapi import APIRouter, Header, HTTPException, Query
 
 from backend.database import get_db_connection
 from backend.services import get_user_by_username_or_email
+from fastapi import Depends
+from backend.security import session_username
 
 router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
@@ -82,7 +84,7 @@ def collection_report(
     direction: str = Query("asc", alias="dir", description="asc | desc"),
     page: int = Query(1, ge=1),
     page_size: int = Query(24, ge=1, le=100),
-    x_username: str = Header(None),
+    x_username: str = Depends(session_username),
 ):
     if sort not in SORT_COLUMNS:
         raise HTTPException(status_code=400, detail=f"Campo de ordenación no válido: {sort}.")

@@ -21,13 +21,15 @@ La subida usa el cuerpo en bruto (no multipart) porque python-multipart no está
     fetch('/api/profile/avatar', {method: 'POST', headers: {'X-Username': username, 'Content-Type': file.type}, body: file})
 """
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from backend.services import get_user_by_username
 from backend import profile_services as svc
 from backend.profile_services import ProfileError
+from fastapi import Depends
+from backend.security import session_username
 
-def get_session_user(x_username: str = Header(None)):
+def get_session_user(x_username: str = Depends(session_username)):
     """Usuario indicado en la cabecera X-Username (401 si falta o no existe)."""
     user = get_user_by_username((x_username or "").strip()) if x_username else None
     if not user:
@@ -39,7 +41,7 @@ router = APIRouter(prefix="/api/profile", tags=["Profile"])
 
 
 class TargetUser(BaseModel):
-    username: str
+    username: str = Field(..., min_length=1, max_length=100)
 
 
 def _call(func, *args):

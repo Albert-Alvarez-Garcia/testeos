@@ -34,10 +34,10 @@
         const st = document.createElement('style');
         st.id = 'user-menu-css';
         st.textContent = `
-        .um-bar{position:absolute;top:1.5rem;right:1.5rem;z-index:40;display:flex;align-items:center;gap:.75rem;
-            background:${c('panel', .9)};border:1px solid ${c('gold', .6)};padding:.5rem 1rem;border-radius:.75rem;
+        .um-bar{position:absolute;top:1.5rem;right:1.5rem;z-index:1000;display:flex;align-items:center;gap:.75rem;
+            background:${c('panel', .97)};border:1px solid ${c('gold', .6)};padding:.5rem 1rem;border-radius:.75rem;
             box-shadow:0 25px 50px -12px rgba(0,0,0,.6);backdrop-filter:blur(12px);font-family:'Inter',sans-serif}
-        .um-panel{position:absolute;top:6rem;right:1.5rem;z-index:40;width:20rem;background:${c('panel', .95)};
+        .um-panel{position:absolute;top:6rem;right:1.5rem;z-index:1000;width:20rem;background:${c('panel', .95)};
             border:2px solid ${c('gold')};border-radius:1rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.6);
             backdrop-filter:blur(12px);padding:1rem;font-family:'Inter',sans-serif}
         .um-panel-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem}
@@ -56,7 +56,7 @@
             border-radius:9999px;background:#dc2626;color:#fff;font-size:.625rem;font-weight:700;
             display:flex;align-items:center;justify-content:center}
         .um-notif{position:absolute;right:0;top:100%;margin-top:.75rem;width:18rem;max-height:20rem;overflow-y:auto;
-            z-index:50;display:flex;flex-direction:column;gap:.5rem;background:${c('panel', .95)};
+            z-index:1010;display:flex;flex-direction:column;gap:.5rem;background:${c('panel', .95)};
             border:2px solid ${c('gold')};border-radius:1rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.6);
             backdrop-filter:blur(12px);padding:.75rem}
         .um-btn{display:inline-block;padding:.25rem .625rem;font-family:inherit;font-size:.75rem;font-weight:500;
@@ -129,6 +129,7 @@
                 </div>
                 <button id="profile-btn" class="um-btn">Logros</button>
                 <a href="profile.html" class="um-btn">Perfil</a>
+                <a href="stats.html" class="um-btn">Estadísticas</a>
                 <button id="logout-btn" class="um-btn um-btn-out">Salir</button>
             </div>`;
 
@@ -192,10 +193,13 @@
         (async () => {
             try {
                 const res = await fetch(API_BASE + '/api/profile/me', {
-                    headers: { Accept: 'application/json', 'X-Username': userData.username }
+                    headers: { Accept: 'application/json' }, credentials: 'same-origin'
                 });
                 if (!res.ok) return;
                 const me = await res.json();
+                // Otras partes de la página (p. ej. index.js) reaccionan al perfil confirmado por el servidor
+                if (me.auth_type === '42' && window.cbEnableTheme42) window.cbEnableTheme42();
+                window.dispatchEvent(new CustomEvent('cb:profile', { detail: me }));
                 if (me.avatar) {
                     if (me.avatar === userData.avatar) return;
                     userData.avatar = me.avatar;
@@ -212,6 +216,7 @@
 
         // ---------- Salir ----------
         document.getElementById('logout-btn').addEventListener('click', () => {
+            try { navigator.sendBeacon('/api/auth/logout'); } catch (e) { /* sin cookie que cerrar */ }
             localStorage.removeItem('cardbinder_user');
             window.location.href = LOGIN_PAGE;
         });
@@ -263,7 +268,7 @@
         async function loadNotifications() {
             try {
                 const res = await fetch(API_BASE + '/api/social/notifications', {
-                    headers: { Accept: 'application/json', 'X-Username': userData.username }
+                    headers: { Accept: 'application/json' }, credentials: 'same-origin'
                 });
                 if (res.status === 401) { clearInterval(notifTimer); return; }
                 if (res.ok) renderNotifications(await res.json());
@@ -285,7 +290,7 @@
         const achievementsGrid = document.getElementById('achievements-grid');
         const achievementsSummary = document.getElementById('achievements-summary');
 
-        const fetchAchievements = (name) => fetch(`${API_BASE}/api/achievements/`, { headers: { 'X-Username': name } });
+        const fetchAchievements = () => fetch(`${API_BASE}/api/achievements/`, { credentials: 'same-origin' });
 
         function showAchievementsMessage(text, isError) {
             achievementsSummary.textContent = '';
@@ -323,10 +328,7 @@
         async function loadAchievements() {
             showAchievementsMessage('Cargando medallas...', false);
             try {
-                let res = await fetchAchievements(userData.username);
-                if (res.status === 401 && userData.user_login && userData.user_login !== userData.username) {
-                    res = await fetchAchievements(userData.user_login);
-                }
+                const res = await fetchAchievements();
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 renderAchievements(await res.json());
             } catch (error) {

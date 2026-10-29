@@ -4,6 +4,8 @@ from fastapi import APIRouter, HTTPException, Query, Header
 from typing import Optional
 from backend.services import search_cards_by_substring, get_user_by_username_or_email
 from backend.database import get_db_connection
+from fastapi import Depends
+from backend.security import session_username
 
 router = APIRouter(prefix="/api/cards", tags=["cards"])
 
@@ -56,7 +58,7 @@ def get_types_taxonomy():
 @router.get("/ownership/{scryfall_printing_id}")
 def get_card_ownership(
     scryfall_printing_id: str,
-    x_username: str = Header(None)
+    x_username: str = Depends(session_username)
 ):
     """
     Comprueba si el usuario posee copias de ESA impresión exacta (arte/colección)

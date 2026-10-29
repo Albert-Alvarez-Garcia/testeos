@@ -1,9 +1,12 @@
+import re
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel
 from typing import List
 from backend.database import get_db_connection
+from backend.security import ws_username, ALLOW_LEGACY
+from backend.services import get_user_by_username
 
 router = APIRouter(
     prefix="/api/chat",
@@ -34,6 +37,18 @@ class ConnectionManager:
                 print(f"❌ Error al enviar mensaje por WebSocket: {e}")
 
 manager = ConnectionManager()
+
+# El front envía los GIF como <img ...>. Solo se acepta ese formato exacto y de giphy.com; cualquier otro
+# '<' o '>' se neutraliza para que nadie pueda inyectar HTML/JavaScript en la sala (XSS almacenado).
+GIF_HTML = re.compile(r'^<img src="https://[a-z0-9.-]*giphy\.com/[^"\s<>]+" class="[^"<>]*" alt="Sticker"/>$')
+MAX_MESSAGE_CHARS = 2000
+
+
+def _clean_message(text: str) -> str:
+    text = text[:MAX_MESSAGE_CHARS]
+    if GIF_HTML.match(text):
+        return text
+    return text.replace("<", "＜").replace(">", "＞")
 
 
 def _iso_utc(value) -> str:
@@ -84,15 +99,27 @@ async def get_chat_history():
 @router.websocket("/ws/chat")
 async def chat_websocket(websocket: WebSocket):
     """Endpoint WebSocket para la comunicación en tiempo real de la sala global."""
+    # Identidad real: sale de la cookie de sesión, no de lo que diga el mensaje (así nadie escribe como otro)
+    verified = ws_username(websocket)
+    me = get_user_by_username(verified) if verified else None
+    if me is None and not ALLOW_LEGACY:
+        await websocket.close(code=4401)
+        return
+
     await manager.connect(websocket)
 
     try:
         while True:
             data = await websocket.receive_json()
-            username = data.get("username", "Anónimo")
-            user_login = data.get("user_login", "anon")
-            badge_type = data.get("badge_type", "civil_homebrewer")
-            message = data.get("message", "").strip()
+            if me:
+                username = me["username"]
+                user_login = me["username"]
+                badge_type = me.get("badge_type") or "civil_homebrewer"
+            else:  # modo transición (ALLOW_LEGACY_HEADER=1)
+                username = data.get("username", "Anónimo")
+                user_login = data.get("user_login", "anon")
+                badge_type = data.get("badge_type", "civil_homebrewer")
+            message = _clean_message(str(data.get("message", "")).strip())
 
             if not message:
                 continue

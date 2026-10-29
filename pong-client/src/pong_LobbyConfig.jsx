@@ -56,6 +56,7 @@ export default function LobbyConfig({ config, isHost, send }) {
         <div className="field">
           <label className="field-label" htmlFor="goal-range">Goles para ganar</label>
           <div className="range-row">
+            <div className="lever" style={{ "--fill": `${((goals - GOAL_LIMIT.min) / (GOAL_LIMIT.max - GOAL_LIMIT.min)) * 100}%`, "--steps": (GOAL_LIMIT.max - GOAL_LIMIT.min) / 1 }}>
             <input
               id="goal-range"
               type="range"
@@ -66,6 +67,8 @@ export default function LobbyConfig({ config, isHost, send }) {
               disabled={disabled}
               onChange={(e) => setGoals(Number(e.target.value))}
             />
+            <span className="lever-ticks" aria-hidden="true" />
+            </div>
             <output className="range-value" htmlFor="goal-range">{goals}</output>
           </div>
         </div>
@@ -73,6 +76,7 @@ export default function LobbyConfig({ config, isHost, send }) {
         <div className="field">
           <label className="field-label" htmlFor="time-range">Duración</label>
           <div className="range-row">
+            <div className="lever" style={{ "--fill": `${((time - TIME_LIMIT.min) / (TIME_LIMIT.max - TIME_LIMIT.min)) * 100}%`, "--steps": (TIME_LIMIT.max - TIME_LIMIT.min) / TIME_LIMIT.step }}>
             <input
               id="time-range"
               type="range"
@@ -83,6 +87,8 @@ export default function LobbyConfig({ config, isHost, send }) {
               disabled={disabled}
               onChange={(e) => setTime(Number(e.target.value))}
             />
+            <span className="lever-ticks" aria-hidden="true" />
+            </div>
             <output className="range-value" htmlFor="time-range">{formatTime(time)}</output>
           </div>
           <div className="chips">

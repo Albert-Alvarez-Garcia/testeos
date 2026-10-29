@@ -24,6 +24,8 @@ export function RadioGroup({ name, legend, value, onChange, options, disabled = 
             <span className="radio-face">{renderOption(opt)}</span>
           </label>
         ))}
+        {/* Pieza de latón de la palanca (solo visual): se desliza hasta la opción elegida */}
+        {variant === "seg" && <span className="radio-slug" aria-hidden="true" />}
       </div>
     </fieldset>
   );

@@ -16,6 +16,8 @@ from fastapi import APIRouter, Header, HTTPException, Query, Body
 
 from backend.database import get_db_connection
 from backend.services import get_user_by_username_or_email
+from fastapi import Depends
+from backend.security import session_username
 
 router = APIRouter(prefix="/api/collection", tags=["Collection & Reports"])
 
@@ -76,7 +78,7 @@ def collection_report(
     direction: str = Query("asc", alias="dir", description="asc | desc"),
     page: int = Query(1, ge=1),
     page_size: int = Query(24, ge=1, le=100),
-    x_username: str = Header(None),
+    x_username: str = Depends(session_username),
 ):
     if sort not in SORT_COLUMNS:
         raise HTTPException(status_code=400, detail=f"Campo de ordenación no válido: {sort}.")
@@ -253,7 +255,7 @@ def collection_report(
 
 
 @router.get("/summary")
-def collection_summary(x_username: str = Header(None)):
+def collection_summary(x_username: str = Depends(session_username)):
     user_id = _get_user_id_from_header(x_username)
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -341,7 +343,7 @@ def collection_summary(x_username: str = Header(None)):
 
 
 @router.get("/export")
-def collection_export(x_username: str = Header(None)):
+def collection_export(x_username: str = Depends(session_username)):
     user_id = _get_user_id_from_header(x_username)
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -373,7 +375,7 @@ def collection_export(x_username: str = Header(None)):
 def collection_import(
     payload: dict = Body(...),
     dry_run: bool = Query(True),
-    x_username: str = Header(None)
+    x_username: str = Depends(session_username)
 ):
     user_id = _get_user_id_from_header(x_username)
     copies = payload.get("copies", [])

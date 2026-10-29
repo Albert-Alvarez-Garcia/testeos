@@ -14,7 +14,7 @@ COPY frontend/ /usr/share/nginx/html/
 COPY public/ /usr/share/nginx/html/public/
 
 # Copiar tu archivo de configuración de Nginx original
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copiar el resultado compilado de React (Pong) a la subcarpeta /pong
 COPY --from=builder /app/pong-client/dist /usr/share/nginx/html/pong

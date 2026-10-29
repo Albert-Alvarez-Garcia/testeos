@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro - Estadísticas</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="css/portal.css">
+    <script src="js/shared/theme.js"></script>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="border-b border-[rgb(var(--c-gold-dark))] bg-[rgb(var(--c-bg-app)/0.8)] backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold font-magic tracking-wider text-[rgb(var(--c-accent))]">📊 Estadísticas y ranking</h1>
+            <a href="index.html" class="text-sm text-[color:var(--text-muted)] hover:text-[rgb(var(--c-accent-hi))] transition">← Volver al Inicio</a>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8 grow w-full space-y-8">
+        <div class="flex items-center gap-3">
+            <label for="game-filter" class="text-sm text-[color:var(--text-muted)]">Juego</label>
+            <select id="game-filter" class="fantasy-input rounded-lg px-3 py-2 text-sm">
+                <option value="">Todos</option>
+                <option value="guess_card">Adivina la Carta</option>
+                <option value="pong">Pong</option>
+            </select>
+        </div>
+
+        <section aria-labelledby="h-level" class="fantasy-panel p-5">
+            <h2 id="h-level" class="text-lg font-bold font-magic text-[rgb(var(--c-accent))] mb-3">Nivel y experiencia</h2>
+            <div class="flex items-baseline gap-3 mb-2">
+                <span class="text-3xl font-bold text-[rgb(var(--c-accent))]">Nivel <span id="xp-level">1</span></span>
+                <span id="xp-text" class="text-sm text-[color:var(--text-muted)]"></span>
+            </div>
+            <div class="w-full h-3 rounded-full bg-[rgb(var(--c-bg-app)/0.8)] border border-[rgb(var(--c-gold-dark))] overflow-hidden"
+                 role="progressbar" aria-label="Progreso al siguiente nivel" aria-valuemin="0" aria-valuemax="100" id="xp-bar-wrap">
+                <div id="xp-bar" class="h-full bg-[rgb(var(--c-accent))] transition-all" style="width:0%"></div>
+            </div>
+            <p id="xp-breakdown" class="mt-3 text-xs text-[color:var(--text-muted)]"></p>
+        </section>
+
+        <section aria-labelledby="h-summary">
+            <h2 id="h-summary" class="text-lg font-bold font-magic text-[rgb(var(--c-accent))] mb-3">Tu resumen</h2>
+            <div id="summary" class="grid grid-cols-2 md:grid-cols-5 gap-3"></div>
+        </section>
+
+        <section aria-labelledby="h-history" class="fantasy-panel p-5">
+            <h2 id="h-history" class="text-lg font-bold font-magic text-[rgb(var(--c-accent))] mb-3">Historial de partidas</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-[color:var(--text-muted)]"><tr>
+                        <th class="py-2 pr-3">Fecha</th><th class="pr-3">Juego</th><th class="pr-3">Resultado</th>
+                        <th class="pr-3">Puntos</th><th>Rivales</th></tr></thead>
+                    <tbody id="history"></tbody>
+                </table>
+            </div>
+            <p id="history-empty" class="text-sm text-[color:var(--text-muted)] hidden">Aún no has jugado ninguna partida.</p>
+        </section>
+
+        <section aria-labelledby="h-board" class="fantasy-panel p-5">
+            <h2 id="h-board" class="text-lg font-bold font-magic text-[rgb(var(--c-accent))] mb-3">🏆 Ranking (top 10)</h2>
+            <table class="w-full text-sm text-left">
+                <thead class="text-[color:var(--text-muted)]"><tr>
+                    <th class="py-2 pr-3">#</th><th class="pr-3">Jugador</th><th class="pr-3">Victorias</th>
+                    <th class="pr-3">Partidas</th><th>Puntos</th></tr></thead>
+                <tbody id="board"></tbody>
+            </table>
+            <p id="board-empty" class="text-sm text-[color:var(--text-muted)] hidden">Todavía no hay partidas registradas.</p>
+        </section>
+    </main>
+    <script src="js/shared/auth.js"></script>
+    <script src="js/pages/stats.js"></script>
+    <script src="js/shared/footer.js"></script>
+</body>
+</html>

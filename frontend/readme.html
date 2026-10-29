@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder - Sobre el proyecto</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/readme.css">
+    <script src="js/shared/theme.js"></script>
+</head>
+<body>
+    <div class="readme-page">
+        <div class="readme-top">
+            <a href="index.html" class="readme-back">← Volver al portal</a>
+            <img src="public/assets/logomagic.png" alt="Card Binder" class="readme-logo">
+        </div>
+        <article class="readme-card">
+<h1>Card Binder Pro</h1>
+<p>Aplicación web para <strong>gestionar una colección de cartas de Magic: The Gathering</strong>: buscar cartas, guardarlas en contenedores (archivadores, mazos y cajas), ver informes de la colección, abrir sobres virtuales y jugar online contra otros usuarios, con perfiles, logros y chat.</p>
+<p>Este documento explica el proyecto de forma global y técnica para que cualquier miembro del equipo pueda presentarlo y defenderlo.</p>
+<hr />
+<h2>1. Qué hace (visión de producto)</h2>
+<table>
+<thead>
+<tr>
+<th>Zona</th>
+<th>Qué ofrece</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Acceso</strong></td>
+<td>Registro e inicio de sesión con usuario y contraseña, o con la cuenta de 42 (OAuth).</td>
+</tr>
+<tr>
+<td><strong>Portal</strong> (<code>index.html</code>)</td>
+<td>Pantalla de inicio con acceso a todas las secciones. Los usuarios de 42 ven un tema visual azul propio.</td>
+</tr>
+<tr>
+<td><strong>Colección</strong></td>
+<td>Buscador y filtros (nombre, tipo, rareza, set, foil), detalle de carta, exportar/importar la colección en JSON, informe e impresión.</td>
+</tr>
+<tr>
+<td><strong>Contenedores</strong></td>
+<td>Crear binders (2x2, 3x3, 4x3), mazos (con sideboard) y cajas; añadir cartas desde el buscador; verlas en una vista de archivador paginada o de mazo; borrar copias.</td>
+</tr>
+<tr>
+<td><strong>Visor 2.5D</strong></td>
+<td>Carta con efecto de perspectiva según el ratón y modo lupa.</td>
+</tr>
+<tr>
+<td><strong>Gacha</strong></td>
+<td>Apertura de sobres virtuales con vídeo y carta aleatoria con GIF.</td>
+</tr>
+<tr>
+<td><strong>Juegos</strong></td>
+<td>Pong isométrico online 1 contra 1 (salas y lobby) y local por teclado.</td>
+</tr>
+<tr>
+<td><strong>Social</strong></td>
+<td>Perfil con avatar y medallas, logros, amigos, usuarios bloqueados y chat con GIFs.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>2. Arquitectura</h2>
+<pre><code>Navegador ──HTTPS 8443 / HTTP 8080──▶  Nginx (card_binder_web)
+                                         │  sirve HTML, CSS, JS y assets estáticos
+                                         │  proxy inverso: /api/  ──▶  backend:8000
+                                         │                 /ws/   ──▶  WebSocket del backend
+                                         ▼
+                                   FastAPI (card_binder_api)
+                                         │  routers: cards, containers, auth, chat,
+                                         │  game, pong_game, achievements, reports, access
+                                         ▼
+                                  PostgreSQL 15 (card_binder_db)
+                                         volumen persistente: pgdata
+</code></pre>
+<ul>
+<li><strong>Tres contenedores Docker</strong> orquestados con <code>docker-compose.yml</code>: <code>card_binder_web</code>, <code>card_binder_api</code>, <code>card_binder_db</code>.</li>
+<li><strong>Mismo origen</strong>: el navegador solo habla con Nginx; Nginx reenvía <code>/api/</code> al backend. Así no hay problemas de CORS y la cookie de sesión viaja sola.</li>
+<li><strong>HTTPS</strong> en localhost con certificado autofirmado (carpeta <code>certs/</code>); el acceso por IP de red local va por HTTP en el 8080.</li>
+<li><strong>Persistencia</strong>: la base de datos y los avatares viven en volúmenes Docker (<code>pgdata</code>, <code>avatars</code>), por eso <code>make restart</code> no borra datos. <code>make clean</code> sí elimina volúmenes (ver sección 9).</li>
+</ul>
+<h2>3. Tecnologías</h2>
+<ul>
+<li><strong>Backend</strong>: Python, FastAPI (REST + WebSockets), PostgreSQL.</li>
+<li><strong>Frontend</strong>: HTML, CSS y JavaScript sin framework, con Tailwind CSS v4 (CDN) para las utilidades. El Pong tiene además un cliente en React (<code>pong-client/</code>).</li>
+<li><strong>Infra</strong>: Docker, Docker Compose, Nginx, Makefile.</li>
+<li><strong>Datos de cartas</strong>: bulk data de Scryfall (ver sección 5).</li>
+</ul>
+<hr />
+<h2>4. Modelo de datos (PostgreSQL, <code>database/init.sql</code>)</h2>
+<table>
+<thead>
+<tr>
+<th>Tabla</th>
+<th>Para qué sirve</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>users</code></td>
+<td>Cuentas (usuario, contraseña con hash, tipo de autenticación local/42, perfil).</td>
+</tr>
+<tr>
+<td><code>cards</code></td>
+<td>Una fila por carta "conceptual" (nombre, tipo, coste de maná...).</td>
+</tr>
+<tr>
+<td><code>printings</code></td>
+<td>Cada impresión concreta de una carta (set, número, imagen). Una carta tiene muchas impresiones.</td>
+</tr>
+<tr>
+<td><code>containers</code></td>
+<td>Binders, mazos y cajas de un usuario (tipo, capacidad, páginas, sideboard).</td>
+</tr>
+<tr>
+<td><code>container_slots</code></td>
+<td>Los huecos de un contenedor (página, posición, sección main/sideboard).</td>
+</tr>
+<tr>
+<td><code>card_copies</code></td>
+<td>Las copias físicas que posee el usuario: impresión, estado (NM/LP/MP), foil, idioma, y en qué hueco están.</td>
+</tr>
+<tr>
+<td><code>chat_messages</code></td>
+<td>Mensajes del chat.</td>
+</tr>
+<tr>
+<td><code>friendships</code>, <code>blocked_users</code></td>
+<td>Relaciones sociales.</td>
+</tr>
+</tbody>
+</table>
+<p>Idea clave: <strong>carta ≠ impresión ≠ copia</strong>. La carta es el concepto, la impresión es el arte concreto, y la copia es lo que el usuario tiene en su mano y dónde la guarda.</p>
+<h2>5. Carga de datos de cartas</h2>
+<p>Scripts en <code>scripts/</code> (se ejecutan una vez para poblar la base de datos; <code>make download</code> y <code>make import</code> los lanzan):</p>
+<ol>
+<li><code>download_bulk.py</code> descarga el fichero masivo de Scryfall.</li>
+<li><code>parse_types.py</code> y <code>clean_types.py</code> normalizan los tipos de carta en una taxonomía limpia (<code>clean_card_types.json</code>) que alimenta los filtros de tipo y subtipo.</li>
+<li><code>import_bulk.py</code> inserta cartas e impresiones en PostgreSQL.</li>
+</ol>
+<hr />
+<h2>6. Autenticación y seguridad</h2>
+<ul>
+<li><strong>Sesión</strong>: al iniciar sesión el backend emite un <strong>JWT firmado (HS256)</strong> en una cookie <strong>HttpOnly</strong> llamada <code>cb_session</code>. Al ser HttpOnly, el JavaScript de la página no puede leerla (protege frente a robo por XSS).</li>
+<li><strong>Cierre de sesión</strong>: <code>POST /api/auth/logout</code> borra la cookie.</li>
+<li><strong>42 OAuth</strong>: el <code>redirect_uri</code> se calcula por petición.</li>
+<li><strong>Contraseñas</strong>: se guardan con hash, nunca en claro.</li>
+<li><strong>Contenido de usuario</strong>: todo texto introducido por usuarios (nombres de sala, de contenedor, mensajes) se pinta con <code>textContent</code> o escapado, nunca como HTML, para evitar XSS. El chat solo acepta GIFs de <code>giphy.com</code>.</li>
+<li><strong>Secretos</strong> (<code>.env</code>): no se suben a git. Lo gestionan las variables de entorno del <code>docker-compose.yml</code>.</li>
+</ul>
+<hr />
+<h2>7. Estructura del repositorio</h2>
+<pre><code>.
+├── backend/            FastAPI: main.py y un router por área (auth, cards, containers, chat, game...)
+├── database/           init.sql (esquema inicial)
+├── frontend/
+│   ├── *.html          una página por pantalla (URLs en la raíz)
+│   ├── css/            portal.css (paleta y componentes comunes) + un CSS por página
+│   ├── js/shared/      código común: theme, user-menu, section-nav, chat, auth
+│   ├── js/pages/       un JS por página
+│   └── public/assets/  imágenes, vídeo y fondos
+├── docker/             frontend.Dockerfile y nginx.conf (fuera de frontend/ para no servirlos)
+├── certs/              certificado autofirmado para HTTPS local
+├── scripts/            carga de datos de Scryfall
+├── pong-client/        cliente React del Pong
+├── docker-compose.yml
+└── Makefile
+</code></pre>
+<h2>8. Convenciones del frontend</h2>
+<ul>
+<li><strong>Ningún HTML lleva CSS ni JS en línea</strong>: cada página carga su <code>css/&lt;pagina&gt;.css</code> y su <code>js/pages/&lt;pagina&gt;.js</code>.</li>
+<li><strong>Una sola paleta</strong>: <code>css/portal.css</code> define los colores como variables (<code>--c-gold</code>, <code>--c-panel</code>, <code>--c-amber-400</code>...) y variables semánticas (<code>--bg-app</code>, <code>--text-main</code>, <code>--accent</code>, <code>--danger</code>...). Los demás CSS solo usan variables, no colores sueltos.</li>
+<li><strong>Tema de 42</strong>: <code>theme.js</code> añade la clase <code>theme-42</code> y carga <code>theme-42.css</code>, que solo redefine las variables de color. Cambiar el tema es cambiar la paleta, no reescribir estilos.</li>
+<li><strong>Seguridad en la capa visual</strong>: ver sección 6.</li>
+<li><strong>Sesión en contenedores</strong>: <code>js/shared/auth.js</code> centraliza la lectura de sesión y redirige al login si no hay sesión o el servidor responde 401.</li>
+</ul>
+<hr />
+<h2>9. Cómo arrancarlo</h2>
+<p>Requisitos: Docker, Docker Compose, <code>make</code> y Python 3 (solo para descargar los datos).</p>
+<h3>Primera puesta en marcha</h3>
+<pre><code class="language-bash">cp .env.example .env     # rellenar contraseñas y claves (no subir a git)
+make up                  # construye y levanta base de datos, API y Nginx
+make download            # descarga el bulk data de Scryfall a data/
+make import              # importa cartas e impresiones a PostgreSQL
+</code></pre>
+<ul>
+<li>Aplicación: <code>http://localhost:8080</code> (redirige a <code>https://localhost:8443</code> en localhost).</li>
+<li><code>make</code> a secas muestra el logo y la ayuda.</li>
+</ul>
+<h3>Comandos del Makefile</h3>
+<table>
+<thead>
+<tr>
+<th>Comando</th>
+<th>Qué hace</th>
+<th>Ojo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>make up</code></td>
+<td><code>docker compose up --build -d</code>: construye y levanta los tres servicios.</td>
+<td>Reconstruye imágenes: úsalo tras cambiar HTML, CSS, JS o código del backend.</td>
+</tr>
+<tr>
+<td><code>make down</code></td>
+<td>Detiene y apaga los contenedores (<code>--remove-orphans</code>).</td>
+<td>Conserva los datos.</td>
+</tr>
+<tr>
+<td><code>make restart</code></td>
+<td>Apaga, elimina los contenedores <code>card_binder_*</code> y vuelve a levantar con build.</td>
+<td><strong>Conserva</strong> los volúmenes (<code>pgdata</code>, <code>avatars</code>): no se pierden usuarios ni colección.</td>
+</tr>
+<tr>
+<td><code>make logs</code></td>
+<td>Logs en tiempo real de todos los servicios.</td>
+<td></td>
+</tr>
+<tr>
+<td><code>make download</code></td>
+<td>Ejecuta <code>scripts/download_bulk.py</code> en tu máquina y deja el JSON en <code>data/</code>.</td>
+<td>Se hace una vez, o para actualizar cartas.</td>
+</tr>
+<tr>
+<td><code>make import</code></td>
+<td>Ejecuta <code>scripts/import_bulk.py</code> <strong>dentro del contenedor del backend</strong> y carga los datos en PostgreSQL.</td>
+<td>La base de datos debe estar levantada.</td>
+</tr>
+<tr>
+<td><code>make clean</code></td>
+<td><code>docker compose down -v --rmi local</code>: elimina contenedores, <strong>volúmenes</strong> e imágenes del proyecto.</td>
+<td><strong>Borra todos los datos</strong> (usuarios, colección, avatares). Después hay que repetir <code>make up</code>, <code>make download</code> (si no existe <code>data/</code>) y <code>make import</code>.</td>
+</tr>
+<tr>
+<td><code>make prune</code></td>
+<td><code>docker system prune -f</code>: purga contenedores parados, redes y caché sin usar.</td>
+<td>Afecta a <strong>todo Docker</strong> en la máquina, no solo a este proyecto. No borra volúmenes.</td>
+</tr>
+</tbody>
+</table>
+<p>Los ficheros del frontend se copian a la imagen de Nginx, no se montan: cualquier cambio de interfaz necesita <code>make up</code> o <code>make restart</code> para verse.</p>
+<hr />
+        </article>
+    </div>
+    <script src="js/shared/auth.js"></script>
+    <script src="js/pages/readme.js"></script>
+    <script src="js/shared/footer.js"></script>
+</body>
+</html>

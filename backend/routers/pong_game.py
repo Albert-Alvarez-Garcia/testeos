@@ -49,6 +49,7 @@ import uuid
 from typing import Dict, List, Optional, Union
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from backend.security import ws_username
 
 router = APIRouter(
     prefix="/api/pong",
@@ -825,7 +826,13 @@ class PongManager:
         members = list(self.lobbies.get(room_id, []))
         if members:
             message = self.lobby_state(room_id)
-            await asyncio.gather(*(safe_send(ws, message) for ws in members))
+            # "you" = el nombre con el que el servidor identifica a ESTE socket (puede diferir del que
+            # el cliente cree tener: cuenta autenticada, nombre saneado...). El cliente lo usa para saber
+            # si es el anfitrión y, así, imponer el modo local/online.
+            await asyncio.gather(*(
+                safe_send(ws, {**message, "you": self.lobby_players.get(ws, {}).get("username")})
+                for ws in members
+            ))
 
     async def lobby_chat(self, websocket: WebSocket, room_id: str, text) -> None:
         info = self.lobby_players.get(websocket)
@@ -900,7 +907,10 @@ class PongManager:
             "host": host,
             "players": players,
         }
-        await asyncio.gather(*(safe_send(ws, payload) for ws in members))
+        await asyncio.gather(*(
+            safe_send(ws, {**payload, "you": self.lobby_players.get(ws, {}).get("username")})
+            for ws in members
+        ))
 
     # ======================= PARTIDA =======================
     def _take_pending(self, room_id: str) -> Optional[dict]:
@@ -1149,7 +1159,11 @@ def get_options():
 # ---------------------------------------------------------------------------
 @router.websocket("/ws/lobby/{room_id}")
 async def lobby_websocket(websocket: WebSocket, room_id: str):
-    username = clean_username(websocket.query_params.get("username"), "Conjurador")
+    username = ws_username(websocket, websocket.query_params.get("username"))
+    if not username:
+        await websocket.close(code=4401)
+        return
+    username = clean_username(username, "Conjurador")
     if not await manager.connect_lobby(websocket, room_id, username):
         return
 
@@ -1181,7 +1195,11 @@ async def lobby_websocket(websocket: WebSocket, room_id: str):
 # ---------------------------------------------------------------------------
 @router.websocket("/ws/game/{room_id}")
 async def game_websocket(websocket: WebSocket, room_id: str):
-    username = clean_username(websocket.query_params.get("username"), "Jugador")
+    username = ws_username(websocket, websocket.query_params.get("username"))
+    if not username:
+        await websocket.close(code=4401)
+        return
+    username = clean_username(username, "Jugador")
     room = await manager.connect_game(websocket, room_id, username, dict(websocket.query_params))
     if room is None:
         return

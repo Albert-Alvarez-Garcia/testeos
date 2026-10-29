@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Binder - Gacha de Conjuradores</title>
     <!-- Tailwind CSS Play CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="css/portal.css">
     <script src="js/shared/user-menu.js"></script> 
     <script src="js/shared/theme.js"></script>
@@ -30,7 +30,7 @@
         
         <!-- Botón inicial para abrir sobre -->
         <div id="initial-action" class="flex flex-col items-center space-y-4">
-            <div class="w-56 h-80 border-2 border-dashed border-[rgb(var(--c-gold)/0.4)] rounded-2xl flex items-center justify-center bg-[rgb(var(--c-panel)/0.5)] shadow-2xl relative group cursor-pointer hover:border-[rgb(var(--c-amber-400))] transition-all">
+            <div id="magic-pack" role="button" tabindex="0" aria-label="Abrir sobre mágico" class="w-56 h-80 border-2 border-dashed border-[rgb(var(--c-gold)/0.4)] rounded-2xl flex items-center justify-center bg-[rgb(var(--c-panel)/0.5)] shadow-2xl relative group cursor-pointer hover:border-[rgb(var(--c-amber-400))] transition-all">
                 <span class="text-[rgb(var(--c-amber-200)/0.75)] text-base font-bold group-hover:scale-105 transition-transform">Sobre Mágico #1</span>
             </div>
             <button id="open-pack-btn" class="bg-[rgb(var(--c-gold)/0.3)] hover:bg-[rgb(var(--c-gold)/0.6)] border-2 border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-100))] px-6 py-3 rounded-2xl text-sm font-bold shadow-2xl transition-all cursor-pointer hover:scale-105">
@@ -53,7 +53,7 @@
             <div id="card-result" class="absolute hidden w-[256px] h-[378px] z-30 animate-fade-in pointer-events-none">
                 
                 <!-- Zona 3: Ilustración / GIF limpio -->
-                <div id="card-gif-container" class="absolute top-[65px] left-[32px] right-[32px] h-[155px] rounded-sm overflow-hidden flex items-center justify-center bg-black">
+                <div id="card-gif-container" class="absolute top-[65px] left-[32px] right-[32px] h-[155px] rounded-xs overflow-hidden flex items-center justify-center bg-black">
                     <!-- GIF inyectado por JS -->
                 </div>
 
@@ -74,81 +74,7 @@
 
     </div>
 
-    <!-- SCRIPT DE LÓGICA DEL GACHA -->
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const openBtn = document.getElementById('open-pack-btn');
-        const initialAction = document.getElementById('initial-action');
-        const videoContainer = document.getElementById('video-container');
-        const gachaVideo = document.getElementById('gacha-video');
-        const cardResult = document.getElementById('card-result');
-        const cardGifContainer = document.getElementById('card-gif-container');
-        const cardTitle = document.getElementById('card-title');
-        const cardRarity = document.getElementById('card-rarity');
-        const postOpenActions = document.getElementById('post-open-actions');
-        const openAnotherBtn = document.getElementById('open-another-btn');
-
-        const searchKeywords = [
-            "wizard cat", "epic warrior", "magic dragon", "cyberpunk samurai", 
-            "funny monster", "cute wizard", "space alien", "dark knight", "golden beast"
-        ];
-
-        const titlesPool = [
-            "Capibara Suprema Mágica", "Orco Albañil Nivel 99", "Gatete Archimago",
-            "Guerrero de la Niebla", "Señor de los Servidores", "Dragón de C++ Compilado",
-            "Hechicero Bugged", "Caballero del Stack Overflow", "Espectro de la Base de Datos"
-        ];
-
-        openBtn.addEventListener('click', async () => {
-            initialAction.classList.add('hidden');
-            videoContainer.classList.remove('hidden');
-            postOpenActions.classList.add('hidden');
-            cardResult.classList.add('hidden');
-
-            gachaVideo.currentTime = 0;
-            gachaVideo.play();
-
-            const randomKeyword = searchKeywords[Math.floor(Math.random() * searchKeywords.length)];
-            const randomTitle = titlesPool[Math.floor(Math.random() * titlesPool.length)];
-            
-            let fetchedGifUrl = "";
-            try {
-                const res = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=uYe3zQDwYQ8ZaDrzjdbgSr5Uwm3TOZ6O&q=${encodeURIComponent(randomKeyword)}&limit=15&lang=es`);
-                const data = await res.json();
-                if (data.data && data.data.length > 0) {
-                    const randomGif = data.data[Math.floor(Math.random() * data.data.length)];
-                    fetchedGifUrl = randomGif.images.fixed_height.url;
-                }
-            } catch (err) {
-                console.error("Error obteniendo GIF:", err);
-                fetchedGifUrl = "https://media.giphy.com/media/3o7TKSjRrfIPjeiDiM/giphy.gif";
-            }
-
-            cardTitle.textContent = randomTitle;
-            cardGifContainer.innerHTML = `<img src="${fetchedGifUrl}" class="w-full h-full object-cover" alt="Carta Art"/>`;
-            cardRarity.textContent = `✨ ${randomKeyword.toUpperCase()}`;
-
-            // Sincronizado en el segundo 5.5 para clavar la revelación estática perfecta
-            gachaVideo.ontimeupdate = () => {
-                if (gachaVideo.currentTime >= 9.5 && cardResult.classList.contains('hidden')) {
-                    cardResult.classList.remove('hidden');
-                    cardResult.classList.add('flex');
-                }
-            };
-
-            gachaVideo.onended = () => {
-                postOpenActions.classList.remove('hidden');
-                postOpenActions.classList.add('flex');
-            };
-        });
-
-        openAnotherBtn.addEventListener('click', () => {
-            postOpenActions.classList.add('hidden');
-            cardResult.classList.add('hidden');
-            videoContainer.classList.add('hidden');
-            initialAction.classList.remove('hidden');
-        });
-    });
-    </script>
+    <script src="js/pages/gacha.js"></script>
+    <script src="js/shared/footer.js"></script>
 </body>
 </html>

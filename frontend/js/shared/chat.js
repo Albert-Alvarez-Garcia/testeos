@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const s = getSession();
         return {
             username: s.username || s.user_login || "Invitado",
-            user_login: s.user_login || "guest",
+            user_login: s.user_login || s.username || "guest",
             badge_type: s.badge_type || s.badge || "civil_homebrewer",
             message
         };
@@ -96,7 +96,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 try {
                     setHint("Buscando...", "active");
                     // API Key personal y soporte de idioma en español
-                    const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=uYe3zQDwYQ8ZaDrzjdbgSr5Uwm3TOZ6O&q=${encodeURIComponent(query)}&limit=9&lang=es`);
+                    const response = await fetch(`/api/giphy/search?q=${encodeURIComponent(query)}&limit=9`);
                     const data = await response.json();
 
                     if (!data.data || data.data.length === 0) { setHint("No se encontraron GIFs"); return; }
@@ -176,7 +176,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const when = data.created_at ? new Date(data.created_at) : new Date();
         const timeStr = (isNaN(when) ? new Date() : when).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
         const name = data.username || data.user_login || "Conjurador";
-        const login = data.user_login ? `(${data.user_login})` : "";
+        const login = data.user_login && data.user_login !== "guest" && data.user_login !== name ? `(${data.user_login})` : "";
 
         const msg = document.createElement("div");
         msg.className = "chat-msg";

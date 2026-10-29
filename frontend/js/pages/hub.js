@@ -21,12 +21,7 @@
 
     // Igual que index.html: si el servidor no reconoce el username, se prueba con el login de 42
     async function apiGet(path) {
-        const request = (id) => fetch(API + path, { headers: { Accept: 'application/json', 'X-Username': id } });
-        let res = await request(user.username);
-        if (res.status === 401 && user.user_login && user.user_login !== user.username) {
-            res = await request(user.user_login);
-        }
-        return res;
+        return fetch(API + path, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
     }
 
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => (
@@ -83,7 +78,7 @@
             } else if (state === 'locked') {
                 slot.innerHTML = pongMarkup('div', 'role="group"',
                     '<span class="hub-lock">🔒 Solo para usuarios de 42</span>' +
-                    '<p style="margin-top:8px">Entra con tu cuenta de 42 para jugar.</p>');
+                    '<p class="hub-note">Entra con tu cuenta de 42 para jugar.</p>');
             } else if (state === 'error') {
                 slot.innerHTML = pongMarkup('div', 'role="group"',
                     '<span class="hub-lock">No se pudo comprobar tu acceso <button type="button" class="hub-retry" id="pongRetry">Reintentar</button></span>');

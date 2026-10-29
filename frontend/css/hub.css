@@ -8,10 +8,10 @@
     --hub-panel-2: rgb(var(--c-raised-2));
     --hub-line: rgb(var(--c-gold) / 0.32);
     --hub-line-strong: rgb(var(--c-gold-dark));
-    --hub-gold: #fbbf24;
-    --hub-gold-soft: #fcd34d;
+    --hub-gold: rgb(var(--c-amber-400));
+    --hub-gold-soft: rgb(var(--c-amber-300));
     --hub-text: rgb(var(--c-cream));
-    --hub-muted: rgba(253, 230, 138, 0.68);
+    --hub-muted: rgb(var(--c-amber-200) / 0.68);
 }
 
 * { box-sizing: border-box; }
@@ -59,6 +59,7 @@ a.hub-card:focus-visible { outline: 2px solid var(--hub-gold); outline-offset: 3
 .hub-card h2 { font-family: 'Cinzel', Georgia, serif; font-size: 1.1rem; color: var(--hub-gold-soft); margin: 0 0 6px; }
 .hub-card.primary h2 { font-size: 1.4rem; }
 .hub-card p { margin: 0; font-size: .88rem; color: rgb(var(--c-cream) / .88); max-width: 52ch; }
+.hub-card p.hub-note { margin-top: 8px; }
 
 .hub-stats { display: flex; flex-wrap: wrap; gap: 6px 28px; margin: 14px 0 0; padding: 0; }
 .hub-stats div { display: flex; flex-direction: column-reverse; }
@@ -66,12 +67,12 @@ a.hub-card:focus-visible { outline: 2px solid var(--hub-gold); outline-offset: 3
 .hub-stats dd { margin: 0; font-family: 'Cinzel', Georgia, serif; font-size: 1.5rem; font-weight: 700; color: var(--hub-gold); line-height: 1.1; }
 
 /* Juego bloqueado o en comprobación */
-.hub-card.is-locked { border-color: var(--hub-line); background: rgba(14, 10, 7, .94); }
+.hub-card.is-locked { border-color: var(--hub-line); background: rgb(var(--c-ink-3) / .94); }
 .hub-card.is-locked .hub-orb { filter: grayscale(1); opacity: .55; }
 .hub-card.is-locked h2 { color: var(--hub-muted); }
 .hub-lock {
     display: inline-flex; align-items: center; gap: 6px; margin-top: 12px; padding: 4px 10px; border-radius: 99px;
-    font-size: .78rem; font-weight: 600; background: rgba(251, 191, 36, .09); border: 1px solid rgba(251, 191, 36, .4); color: var(--hub-gold-soft);
+    font-size: .78rem; font-weight: 600; background: rgb(var(--c-amber-400) / .09); border: 1px solid rgb(var(--c-amber-400) / .4); color: var(--hub-gold-soft);
 }
 .hub-retry {
     margin-left: 6px; font: inherit; font-size: .78rem; color: var(--hub-text); background: var(--hub-panel-2);

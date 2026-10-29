@@ -17,3 +17,5 @@ noesun.env*
 pong-client/dist/
 .DS_Store
 # <<< reorganize
+
+*.bak

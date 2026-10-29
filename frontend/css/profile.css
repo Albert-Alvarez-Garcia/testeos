@@ -1,0 +1,71 @@
+/* profile.css · Perfil y sistema social (profile.html). Usa la paleta de portal.css. */
+
+/* ---- Avatares redondos (el tamaño lo pasa profile.js con --sz) ---- */
+.avatar-fallback,
+.avatar-round {
+    width: var(--sz, 36px);
+    height: var(--sz, 36px);
+    flex-shrink: 0;
+    border-radius: 9999px;
+    border: 2px solid rgb(var(--c-accent));
+}
+.avatar-fallback {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--sz, 36px) * 0.45);
+    font-weight: 700;
+    color: rgb(var(--c-accent));
+    user-select: none;
+    background: radial-gradient(circle at 30% 30%, rgb(var(--c-bronze)) 0%, rgb(var(--c-bronze-deep)) 70%);
+}
+.avatar-round {
+    object-fit: cover;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
+}
+
+/* ---- Botones de las filas sociales (junto a .btn-fantasy de portal.css) ---- */
+.btn-sm { padding: 0.25rem 0.75rem; font-size: 0.75rem; }
+.btn-danger,
+.btn-ghost {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.btn-danger {
+    background: rgba(127, 29, 29, 0.8);
+    border: 1px solid #b91c1c;
+    color: #fff;
+    font-weight: 700;
+}
+.btn-danger:hover { background: #991b1b; }
+.btn-ghost {
+    background: transparent;
+    border: 1px solid rgb(var(--c-gold-dark));
+    color: rgb(var(--c-accent));
+}
+.btn-ghost:hover { background: rgb(var(--c-raised)); }
+.btn-sm:disabled, .btn-danger:disabled, .btn-ghost:disabled { opacity: 0.5; cursor: default; }
+
+/* ---- Aviso emergente ---- */
+#toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 100;
+    max-width: 20rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(var(--c-gold));
+    background: rgb(var(--c-panel));
+    color: rgb(var(--c-amber-200));
+    font-size: 0.875rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+#toast.is-visible { opacity: 1; }
+#toast.is-error { background: #450a0a; color: #fecaca; border-color: #b91c1c; }

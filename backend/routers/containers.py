@@ -3,11 +3,13 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from backend.database import get_db_connection
 from backend.services import get_user_by_username_or_email
+from fastapi import Depends
+from backend.security import session_username
 
 router = APIRouter(prefix="/api/containers", tags=["Containers"])
 
 # Dependencia para obtener el usuario actual mediante la cabecera X-Username
-async def get_current_user(x_username: str = Header(None)):
+async def get_current_user(x_username: str = Depends(session_username)):
     if not x_username:
         raise HTTPException(
             status_code=401, 
@@ -23,21 +25,21 @@ async def get_current_user(x_username: str = Header(None)):
     return user
 
 class ContainerCreate(BaseModel):
-    name: str
-    type: str  # Recibirá 'binder', 'binder_s', 'binder_m', 'binder_xl', 'deck', 'box'
-    max_capacity: Optional[int] = None
-    slots_per_page: Optional[int] = 9
-    total_pages: Optional[int] = None
-    sideboard_capacity: Optional[int] = None
+    name: str = Field(..., min_length=1, max_length=60)
+    type: str = Field(..., min_length=1, max_length=20)  # 'binder', 'binder_s', 'binder_m', 'binder_xl', 'deck', 'box'
+    max_capacity: Optional[int] = Field(None, ge=0, le=100000)
+    slots_per_page: Optional[int] = Field(9, ge=0, le=100)
+    total_pages: Optional[int] = Field(None, ge=0, le=10000)
+    sideboard_capacity: Optional[int] = Field(None, ge=0, le=1000)
 
 class AddCardToContainerRequest(BaseModel):
     printing_id: str
     container_id: str
     slot_id: Optional[str] = None
-    condition: Optional[str] = "Near Mint"
-    language: Optional[str] = "en"
+    condition: Optional[str] = Field("Near Mint", max_length=30)
+    language: Optional[str] = Field("en", max_length=10)
     is_foil: Optional[bool] = False
-    notes: Optional[str] = None
+    notes: Optional[str] = Field(None, max_length=500)
     quantity: int = Field(1, ge=1, le=99)
 
 class MoveCardRequest(BaseModel):

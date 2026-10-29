@@ -72,8 +72,9 @@
     const setShort = (p) => `${setCode(p)} #${p.collector_number}`;
     const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function getAuthHeader() {
-        let username = 'admin';
+    // Usuario guardado en el navegador (solo para mostrarlo y comprobar que hay sesión; no se envía al servidor)
+    function getUsername() {
+        let username = null;
         try {
             const userData = JSON.parse(localStorage.getItem('cardbinder_user')) ||
                              JSON.parse(localStorage.getItem('user_session'));
@@ -81,7 +82,12 @@
         } catch (e) {
             console.error('Error leyendo usuario:', e);
         }
-        return { 'X-Username': username };
+        return username;
+    }
+
+    // La identidad viaja en la cookie de sesión; no hace falta cabecera
+    function getAuthHeader() {
+        return {};
     }
 
     function today() {
@@ -126,6 +132,10 @@
             });
         } catch (e) {
             throw new ApiError('No se pudo conectar con el servidor. Comprueba que la API está en marcha.', 0);
+        }
+        if (res.status === 401) {
+            location.href = 'login.html';
+            throw new ApiError('Sesión no válida.', 401);
         }
         if (!res.ok) {
             let data = null;
@@ -568,6 +578,42 @@
         setTimeout(() => URL.revokeObjectURL(url), 2000);
     }
 
+    // Exportar CSV (se genera en el navegador a partir de la exportación JSON)
+    function csvCell(v) {
+        if (v === null || v === undefined) return '';
+        let s = typeof v === 'object' ? JSON.stringify(v) : String(v);
+        if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s;   // evita inyección de fórmulas en hojas de cálculo
+        return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }
+
+    function flattenRow(o, prefix, out) {
+        for (const [k, v] of Object.entries(o)) {
+            const key = prefix ? prefix + '.' + k : k;
+            if (v && typeof v === 'object' && !Array.isArray(v)) flattenRow(v, key, out);
+            else out[key] = Array.isArray(v) ? v.join(' | ') : v;
+        }
+        return out;
+    }
+
+    async function exportCsv() {
+        const btn = $('exportCsvBtn');
+        btn.disabled = true;
+        try {
+            const { res } = await api('/collection/export', { raw: true });
+            const data = await res.json();
+            const rows = (data.copies || []).map((c) => flattenRow(c, '', {}));
+            if (!rows.length) throw new Error('No hay cartas que exportar');
+            const cols = [...new Set(rows.flatMap((r) => Object.keys(r)))];
+            const lines = [cols.map(csvCell).join(',')].concat(rows.map((r) => cols.map((c) => csvCell(r[c])).join(',')));
+            download(new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' }), `coleccion-${today()}.csv`);
+            toast('Colección exportada en CSV.');
+        } catch (e) {
+            toast(`No se pudo exportar: ${e.message}`, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
     async function exportJson() {
         const btn = $('exportBtn');
         btn.disabled = true;
@@ -723,7 +769,7 @@
         const copies = items.reduce((n, i) => n + i.total_copies, 0);
         const printings = items.reduce((n, i) => n + i.printings.length, 0);
         const filters = describeFilters();
-        const user = getAuthHeader()['X-Username'];
+        const user = getUsername();
         const cols = thumbs ? 7 : 6;
 
         const bodies = items.map((it) => {
@@ -854,6 +900,11 @@
         }
 
         $('exportBtn').addEventListener('click', exportJson);
+        const csvBtn = $('exportBtn').cloneNode(false);
+        csvBtn.id = 'exportCsvBtn';
+        csvBtn.textContent = 'Exportar CSV';
+        $('exportBtn').insertAdjacentElement('afterend', csvBtn);
+        csvBtn.addEventListener('click', exportCsv);
         $('importBtn').addEventListener('click', openImport);
         $('printBtn').addEventListener('click', openPrint);
     }
@@ -868,6 +919,7 @@
     // Arranque
     // ------------------------------------------------------------------------
     async function init() {
+        if (!getUsername()) { location.href = 'login.html'; return; }
         state = readUrl();
         bindEvents();
         await Promise.all([loadTaxonomy(), loadContainers()]);

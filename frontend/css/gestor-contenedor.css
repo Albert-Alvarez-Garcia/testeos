@@ -1,0 +1,63 @@
+/* gestor-contenedor.css · Visor 2.5D de una carta con lupa (gestor-contenedor.html).
+   La paleta y las variables semánticas vienen de portal.css. */
+
+/* Botón de modo lupa */
+.visor-mode-btn {
+    background: linear-gradient(135deg, rgb(var(--c-raised-2)) 0%, rgb(var(--c-raised-3)) 100%);
+    border: 1px solid rgb(var(--c-gold-dark));
+    color: rgb(var(--c-cream));
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.visor-mode-btn:hover, .visor-mode-btn.active {
+    border-color: rgb(var(--c-accent-hi));
+    color: rgb(var(--c-accent-hi));
+    box-shadow: 0 0 10px rgb(var(--c-accent) / 0.3);
+}
+
+/* Visor interactivo y lupa */
+#cardContainer {
+    position: relative;
+    overflow: hidden;
+    perspective: 1000px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-width: 300px;
+    margin: 0 auto;
+}
+
+#interactiveCard {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.1s ease-out;
+    transform-style: preserve-3d;
+}
+
+#dynamicCardImg {
+    width: 100%;
+    height: auto;
+    display: block;
+    border-radius: 12px;
+}
+
+#cardMagnifier {
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    border-radius: 50%;
+    border: 3px solid rgb(var(--c-cream) / 0.8);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    pointer-events: none;
+    display: none;
+    z-index: 50;
+    background-repeat: no-repeat;
+}
+
+#cardMagnifier.is-visible {
+    display: block;
+}

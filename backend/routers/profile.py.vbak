@@ -1,0 +1,140 @@
+"""
+profile.py · Router del perfil de usuario: datos propios, avatar, amigos y bloqueos.
+
+Todas las rutas identifican al usuario con la cabecera X-Username (igual que el resto de la API).
+El usuario NUNCA va en la URL: sale de la cabecera X-Username (pendiente de endurecer con token más adelante).
+
+    GET    /api/profile/me                    Perfil propio (+ avatar)
+    POST   /api/profile/avatar                Sube avatar: el cuerpo es la imagen en bruto (Content-Type: image/*)
+    DELETE /api/profile/avatar                Quita el avatar propio
+
+    GET    /api/profile/friends               { friends, incoming, outgoing, blocked }
+    GET    /api/profile/search?q=ana          Busca usuarios por nombre (mín. 2 letras)
+    POST   /api/profile/friends/request       { "username": "ana" }   Enviar solicitud (si ya te la envió, la acepta)
+    POST   /api/profile/friends/accept        { "username": "ana" }   Aceptar una solicitud recibida
+    POST   /api/profile/friends/reject        { "username": "ana" }   Rechazar una recibida o cancelar una enviada
+    DELETE /api/profile/friends/{username}    Eliminar amigo
+    POST   /api/profile/block                 { "username": "ana" }   Bloquear (borra la amistad)
+    DELETE /api/profile/block/{username}      Desbloquear
+
+La subida usa el cuerpo en bruto (no multipart) porque python-multipart no está en requirements.txt:
+    fetch('/api/profile/avatar', {method: 'POST', headers: {'X-Username': username, 'Content-Type': file.type}, body: file})
+"""
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from pydantic import BaseModel
+
+from backend.services import get_user_by_username
+from backend import profile_services as svc
+from backend.profile_services import ProfileError
+from fastapi import Depends
+from backend.security import session_username
+
+def get_session_user(x_username: str = Depends(session_username)):
+    """Usuario indicado en la cabecera X-Username (401 si falta o no existe)."""
+    user = get_user_by_username((x_username or "").strip()) if x_username else None
+    if not user:
+        raise HTTPException(status_code=401, detail="Sesión no válida. Vuelve a iniciar sesión.")
+    return user
+
+
+router = APIRouter(prefix="/api/profile", tags=["Profile"])
+
+
+class TargetUser(BaseModel):
+    username: str
+
+
+def _call(func, *args):
+    """Ejecuta una operación del servicio y traduce ProfileError a una respuesta HTTP."""
+    try:
+        return func(*args)
+    except ProfileError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+
+
+# ----- Perfil y avatar -----------------------------------------------------
+@router.get("/me")
+def get_my_profile(current_user: dict = Depends(get_session_user)):
+    return svc.get_profile(current_user)
+
+
+@router.post("/avatar")
+async def upload_avatar(request: Request, current_user: dict = Depends(get_session_user)):
+    too_big = HTTPException(
+        status_code=413,
+        detail=f"La imagen supera el máximo de {svc.UPLOAD_MAX_BYTES // 1024} KB.",
+    )
+
+    declared = request.headers.get("content-length", "")
+    if declared.isdigit() and int(declared) > svc.UPLOAD_MAX_BYTES:
+        raise too_big
+
+    data = b""
+    async for chunk in request.stream():
+        data += chunk
+        if len(data) > svc.UPLOAD_MAX_BYTES:  # también si no venía Content-Length o mentía
+            raise too_big
+
+    if not data:
+        raise HTTPException(status_code=400, detail="No se ha recibido ninguna imagen.")
+
+    try:
+        url = svc.store_avatar(current_user["username"], data)
+    except ProfileError as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+    except OSError as e:
+        print(f"❌ No se pudo guardar el avatar de '{current_user['username']}': {e}")
+        raise HTTPException(status_code=500, detail="No se pudo guardar el avatar.")
+    return {"avatar": url}
+
+
+@router.delete("/avatar")
+def delete_avatar(current_user: dict = Depends(get_session_user)):
+    try:
+        svc.remove_avatar(current_user["username"])
+    except OSError as e:
+        print(f"❌ No se pudo borrar el avatar de '{current_user['username']}': {e}")
+        raise HTTPException(status_code=500, detail="No se pudo borrar el avatar.")
+    return {"avatar": None}
+
+
+# ----- Amistades -----------------------------------------------------------
+@router.get("/friends")
+def get_friends(current_user: dict = Depends(get_session_user)):
+    return _call(svc.list_social, current_user["id"])
+
+
+@router.get("/search")
+def search_users(q: str = Query("", max_length=100), current_user: dict = Depends(get_session_user)):
+    return {"results": _call(svc.search_users, current_user["id"], q)}
+
+
+@router.post("/friends/request")
+def friend_request(body: TargetUser, current_user: dict = Depends(get_session_user)):
+    return _call(svc.send_friend_request, current_user["id"], body.username)
+
+
+@router.post("/friends/accept")
+def friend_accept(body: TargetUser, current_user: dict = Depends(get_session_user)):
+    return _call(svc.accept_friend_request, current_user["id"], body.username)
+
+
+@router.post("/friends/reject")
+def friend_reject(body: TargetUser, current_user: dict = Depends(get_session_user)):
+    return _call(svc.reject_friend_request, current_user["id"], body.username)
+
+
+@router.delete("/friends/{username}")
+def friend_remove(username: str, current_user: dict = Depends(get_session_user)):
+    return _call(svc.remove_friend, current_user["id"], username)
+
+
+# ----- Bloqueos ------------------------------------------------------------
+@router.post("/block")
+def block(body: TargetUser, current_user: dict = Depends(get_session_user)):
+    return _call(svc.block_user, current_user["id"], body.username)
+
+
+@router.delete("/block/{username}")
+def unblock(username: str, current_user: dict = Depends(get_session_user)):
+    return _call(svc.unblock_user, current_user["id"], username)

@@ -24,6 +24,8 @@ from backend.database import get_db_connection
 from backend.services import get_user_by_username
 from backend import profile_services as svc
 from backend.profile_services import ProfileError
+from fastapi import Depends
+from backend.security import session_username
 
 router = APIRouter(prefix="/api/social", tags=["Social"])
 
@@ -31,7 +33,7 @@ MAX_MESSAGE_LEN = 1000
 HISTORY_LIMIT = 50
 
 
-def get_session_user(x_username: str = Header(None)):
+def get_session_user(x_username: str = Depends(session_username)):
     """Usuario indicado en la cabecera X-Username (401 si falta o no existe). Igual que en profile.py."""
     user = get_user_by_username((x_username or "").strip()) if x_username else None
     if not user:
