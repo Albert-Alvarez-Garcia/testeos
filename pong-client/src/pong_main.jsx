@@ -10,3 +10,8 @@ createRoot(document.getElementById("root")).render(
     <PongApp />
   </StrictMode>
 );
+
+// Pie legal común del portal (Privacy Policy / Terms of Service)
+const legalFooter = document.createElement("script");
+legalFooter.src = "/js/shared/footer.js";
+document.body.appendChild(legalFooter);

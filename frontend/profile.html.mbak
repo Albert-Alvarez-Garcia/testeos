@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🃏%3C/text%3E%3C/svg%3E">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Binder Pro - Perfil y Social</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- CSS Estético del Portal de Magic -->
+    <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/profile.css">
+    <script src="js/shared/theme.js"></script>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <header class="border-b border-[rgb(var(--c-gold-dark))] bg-[rgb(var(--c-bg-app)/0.8)] backdrop-blur-sm sticky top-0 z-50">
+        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-xl font-bold font-magic tracking-wider text-[rgb(var(--c-accent))] flex items-center gap-2">
+                <span>🛡️</span> Perfil y Sistema Social
+            </h1>
+            <a href="index.html" class="text-sm text-[color:var(--text-muted)] hover:text-[rgb(var(--c-accent-hi))] transition">← Volver al Inicio</a>
+        </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-8 grow w-full grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <!-- Columna izquierda: identidad -->
+        <div class="md:col-span-1 fantasy-panel p-6 flex flex-col items-center text-center self-start">
+            <div id="avatar-slot" class="mb-4"></div>
+            <h2 id="username-display" class="text-2xl font-bold font-magic text-[color:var(--text-main)] break-all">Cargando...</h2>
+            <p id="email-display" class="text-sm text-[color:var(--text-muted)] mt-1 break-all">&nbsp;</p>
+            <span id="badge-display" class="mt-3 px-3 py-1 text-xs font-semibold bg-[rgb(var(--c-raised))] text-[rgb(var(--c-accent))] rounded-full border border-[rgb(var(--c-gold-dark))] hidden"></span>
+            <button id="remove-avatar-btn" type="button" class="mt-5 text-xs text-[color:var(--text-muted)] hover:text-red-400 underline hidden">Quitar mi avatar</button>
+        </div>
+
+        <div class="md:col-span-2 space-y-6">
+
+            <!-- Avatar -->
+            <section class="fantasy-panel p-6" id="avatar-panel">
+                <h3 class="text-lg font-semibold font-magic text-[rgb(var(--c-accent))] mb-4">Personalizar Avatar</h3>
+
+                <div class="mb-6">
+                    <label for="custom-avatar-input" class="block text-sm text-[color:var(--text-muted)] mb-2">Subir imagen propia (PNG, JPG, GIF o WebP · máx. 1 MB)</label>
+                    <div class="flex gap-3">
+                        <input type="file" id="custom-avatar-input" accept="image/png,image/jpeg,image/gif,image/webp" class="block w-full text-sm text-[color:var(--text-muted)] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border file:border-[rgb(var(--c-gold-dark))] file:text-sm file:font-semibold file:bg-[rgb(var(--c-raised))] file:text-[rgb(var(--c-accent))] hover:file:bg-[rgb(var(--c-bronze))] cursor-pointer">
+                        <button id="upload-btn" type="button" class="btn-fantasy text-sm">Subir</button>
+                    </div>
+                </div>
+
+                <div id="presets-block" class="hidden">
+                    <p class="block text-sm text-[color:var(--text-muted)] mb-2">O elige un avatar predefinido</p>
+                    <div class="grid grid-cols-5 gap-2" id="predefined-avatars-grid"></div>
+                </div>
+            </section>
+
+            <!-- Resumen de la colección -->
+            <section class="fantasy-panel p-6" id="collection-panel">
+                <div class="flex items-baseline justify-between gap-3 mb-4">
+                    <h3 class="text-lg font-semibold font-magic text-[rgb(var(--c-accent))]">Mi colección</h3>
+                    <a href="hub-coleccion.html" class="text-sm text-[color:var(--text-muted)] hover:text-[rgb(var(--c-accent-hi))] transition">Ver mi colección</a>
+                </div>
+                <dl class="grid grid-cols-3 gap-3 text-center">
+                    <div class="flex flex-col-reverse bg-[rgb(var(--c-ink-3))] p-3 rounded-lg border border-[rgb(var(--c-gold-dark))]">
+                        <dt class="text-xs text-[color:var(--text-muted)]">Copias</dt>
+                        <dd class="text-2xl font-bold font-magic text-[rgb(var(--c-accent))]" data-stat="copies">—</dd>
+                    </div>
+                    <div class="flex flex-col-reverse bg-[rgb(var(--c-ink-3))] p-3 rounded-lg border border-[rgb(var(--c-gold-dark))]">
+                        <dt class="text-xs text-[color:var(--text-muted)]">Cartas distintas</dt>
+                        <dd class="text-2xl font-bold font-magic text-[rgb(var(--c-accent))]" data-stat="cards">—</dd>
+                    </div>
+                    <div class="flex flex-col-reverse bg-[rgb(var(--c-ink-3))] p-3 rounded-lg border border-[rgb(var(--c-gold-dark))]">
+                        <dt class="text-xs text-[color:var(--text-muted)]">Contenedores</dt>
+                        <dd class="text-2xl font-bold font-magic text-[rgb(var(--c-accent))]" data-stat="containers">—</dd>
+                    </div>
+                </dl>
+                <p id="collection-note" class="hidden text-xs mt-3"></p>
+            </section>
+
+            <!-- Social -->
+            <section class="fantasy-panel p-6" id="social-panel">
+                <h3 class="text-lg font-semibold font-magic text-[rgb(var(--c-accent))] mb-4">Sistema Social</h3>
+
+                <label for="search-input" class="block text-xs text-[color:var(--text-muted)] mb-1">Buscar o añadir un usuario por su nombre</label>
+                <div class="flex gap-2">
+                    <input type="text" id="search-input" placeholder="Nombre de usuario" autocomplete="off" maxlength="100" class="w-full text-sm">
+                    <button id="send-request-btn" type="button" class="btn-fantasy text-sm whitespace-nowrap">Enviar solicitud</button>
+                </div>
+                <div id="search-results" class="mt-2 space-y-2"></div>
+
+                <div id="social-lists" class="mt-6 space-y-5"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Perfil de amigo + mensajes directos -->
+    <div id="fm-modal" class="hidden fixed inset-0 z-[90] bg-black/70 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="fm-name">
+        <div class="fantasy-panel w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-5 flex items-center gap-4 border-b border-[rgb(var(--c-gold-dark))]">
+                <div id="fm-avatar"></div>
+                <div class="min-w-0 grow">
+                    <h3 id="fm-name" class="text-lg font-bold font-magic text-[color:var(--text-main)] truncate"></h3>
+                    <span id="fm-badge" class="hidden mt-1 inline-block px-2 py-0.5 text-xs font-semibold bg-[rgb(var(--c-raised))] text-[rgb(var(--c-accent))] rounded-full border border-[rgb(var(--c-gold-dark))]"></span>
+                </div>
+                <button id="fm-close" type="button" aria-label="Cerrar" class="text-xl text-[color:var(--text-muted)] hover:text-[rgb(var(--c-accent-hi))] transition">✕</button>
+            </div>
+            <dl class="grid grid-cols-3 gap-2 p-4 text-center">
+                <div class="flex flex-col-reverse bg-[rgb(var(--c-ink-3))] p-2 rounded-lg border border-[rgb(var(--c-gold-dark))]">
+                    <dt class="text-xs text-[color:var(--text-muted)]">Copias</dt>
+                    <dd class="text-xl font-bold font-magic text-[rgb(var(--c-accent))]" data-fm-stat="copies">—</dd>
+                </div>
+                <div class="flex flex-col-reverse bg-[rgb(var(--c-ink-3))] p-2 rounded-lg border border-[rgb(var(--c-gold-dark))]">
+                    <dt class="text-xs text-[color:var(--text-muted)]">Cartas distintas</dt>
+                    <dd class="text-xl font-bold font-magic text-[rgb(var(--c-accent))]" data-fm-stat="cards">—</dd>
+                </div>
+                <div class="flex flex-col-reverse bg-[rgb(var(--c-ink-3))] p-2 rounded-lg border border-[rgb(var(--c-gold-dark))]">
+                    <dt class="text-xs text-[color:var(--text-muted)]">Contenedores</dt>
+                    <dd class="text-xl font-bold font-magic text-[rgb(var(--c-accent))]" data-fm-stat="containers">—</dd>
+                </div>
+            </dl>
+            <div id="fm-messages" class="grow overflow-y-auto px-4 space-y-2 min-h-[160px] max-h-64" aria-live="polite"></div>
+            <form id="fm-form" class="p-4 flex gap-2 border-t border-[rgb(var(--c-gold-dark))]">
+                <input type="text" id="fm-input" maxlength="1000" autocomplete="off" placeholder="Escribe un mensaje" aria-label="Mensaje" class="w-full text-sm">
+                <button type="submit" class="btn-fantasy text-sm whitespace-nowrap">Enviar</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" role="status" aria-live="polite"></div>
+
+    <script src="js/pages/profile.js"></script>
+    <script src="js/shared/footer.js"></script>
+</body>
+</html>

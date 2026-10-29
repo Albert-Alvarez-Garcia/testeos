@@ -339,6 +339,18 @@ ul { padding: 0; list-style: none; }
   animation: orb-pulse 3s ease-in-out infinite;
 }
 
+/* Orbe con imagen (PNG): mismo tratamiento que .orb dentro del selector */
+.orb-img { display: block; flex-shrink: 0; object-fit: contain; }
+.radio-orb .radio-face .orb-img {
+  position: relative; z-index: 1; margin: 11px 0 12px;
+  opacity: 0.78; transition: opacity 0.2s, filter 0.2s;
+}
+.radio-orb input:checked + .radio-face .orb-img {
+  opacity: 1;
+  filter: drop-shadow(0 0 8px var(--glow))
+          drop-shadow(0 0 16px color-mix(in srgb, var(--glow) 40%, transparent));
+}
+
 .toast {
   display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; font-size: 0.85rem;
   background: color-mix(in srgb, var(--danger) 12%, rgb(var(--c-ink)));

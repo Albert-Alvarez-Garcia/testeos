@@ -50,6 +50,7 @@ from typing import Dict, List, Optional, Union
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from backend.security import ws_username
+from backend.routers.stats import save_game_result
 
 router = APIRouter(
     prefix="/api/pong",
@@ -365,7 +366,26 @@ class PongRoom:
             "overtime": self.overtime,
         }
 
+    async def record_result(self, over: dict):
+        """Guarda en estadísticas la partida online terminada (la local y las sin ganador real no cuentan)."""
+        if self.mode != "online" or len(self.slots) < 2 or not all(self.slots):
+            return
+        winner = over.get("winner")
+        if winner is None or over.get("reason") in ("no_show", "abandoned"):
+            return
+        # El ganador va primero (en un abandono puede tener menos goles que el rival)
+        ranking = sorted(
+            ({"username": r["username"], "score": r["score"]} for r in over["ranking"]),
+            key=lambda r: (r["username"] != winner, -r["score"]),
+        )
+        try:
+            await asyncio.to_thread(save_game_result, "pong", self.room_id, ranking, winner)
+        except Exception as e:
+            print(f"⚠️ No se pudo guardar el resultado de Pong: {e}")
+
     async def broadcast(self, message: dict):
+        if message.get("type") == "GAME_OVER":
+            await self.record_result(message)
         sockets = [p["ws"] for p in list(self.players.values()) if p["ws"] is not None]
         if sockets:
             await asyncio.gather(*(safe_send(ws, message) for ws in sockets))

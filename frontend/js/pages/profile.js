@@ -366,11 +366,40 @@
     const fmBox = $('fm-messages');
     const socialApi = (path, opts = {}) => api(path, { ...opts, base: '/api/social' });
 
+    const GIF_RE = /^gif:(https:\/\/(?:[a-z0-9-]+\.)*giphy\.com\/[^\s"'<>]{1,400})$/i;
+    const INVITE_RE = /^invite:lobby:([A-Za-z0-9_-]{3,40})$/;
+
+    // Contenido de un mensaje: GIF (solo de Giphy), invitación a sala o texto plano (textContent)
+    function dmContent(m) {
+        const g = GIF_RE.exec(m.message);
+        if (g) {
+            const img = el('img', 'max-w-full rounded');
+            img.src = g[1]; img.alt = 'GIF'; img.loading = 'lazy';
+            return img;
+        }
+        const inv = INVITE_RE.exec(m.message);
+        if (inv) {
+            const box = el('div', 'flex flex-col gap-2');
+            box.append(el('p', 'font-semibold', m.mine ? '🎮 Has invitado a jugar' : '🎮 Te invita a jugar'));
+            const a = el('a', 'btn-fantasy text-xs text-center', 'Entrar a la sala');
+            a.href = 'lobby.html?room=' + encodeURIComponent(inv[1]);
+            box.append(a);
+            return box;
+        }
+        return el('p', 'whitespace-pre-wrap', m.message);
+    }
+
+    function showTyping(on) {
+        const t = $('fm-typing');
+        t.classList.toggle('hidden', !on);
+        if (on) t.textContent = fm.user + ' está escribiendo…';
+    }
+
     function fmBubble(m) {
         const wrap = el('div', 'flex ' + (m.mine ? 'justify-end' : 'justify-start'));
         const b = el('div', 'max-w-[80%] px-3 py-2 rounded-lg text-sm break-words border ' +
             (m.mine ? 'bg-[rgb(var(--c-raised))] border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-100))]' : 'bg-[rgb(var(--c-ink-3))] border-[rgb(var(--c-gold-dark))] text-[color:var(--text-main)]'));
-        b.append(el('p', 'whitespace-pre-wrap', m.message)); // textContent: nunca se interpreta HTML
+        b.append(dmContent(m)); // textContent / DOM: nunca se interpreta HTML
         const t = new Date(m.created_at);
         b.append(el('p', 'text-[10px] text-[color:var(--text-muted)] mt-1 text-right',
             isNaN(t) ? null : t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
@@ -396,7 +425,7 @@
         if (!who) return;
         try {
             const data = await socialApi('/dm/' + encodeURIComponent(who) + '?after_id=' + fm.lastId);
-            if (fm.user === who) appendDm(data.messages || []);
+            if (fm.user === who) { appendDm(data.messages || []); showTyping(!!data.typing); }
         } catch (e) {
             if (first && e.message !== 'Sesión caducada') toast(e.message, true);
         }
@@ -446,6 +475,8 @@
         clearInterval(fm.timer);
         fm.user = null;
         $('fm-modal').classList.add('hidden');
+        $('fm-gif-picker').classList.add('hidden');
+        $('fm-typing').classList.add('hidden');
     }
 
     $('fm-close').addEventListener('click', closeFriend);
@@ -464,6 +495,63 @@
         } catch (err) {
             if (err.message !== 'Sesión caducada') toast(err.message, true);
         }
+    });
+
+    // ---------- Escribiendo, GIFs e invitaciones ----------
+    let lastTypingPing = 0;
+    $('fm-input').addEventListener('input', () => {
+        const now = Date.now();
+        if (!fm.user || now - lastTypingPing < 2500) return;
+        lastTypingPing = now;
+        socialApi('/dm/' + encodeURIComponent(fm.user) + '/typing', { method: 'POST' }).catch(() => {});
+    });
+
+    async function sendDm(text) {
+        if (!fm.user) return;
+        try {
+            await socialApi('/dm/' + encodeURIComponent(fm.user), { method: 'POST', json: { message: text } });
+            await pollDm(true);
+        } catch (err) {
+            if (err.message !== 'Sesión caducada') toast(err.message, true);
+        }
+    }
+
+    const gifPicker = $('fm-gif-picker'), gifResults = $('fm-gif-results'), gifSearch = $('fm-gif-search');
+    let gifTimer = null;
+    $('fm-gif-btn').addEventListener('click', () => {
+        gifPicker.classList.toggle('hidden');
+        if (!gifPicker.classList.contains('hidden')) gifSearch.focus();
+    });
+    gifSearch.addEventListener('input', () => {
+        clearTimeout(gifTimer);
+        const q = gifSearch.value.trim();
+        if (!q) { gifResults.replaceChildren(); return; }
+        gifTimer = setTimeout(async () => {
+            try {
+                const res = await fetch('/api/giphy/search?q=' + encodeURIComponent(q) + '&limit=9', { credentials: 'same-origin' });
+                if (!res.ok) throw new Error('Giphy ' + res.status);
+                const data = await res.json();
+                gifResults.replaceChildren(...(data.data || [])
+                    .filter((g) => g.images && g.images.fixed_height_small && g.images.fixed_height_small.url)
+                    .map((g) => {
+                        const url = g.images.fixed_height_small.url;
+                        const b = el('button', 'rounded overflow-hidden border border-[rgb(var(--c-gold-dark))]');
+                        b.type = 'button';
+                        const img = el('img', 'w-full h-16 object-cover');
+                        img.alt = 'GIF'; img.src = url;
+                        b.append(img);
+                        b.addEventListener('click', () => {
+                            gifPicker.classList.add('hidden'); gifSearch.value = ''; gifResults.replaceChildren();
+                            sendDm('gif:' + url);
+                        });
+                        return b;
+                    }));
+            } catch (e) { toast('No se pudieron cargar los GIFs.', true); }
+        }, 400);
+    });
+
+    $('fm-invite-btn').addEventListener('click', () => {
+        sendDm('invite:lobby:duelo-' + Math.random().toString(36).slice(2, 8));
     });
 
     // ---------- Enlaces desde la campana del inicio: #chat=usuario y #solicitudes ----------

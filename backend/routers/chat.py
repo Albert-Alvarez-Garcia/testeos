@@ -40,7 +40,7 @@ manager = ConnectionManager()
 
 # El front envía los GIF como <img ...>. Solo se acepta ese formato exacto y de giphy.com; cualquier otro
 # '<' o '>' se neutraliza para que nadie pueda inyectar HTML/JavaScript en la sala (XSS almacenado).
-GIF_HTML = re.compile(r'^<img src="https://[a-z0-9.-]*giphy\.com/[^"\s<>]+" class="[^"<>]*" alt="Sticker"/>$')
+GIF_HTML = re.compile(r'^<img src="https://(?:[a-z0-9-]+\.)*giphy\.com/[^"\s<>]+" class="[^"<>]*" alt="Sticker"/>$')
 MAX_MESSAGE_CHARS = 2000
 
 

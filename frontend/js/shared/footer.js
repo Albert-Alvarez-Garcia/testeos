@@ -19,6 +19,6 @@
     const f = document.createElement('footer');
     f.id = 'cb-legal-footer';
     const mk = (href, text) => { const a = document.createElement('a'); a.href = href; a.textContent = text; return a; };
-    f.append('Card Binder Pro · ', mk('privacy.html', 'Privacy Policy / Privacidad'), '·', mk('terms.html', 'Terms of Service / Términos'));
+    f.append('Card Binder Pro · ', mk('/privacy.html', 'Privacy Policy / Privacidad'), '·', mk('/terms.html', 'Terms of Service / Términos'));
     document.body.appendChild(f);
 })();

@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🃏%3C/text%3E%3C/svg%3E">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Binder Pro - Perfil y Social</title>
     <!-- Tailwind CSS CDN -->
@@ -118,7 +119,15 @@
                 </div>
             </dl>
             <div id="fm-messages" class="grow overflow-y-auto px-4 space-y-2 min-h-[160px] max-h-64" aria-live="polite"></div>
+            <p id="fm-typing" class="hidden px-4 text-xs italic text-[color:var(--text-muted)]" aria-live="polite"></p>
+            <div id="fm-gif-picker" class="hidden px-4 pb-2">
+                <input type="text" id="fm-gif-search" maxlength="60" autocomplete="off" placeholder="Buscar GIF..." aria-label="Buscar GIF" class="w-full text-sm mb-2">
+                <div id="fm-gif-results" class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto"></div>
+                <img src="public/assets/Poweredby_100px-Black_VertLogo.png" alt="Powered by Giphy" class="h-4 opacity-75 mt-1">
+            </div>
             <form id="fm-form" class="p-4 flex gap-2 border-t border-[rgb(var(--c-gold-dark))]">
+                <button type="button" id="fm-gif-btn" class="btn-fantasy text-sm" title="Enviar un GIF" aria-label="Enviar un GIF">GIF</button>
+                <button type="button" id="fm-invite-btn" class="btn-fantasy text-sm" title="Invitar a jugar" aria-label="Invitar a jugar">🎮</button>
                 <input type="text" id="fm-input" maxlength="1000" autocomplete="off" placeholder="Escribe un mensaje" aria-label="Mensaje" class="w-full text-sm">
                 <button type="submit" class="btn-fantasy text-sm whitespace-nowrap">Enviar</button>
             </form>

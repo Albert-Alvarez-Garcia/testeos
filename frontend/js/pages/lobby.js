@@ -77,7 +77,9 @@
 
         // ---------------- UI ----------------
         function updateLobbyUI(players, maxPlayers) {
-            playerCount.textContent = `${players.length}/${maxPlayers}`;
+            const active = players.filter(p => !p.spectator);
+            const watchers = players.length - active.length;
+            playerCount.textContent = `${active.length}/${maxPlayers}` + (watchers ? ` · 👁 ${watchers}` : "");
             playersList.innerHTML = "";
             isHost = false;
 
@@ -106,6 +108,13 @@
                     nameSpan.appendChild(hostBadge);
                 }
 
+                if (p.spectator) {
+                    const eye = document.createElement("span");
+                    eye.className = "text-[10px] px-1.5 py-0.5 rounded font-bold border border-[rgb(var(--c-gold)/0.3)] text-[rgb(var(--c-amber-200)/0.7)]";
+                    eye.textContent = "👁 ESPECTADOR";
+                    nameSpan.appendChild(eye);
+                }
+
                 li.appendChild(nameSpan);
                 playersList.appendChild(li);
 
@@ -127,7 +136,7 @@
                 maxPlayersSelect.value = maxPlayers;
                 // No permitir un máximo menor que los jugadores ya presentes
                 Array.from(maxPlayersSelect.options).forEach(opt => {
-                    opt.disabled = parseInt(opt.value) < players.length;
+                    opt.disabled = parseInt(opt.value) < active.length;
                 });
             } else {
                 hostControls.classList.add("hidden");

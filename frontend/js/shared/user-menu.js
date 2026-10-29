@@ -195,6 +195,11 @@
                 const res = await fetch(API_BASE + '/api/profile/me', {
                     headers: { Accept: 'application/json' }, credentials: 'same-origin'
                 });
+                if (res.status === 401) {
+                    try { localStorage.removeItem('cardbinder_user'); localStorage.removeItem('user_session'); } catch (e) {}
+                    window.location.href = LOGIN_PAGE;
+                    return;
+                }
                 if (!res.ok) return;
                 const me = await res.json();
                 // Otras partes de la página (p. ej. index.js) reaccionan al perfil confirmado por el servidor

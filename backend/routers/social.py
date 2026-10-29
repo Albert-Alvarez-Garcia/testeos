@@ -15,6 +15,7 @@ Para activarlo, en main.py (donde ya incluyes el router de profile):
     from backend.<carpeta> import social
     app.include_router(social.router)
 """
+import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
@@ -31,6 +32,8 @@ router = APIRouter(prefix="/api/social", tags=["Social"])
 
 MAX_MESSAGE_LEN = 1000
 HISTORY_LIMIT = 50
+TYPING_SECONDS = 4
+_typing = {}  # (emisor, receptor) -> instante del último "escribiendo"
 
 
 def get_session_user(x_username: str = Depends(session_username)):
@@ -187,13 +190,21 @@ def get_dm(username: str, after_id: int = Query(0, ge=0), current_user: dict = D
                 "created_at": _iso_utc(r["created_at"]),
             }
             for r in rows
-        ]}
+        ], "typing": (time.monotonic() - _typing.get((other_id, me_id), -100.0)) < TYPING_SECONDS}
     except Exception as e:
         print(f"❌ Error leyendo mensajes directos: {e}")
         raise HTTPException(status_code=500, detail="No se pudieron cargar los mensajes.")
     finally:
         if conn:
             conn.close()
+
+
+@router.post("/dm/{username}/typing")
+def dm_typing(username: str, current_user: dict = Depends(get_session_user)):
+    """Marca que el usuario está escribiendo a ese amigo (caduca a los pocos segundos)."""
+    target = _require_friend(current_user, username)
+    _typing[(str(current_user["id"]), str(target["id"]))] = time.monotonic()
+    return {"ok": True}
 
 
 @router.post("/dm/{username}")

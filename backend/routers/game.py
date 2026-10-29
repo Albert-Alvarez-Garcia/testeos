@@ -7,6 +7,7 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from backend.database import get_db_connection
 from backend.security import ws_username
 from backend.routers.stats import save_game_result
+from backend.routers.chat_notify import announce_game
 
 router = APIRouter(
     prefix="/api/game",
@@ -38,6 +39,8 @@ class GameRoom:
         self.loop_task: Optional[asyncio.Task] = None
         self.cleanup_task: Optional[asyncio.Task] = None
         self.finished = False
+        self.allowed: Optional[set] = None            # jugadores de la partida (None = abierta a todos)
+        self.spectators: Dict[str, dict] = {}         # username -> {"ws"}
 
     def connected_players(self) -> List[dict]:
         return [p for p in self.players.values() if p["ws"] is not None]
@@ -98,11 +101,15 @@ class GameRoom:
     async def broadcast(self, message: dict):
         for p in list(self.players.values()):
             await self.send(p["ws"], message)
+        for s in list(self.spectators.values()):
+            await self.send(s["ws"], message)
 
     async def broadcast_round(self):
         # Se recalcula time_remaining por jugador justo al enviar
         for u, p in list(self.players.items()):
             await self.send(p["ws"], self.snapshot(u))
+        for s in list(self.spectators.values()):
+            await self.send(s["ws"], self.snapshot(None))
 
 
 class GameManager:
@@ -113,6 +120,7 @@ class GameManager:
         self.room_config: Dict[str, int] = {}
         # --- Partidas ---
         self.game_rooms: Dict[str, GameRoom] = {}
+        self.pending_players: Dict[str, List[str]] = {}   # jugadores que fija el lobby al empezar
 
     # --- GESTIÓN DE LOBBY CON CONTROL DE DUPLICADOS ---
     async def connect_lobby(self, websocket: WebSocket, room_id: str, username: str):
@@ -131,14 +139,17 @@ class GameManager:
             if room_id not in self.lobbies:
                 self.lobbies[room_id] = []
 
-        self.lobbies[room_id].append(websocket)
-        is_host = len(self.lobbies[room_id]) == 1
         if room_id not in self.room_config:
             self.room_config[room_id] = 4
-
+        members = self.lobbies[room_id]
+        active = [w for w in members if not self.lobby_players.get(w, {}).get("spectator")]
+        is_spectator = len(active) >= self.room_config[room_id]
+        has_host = any(self.lobby_players.get(w, {}).get("is_host") for w in members)
+        members.append(websocket)
         self.lobby_players[websocket] = {
             "username": username,
-            "is_host": is_host
+            "is_host": (not is_spectator) and not has_host,
+            "spectator": is_spectator,
         }
         await self.broadcast_lobby_state(room_id)
 
@@ -147,10 +158,7 @@ class GameManager:
             if websocket in self.lobbies[room_id]:
                 self.lobbies[room_id].remove(websocket)
 
-            if self.lobby_players.get(websocket, {}).get("is_host") and self.lobbies[room_id]:
-                next_host_ws = self.lobbies[room_id][0]
-                if next_host_ws in self.lobby_players:
-                    self.lobby_players[next_host_ws]["is_host"] = True
+            self._rebalance(room_id)
 
             if not self.lobbies[room_id]:
                 del self.lobbies[room_id]
@@ -160,12 +168,28 @@ class GameManager:
         if websocket in self.lobby_players:
             del self.lobby_players[websocket]
 
+    def _rebalance(self, room_id: str):
+        """Un espectador ocupa el hueco libre y siempre hay un host entre los jugadores."""
+        members = self.lobbies.get(room_id, [])
+        mx = self.room_config.get(room_id, 4)
+        info = lambda w: self.lobby_players.get(w, {})
+        for w in members:
+            active = [x for x in members if not info(x).get("spectator")]
+            if len(active) >= mx:
+                break
+            if info(w).get("spectator"):
+                info(w)["spectator"] = False
+        active = [x for x in members if not info(x).get("spectator")]
+        if active and not any(info(x).get("is_host") for x in active):
+            info(active[0])["is_host"] = True
+
     async def broadcast_lobby_state(self, room_id: str):
         if room_id in self.lobbies:
             players_list = [
                 {
                     "username": self.lobby_players[ws]["username"],
-                    "is_host": self.lobby_players[ws]["is_host"]
+                    "is_host": self.lobby_players[ws]["is_host"],
+                    "spectator": bool(self.lobby_players[ws].get("spectator")),
                 }
                 for ws in self.lobbies[room_id] if ws in self.lobby_players
             ]
@@ -187,10 +211,31 @@ class GameManager:
         await websocket.accept()
 
         room = self.game_rooms.get(room_id)
+        pending = self.pending_players.pop(room_id, None)
+        if room is not None and pending is not None and room.finished:
+            self._drop_game_room(room)
+            room = None
         if room is None:
             room = GameRoom(room_id)
+            if pending is not None:
+                room.allowed = set(pending)
             self.game_rooms[room_id] = room
             room.loop_task = asyncio.create_task(self._game_loop(room))
+
+        # Espectador: ve la partida en directo, pero el servidor nunca acepta sus respuestas
+        if room.allowed is not None and username not in room.allowed:
+            old = room.spectators.get(username)
+            room.spectators[username] = {"ws": websocket}
+            if old and old["ws"] is not websocket:
+                try:
+                    await old["ws"].close()
+                except Exception:
+                    pass
+            await room.send(websocket, {"type": "ROLE", "role": "spectator"})
+            if room.card is not None and room.phase != "waiting":
+                await room.send(websocket, room.snapshot(None))
+            await room.send(websocket, room.scores_payload())
+            return room
 
         if room.cleanup_task:
             room.cleanup_task.cancel()
@@ -214,6 +259,7 @@ class GameManager:
                 "ws": websocket,
             }
 
+        await room.send(websocket, {"type": "ROLE", "role": "player"})
         # Estado actual con el tiempo restante REAL (igual para todos)
         if room.card is not None and room.phase != "waiting":
             await room.send(websocket, room.snapshot(username))
@@ -221,6 +267,12 @@ class GameManager:
         return room
 
     async def disconnect_game(self, room: GameRoom, username: str, websocket: WebSocket):
+        spec = room.spectators.get(username)
+        if spec is not None and username not in room.players:
+            if spec["ws"] is websocket:
+                del room.spectators[username]
+            return
+
         player = room.players.get(username)
         if player and player["ws"] is websocket:
             player["ws"] = None
@@ -309,6 +361,10 @@ class GameManager:
                         await asyncio.to_thread(save_game_result, "guess_card", room.room_id, room.ranking(), leader[0])
                     except Exception as e:
                         print(f"⚠️ No se pudo guardar el resultado: {e}")
+                    try:
+                        await announce_game("Adivina la Carta", leader[0], room.ranking())
+                    except Exception as e:
+                        print(f"⚠️ No se pudo avisar en el chat: {e}")
                     await room.broadcast({
                         "type": "GAME_OVER",
                         "winner": leader[0],
@@ -454,13 +510,20 @@ async def lobby_websocket(websocket: WebSocket, room_id: str):
             elif action == "UPDATE_CONFIG":
                 player_info = manager.lobby_players.get(websocket, {})
                 if player_info.get("is_host"):
-                    new_max = int(data.get("max_players", 4))
-                    manager.room_config[room_id] = max(1, min(4, new_max))
+                    new_max = max(1, min(4, int(data.get("max_players", 4))))
+                    active = [w for w in manager.lobbies.get(room_id, [])
+                              if not manager.lobby_players.get(w, {}).get("spectator")]
+                    if new_max >= len(active):
+                        manager.room_config[room_id] = new_max
+                        manager._rebalance(room_id)
                     await manager.broadcast_lobby_state(room_id)
 
             elif action == "START_GAME":
                 player_info = manager.lobby_players.get(websocket, {})
                 if player_info.get("is_host"):
+                    manager.pending_players[room_id] = [
+                        manager.lobby_players[w]["username"] for w in manager.lobbies.get(room_id, [])
+                        if w in manager.lobby_players and not manager.lobby_players[w].get("spectator")]
                     start_signal = {"type": "START_GAME"}
                     if room_id in manager.lobbies:
                         for conn in manager.lobbies[room_id]:

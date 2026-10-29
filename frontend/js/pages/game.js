@@ -38,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let selectedOption = null;
     let locked = true;
     let gameEnded = false;
+    let isSpectator = false;      // los espectadores ven la partida pero no pueden responder
 
     // Los estilos de cada estado están en css/game.css ([data-state="..."])
     function setBtnState(btn, state) {
@@ -61,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ws.onmessage = (event) => {
             const data = JSON.parse(event.data);
             switch (data.type) {
+                case "ROLE": setRole(data.role); break;
                 case "NEW_ROUND": startRound(data); break;
                 case "ANSWER_RESULT": handleAnswerResult(data); break;
                 case "ROUND_END": showReveal(data.correct_answer, data.round_winner); break;
@@ -77,16 +79,24 @@ document.addEventListener("DOMContentLoaded", () => {
         };
     }
 
+    function setRole(role) {
+        isSpectator = role === "spectator";
+        if (isSpectator) {
+            lockOptions();
+            if (roundBanner) roundBanner.textContent = "👁 Modo espectador: estás viendo la partida";
+        }
+    }
+
     // ---------------- Rondas ----------------
     function startRound(data) {
         phase = data.phase || "playing";
         roundDuration = data.round_duration || 15;
         roundEndsAt = performance.now() + (data.time_remaining || 0) * 1000;
         selectedOption = null;
-        locked = false;
+        locked = isSpectator;
 
         if (roundNumberLabel) roundNumberLabel.textContent = data.round_number || 1;
-        if (roundBanner) roundBanner.textContent = "";
+        if (roundBanner) roundBanner.textContent = isSpectator ? "👁 Modo espectador" : "";
         if (titleMask) titleMask.style.display = "block";
 
         if (cardImg) {
@@ -95,6 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         renderOptions(data.options || []);
+        if (isSpectator) lockOptions();
 
         if (phase === "reveal") {
             showReveal(data.correct_answer, data.round_winner);
@@ -121,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function handlePlayerClick(optionText, btn) {
-        if (locked || phase !== "playing") return;
+        if (isSpectator || locked || phase !== "playing") return;
         if (!ws || ws.readyState !== WebSocket.OPEN) return;
 
         selectedOption = optionText;

@@ -12,9 +12,11 @@ const IS_HTTPS = loc.protocol === "https:";
 //   · https -> mismo origen que la web (p. ej. localhost:8443). Nginx hace de proxy hacia la API,
 //              así el TLS lo termina Nginx y no hay contenido mixto ni CORS.
 //   · http  -> backend directo en el puerto 8000 del mismo host (red local / desarrollo).
+//export const API_HOST =
+ // import.meta.env?.VITE_PONG_API_HOST || (IS_HTTPS ? loc.host : `${loc.hostname}:8000`);
 export const API_HOST =
-  import.meta.env?.VITE_PONG_API_HOST || (IS_HTTPS ? loc.host : `${loc.hostname}:8000`);
-
+  import.meta.env?.VITE_PONG_API_HOST || loc.host;
+  
 const HTTP_PROTO = IS_HTTPS ? "https" : "http";
 const WS_PROTO = IS_HTTPS ? "wss" : "ws";
 
