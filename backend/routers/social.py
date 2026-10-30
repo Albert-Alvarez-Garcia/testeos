@@ -48,6 +48,13 @@ class DirectMessageIn(BaseModel):
     message: str = Field(..., max_length=MAX_MESSAGE_LEN)
 
 
+def _dm_status(row) -> str:
+    """sent (✓) · delivered (✓✓, ya le ha llegado al receptor) · read (✓✓ azul, ha abierto la conversación)."""
+    if row.get("read_at") is not None:
+        return "read"
+    return "delivered" if row.get("delivered_at") is not None else "sent"
+
+
 def _iso_utc(value) -> str:
     if isinstance(value, datetime):
         if value.tzinfo is None:
@@ -77,6 +84,7 @@ def _ensure_table():
             );
         """)
         cursor.execute("ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS read_at TIMESTAMPTZ;")
+        cursor.execute("ALTER TABLE direct_messages ADD COLUMN IF NOT EXISTS delivered_at TIMESTAMPTZ;")
         cursor.execute("""
             CREATE INDEX IF NOT EXISTS idx_direct_messages_pair
             ON direct_messages (sender_id, recipient_id, id);
@@ -164,8 +172,8 @@ def get_dm(username: str, after_id: int = Query(0, ge=0), current_user: dict = D
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT id, sender_id, message, created_at FROM (
-                SELECT id, sender_id, message, created_at
+            SELECT id, sender_id, message, created_at, delivered_at, read_at FROM (
+                SELECT id, sender_id, message, created_at, delivered_at, read_at
                 FROM direct_messages
                 WHERE ((sender_id = %s AND recipient_id = %s) OR (sender_id = %s AND recipient_id = %s))
                   AND id > %s
@@ -177,10 +185,13 @@ def get_dm(username: str, after_id: int = Query(0, ge=0), current_user: dict = D
         rows = cursor.fetchall()
         if rows:  # al abrir la conversación, lo recibido hasta aquí queda como visto
             cursor.execute("""
-                UPDATE direct_messages SET read_at = now()
+                UPDATE direct_messages SET read_at = now(), delivered_at = COALESCE(delivered_at, now())
                 WHERE recipient_id = %s AND sender_id = %s AND read_at IS NULL AND id <= %s;
             """, (me_id, other_id, rows[-1]["id"]))
             conn.commit()
+        cursor.execute("SELECT id, delivered_at, read_at FROM direct_messages WHERE sender_id = %s AND recipient_id = %s ORDER BY id DESC LIMIT %s;",
+                       (me_id, other_id, HISTORY_LIMIT))
+        statuses = {str(r["id"]): _dm_status(r) for r in cursor.fetchall()}
         cursor.close()
         return {"messages": [
             {
@@ -188,9 +199,10 @@ def get_dm(username: str, after_id: int = Query(0, ge=0), current_user: dict = D
                 "mine": r["sender_id"] == me_id,
                 "message": r["message"],
                 "created_at": _iso_utc(r["created_at"]),
+                "status": _dm_status(r) if r["sender_id"] == me_id else None,
             }
             for r in rows
-        ], "typing": (time.monotonic() - _typing.get((other_id, me_id), -100.0)) < TYPING_SECONDS}
+        ], "statuses": statuses, "typing": (time.monotonic() - _typing.get((other_id, me_id), -100.0)) < TYPING_SECONDS}
     except Exception as e:
         print(f"❌ Error leyendo mensajes directos: {e}")
         raise HTTPException(status_code=500, detail="No se pudieron cargar los mensajes.")
@@ -260,6 +272,9 @@ def notifications(current_user: dict = Depends(get_session_user)):
             GROUP BY sender_id;
         """, (str(current_user["id"]),))
         counts = {r["sender_id"]: int(r["n"]) for r in cursor.fetchall()}
+        cursor.execute("UPDATE direct_messages SET delivered_at = now() WHERE recipient_id = %s AND delivered_at IS NULL;",
+                       (str(current_user["id"]),))
+        conn.commit()
         cursor.close()
     except Exception as e:
         print(f"❌ Error leyendo notificaciones: {e}")

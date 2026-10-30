@@ -313,7 +313,7 @@
                 section('Solicitudes enviadas', s.outgoing, 'No has enviado ninguna solicitud.', (u) =>
                     userRow(u, 'pendiente de respuesta', [actionBtn('Cancelar', 'ghost', () => reject(u.username))])),
                 section('Amigos', s.friends, 'Aún no tienes amigos añadidos.', (u) =>
-                    userRow(u, null, [actionBtn('Mensaje', 'primary', () => openFriend(u)), actionBtn('Eliminar', 'ghost', () => removeFriend(u.username)), actionBtn('Bloquear', 'danger', () => block(u.username))], () => openFriend(u))),
+                    userRow(u, u.online ? '🟢 En línea' : '⚫ Desconectado', [actionBtn('Mensaje', 'primary', () => openFriend(u)), actionBtn('Eliminar', 'ghost', () => removeFriend(u.username)), actionBtn('Bloquear', 'danger', () => block(u.username))], () => openFriend(u))),
                 section('Bloqueados', s.blocked, 'No has bloqueado a nadie.', (u) =>
                     userRow(u, null, [actionBtn('Desbloquear', 'ghost', () => unblock(u.username))]))
             );
@@ -321,6 +321,9 @@
             if (e.message !== 'Sesión caducada') box.replaceChildren(el('p', 'text-xs text-red-400', 'No se pudo cargar la lista: ' + e.message));
         }
     }
+
+    // El estado en línea de los amigos se refresca solo cada 15 s mientras la pestaña está visible
+    setInterval(() => { if (!document.hidden) loadSocial(); }, 15000);
 
     // Búsqueda con resultados accionables
     const searchInput = $('search-input');
@@ -395,14 +398,36 @@
         if (on) t.textContent = fm.user + ' está escribiendo…';
     }
 
+    // ✓ enviado · ✓✓ recibido · ✓✓ azul = visto
+    function setTick(n, status) {
+        const T = { sent: ['✓', 'Enviado'], delivered: ['✓✓', 'Recibido'], read: ['✓✓', 'Visto'] };
+        const [txt, title] = T[status] || T.sent;
+        n.textContent = txt;
+        n.title = title;
+        n.setAttribute('aria-label', title);
+        n.className = 'ml-1 ' + (status === 'read' ? 'text-sky-400' : 'text-[color:var(--text-muted)]');
+    }
+
+    function updateTicks(map) {
+        if (!map) return;
+        fmBox.querySelectorAll('[data-mid]').forEach((n) => { if (map[n.dataset.mid]) setTick(n, map[n.dataset.mid]); });
+    }
+
     function fmBubble(m) {
         const wrap = el('div', 'flex ' + (m.mine ? 'justify-end' : 'justify-start'));
         const b = el('div', 'max-w-[80%] px-3 py-2 rounded-lg text-sm break-words border ' +
             (m.mine ? 'bg-[rgb(var(--c-raised))] border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-100))]' : 'bg-[rgb(var(--c-ink-3))] border-[rgb(var(--c-gold-dark))] text-[color:var(--text-main)]'));
         b.append(dmContent(m)); // textContent / DOM: nunca se interpreta HTML
         const t = new Date(m.created_at);
-        b.append(el('p', 'text-[10px] text-[color:var(--text-muted)] mt-1 text-right',
-            isNaN(t) ? null : t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })));
+        const meta = el('p', 'text-[10px] text-[color:var(--text-muted)] mt-1 text-right',
+            isNaN(t) ? null : t.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        if (m.mine) {
+            const tick = el('span', '', '');
+            tick.dataset.mid = String(m.id);
+            setTick(tick, m.status);
+            meta.append(tick);
+        }
+        b.append(meta);
         wrap.append(b);
         return wrap;
     }
@@ -425,7 +450,7 @@
         if (!who) return;
         try {
             const data = await socialApi('/dm/' + encodeURIComponent(who) + '?after_id=' + fm.lastId);
-            if (fm.user === who) { appendDm(data.messages || []); showTyping(!!data.typing); }
+            if (fm.user === who) { appendDm(data.messages || []); updateTicks(data.statuses); showTyping(!!data.typing); }
         } catch (e) {
             if (first && e.message !== 'Sesión caducada') toast(e.message, true);
         }

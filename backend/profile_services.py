@@ -17,6 +17,7 @@ import time
 from typing import List
 
 from backend.database import get_db_connection
+from backend.presence import is_online
 from backend.routers.auth import (
     AVATAR_DIR,
     AVATAR_MEDIA_TYPES,
@@ -194,6 +195,8 @@ def list_social(me_id) -> dict:
             (me_id,),
         )
         blocked = [_card(row) for row in cursor.fetchall()]
+        for f in friends:
+            f["online"] = is_online(f["username"])
         return {"friends": friends, "incoming": incoming, "outgoing": outgoing, "blocked": blocked}
 
     return _run(action)

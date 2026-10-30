@@ -47,14 +47,23 @@
                     <div class="text-[11px] text-[rgb(var(--c-amber-200)/0.6)]">Ocupación: <span class="text-emerald-400 font-semibold">${escapeHtml(room.current_players)}/${escapeHtml(room.max_players)}</span> jugadores</div>
                 `;
 
+                if (room.in_game || room.spectators) {
+                    const st = document.createElement("div");
+                    st.className = "text-[11px] text-amber-300 mt-0.5";
+                    st.textContent = (room.in_game ? `▶ En curso · ronda ${room.round || 1} · ` : "") + `👁 ${room.spectators || 0} espectador(es)`;
+                    infoDiv.appendChild(st);
+                }
+
                 const joinBtn = document.createElement("button");
                 joinBtn.className = "bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer";
-                joinBtn.textContent = "Unirse";
+                joinBtn.textContent = room.in_game ? "👁 Ver partida" : "Unirse";
                 
                 joinBtn.addEventListener("click", () => {
                     const username = usernameInput.value.trim() || "Conjurador";
                     localStorage.setItem("user_session", JSON.stringify({ username }));
-                    window.location.href = `lobby.html?room=${encodeURIComponent(room.room_id)}`;
+                    window.location.href = room.in_game
+                        ? `game.html?room=${encodeURIComponent(room.room_id)}&spectate=1`
+                        : `lobby.html?room=${encodeURIComponent(room.room_id)}`;
                 });
 
                 div.appendChild(infoDiv);

@@ -26,6 +26,8 @@ from urllib.parse import urlparse
 
 from fastapi import Header, HTTPException, Request, WebSocket
 
+from backend.presence import touch
+
 COOKIE_NAME = "cb_session"
 SESSION_TTL_SECONDS = int(os.getenv("SESSION_TTL_HOURS", "168")) * 3600
 ALLOW_LEGACY = os.getenv("ALLOW_LEGACY_HEADER", "1").strip() == "1"
@@ -123,6 +125,7 @@ def session_username(request: Request, x_username: str = Header(None)) -> Option
     if name:
         if request.method not in _SAFE_METHODS and not _same_origin(request.headers):
             raise HTTPException(status_code=403, detail="Origen no permitido.")
+        touch(name)
         return name
     if ALLOW_LEGACY and x_username and x_username.strip():
         return x_username.strip()
@@ -137,6 +140,7 @@ def ws_username(websocket: WebSocket, legacy_name: Optional[str] = None) -> Opti
     token = websocket.cookies.get(COOKIE_NAME)
     name = decode_token(token) if token else None
     if name:
+        touch(name)
         return name
     if ALLOW_LEGACY and legacy_name and legacy_name.strip():
         return legacy_name.strip()

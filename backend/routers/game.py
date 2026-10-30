@@ -207,8 +207,16 @@ class GameManager:
     # -----------------------------------------------------------------------
     # PARTIDA SINCRONIZADA (reloj del servidor)
     # -----------------------------------------------------------------------
-    async def connect_game(self, websocket: WebSocket, room_id: str, username: str) -> GameRoom:
+    async def connect_game(self, websocket: WebSocket, room_id: str, username: str,
+                           spectate_only: bool = False) -> Optional[GameRoom]:
         await websocket.accept()
+
+        # Modo "solo ver": nunca crea una partida; si no hay una en curso, se rechaza
+        if spectate_only:
+            existing = self.game_rooms.get(room_id)
+            if existing is None or existing.finished or existing.allowed is None:
+                await websocket.close(code=4404)
+                return None
 
         room = self.game_rooms.get(room_id)
         pending = self.pending_players.pop(room_id, None)
@@ -472,15 +480,25 @@ def get_random_card_with_options():
 # --- ENDPOINT REST PARA LISTAR SALAS ACTIVAS ---
 @router.get("/rooms")
 def get_active_rooms():
-    active_rooms = []
-    for room_id, players in manager.lobbies.items():
-        max_p = manager.room_config.get(room_id, 4)
-        active_rooms.append({
+    rooms = {}
+    for room_id, members in manager.lobbies.items():
+        active = [w for w in members if not manager.lobby_players.get(w, {}).get("spectator")]
+        rooms[room_id] = {
             "room_id": room_id,
-            "current_players": len(players),
-            "max_players": max_p
-        })
-    return {"rooms": active_rooms}
+            "current_players": len(active),
+            "max_players": manager.room_config.get(room_id, 4),
+            "in_game": False,
+            "spectators": len(members) - len(active),
+        }
+    # Partidas ya empezadas: siguen apareciendo (aunque el lobby ya esté vacío) para poder verlas como espectador
+    for room_id, game in manager.game_rooms.items():
+        if game.finished or game.allowed is None:
+            continue
+        entry = rooms.setdefault(room_id, {"room_id": room_id, "current_players": len(game.players),
+                                           "max_players": len(game.allowed)})
+        entry.update(in_game=True, round=game.round_number, spectators=len(game.spectators),
+                     players=sorted(game.players))
+    return {"rooms": list(rooms.values())}
 
 
 # --- WEBSOCKET DEL LOBBY ---
@@ -545,7 +563,10 @@ async def game_websocket(websocket: WebSocket, room_id: str):
     if not username:
         await websocket.close(code=4401)
         return
-    room = await manager.connect_game(websocket, room_id, username)
+    room = await manager.connect_game(websocket, room_id, username,
+                                      spectate_only=websocket.query_params.get("spectate") == "1")
+    if room is None:
+        return
 
     try:
         while True:

@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // ---------------- WebSocket ----------------
     function connectGameWebSocket() {
         if (gameEnded || leftGame) return;
-        ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${API_HOST}/api/game/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
+        ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${API_HOST}/api/game/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}${urlParams.get("spectate") === "1" ? "&spectate=1" : ""}`);
 
         ws.onopen = () => {
             if (roomStatus) roomStatus.textContent = `🟢 En línea - ${roomId}`;
@@ -71,7 +71,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         };
 
-        ws.onclose = () => {
+        ws.onclose = (ev) => {
+            if (ev && ev.code === 4404) {   // la partida que se quería ver ya terminó
+                leftGame = true;
+                if (roomStatus) roomStatus.textContent = "La partida ya no está disponible. Volviendo a las salas…";
+                setTimeout(() => { window.location.href = "rooms.html"; }, 1500);
+                return;
+            }
             if (gameEnded || leftGame) return;
             if (roomStatus) roomStatus.textContent = "🔴 Desconectado. Reintentando...";
             lockOptions();
