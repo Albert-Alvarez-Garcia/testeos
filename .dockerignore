@@ -1,5 +1,7 @@
 # >>> reorganize
 .git
+.env
+.env.*
 _archive
 logs
 tools
@@ -9,4 +11,7 @@ certs
 **/*.crdownload
 *.md
 noesun.env*
+**/default-cards.json
+**/default-cards.jsonl.gz
+data/emergency-assets
 # <<< reorganize

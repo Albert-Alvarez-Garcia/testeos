@@ -18,6 +18,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const endRanking = document.getElementById("end-ranking");
     const endCountdown = document.getElementById("end-countdown");
 
+    window.addEventListener("error", (event) => {
+        if (roomStatus && event.message) roomStatus.textContent = `Error JavaScript: ${event.message.slice(0, 100)}`;
+    });
+    window.addEventListener("unhandledrejection", (event) => {
+        if (roomStatus) roomStatus.textContent = `Error JavaScript: ${String(event.reason || "promesa rechazada").slice(0, 100)}`;
+    });
+
     const userSession = JSON.parse(localStorage.getItem("user_session")) ||
                         JSON.parse(localStorage.getItem("cardbinder_user")) || {
                             username: "Conjurador"
@@ -39,6 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let locked = true;
     let gameEnded = false;
     let isSpectator = false;      // los espectadores ven la partida pero no pueden responder
+    let waitingRoundTimeout = null;
 
     // Los estilos de cada estado están en css/game.css ([data-state="..."])
     function setBtnState(btn, state) {
@@ -56,11 +64,25 @@ document.addEventListener("DOMContentLoaded", () => {
         ws = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${API_HOST}/api/game/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}${urlParams.get("spectate") === "1" ? "&spectate=1" : ""}`);
 
         ws.onopen = () => {
-            if (roomStatus) roomStatus.textContent = `🟢 En línea - ${roomId}`;
+            if (roomStatus) roomStatus.textContent = `WebSocket conectada; esperando ronda · ${roomId}`;
+            clearTimeout(waitingRoundTimeout);
+            const socket = ws;
+            waitingRoundTimeout = setTimeout(() => {
+                if (socket === ws && socket.readyState === WebSocket.OPEN && phase === "waiting" && roomStatus) {
+                    roomStatus.textContent = "Conexión abierta, pero no ha llegado NEW_ROUND del servidor.";
+                }
+            }, 8000);
         };
 
         ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
+            let data;
+            try {
+                data = JSON.parse(event.data);
+            } catch (error) {
+                console.error("Mensaje WebSocket no válido:", error, event.data);
+                if (roomStatus) roomStatus.textContent = "El servidor envió un mensaje ilegible.";
+                return;
+            }
             switch (data.type) {
                 case "ROLE": setRole(data.role); break;
                 case "NEW_ROUND": startRound(data); break;
@@ -72,6 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
 
         ws.onclose = (ev) => {
+            clearTimeout(waitingRoundTimeout);
             if (ev && ev.code === 4404) {   // la partida que se quería ver ya terminó
                 leftGame = true;
                 if (roomStatus) roomStatus.textContent = "La partida ya no está disponible. Volviendo a las salas…";
@@ -79,9 +102,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
             if (gameEnded || leftGame) return;
-            if (roomStatus) roomStatus.textContent = "🔴 Desconectado. Reintentando...";
+            if (roomStatus) roomStatus.textContent = `WebSocket cerrada (código ${ev?.code || 0}). Reintentando…`;
             lockOptions();
             setTimeout(connectGameWebSocket, 2000);
+        };
+
+        ws.onerror = () => {
+            if (roomStatus) roomStatus.textContent = "Error de WebSocket; comprueba la conexión y vuelve a esperar.";
         };
     }
 
@@ -110,7 +137,11 @@ document.addEventListener("DOMContentLoaded", () => {
             cardImg.src = data.image_uri || "public/assets/nocapi.png";
         }
 
-        renderOptions(data.options || []);
+        const options = Array.isArray(data.options) ? data.options : [];
+        renderOptions(options);
+        if (roomStatus) {
+            roomStatus.textContent = `Ronda ${data.round_number || 1}: ${options.length} opciones${isSpectator ? " · espectador" : ""}`;
+        }
         if (isSpectator) lockOptions();
 
         if (phase === "reveal") {
@@ -123,6 +154,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function renderOptions(options) {
         optionsContainer.innerHTML = "";
+        if (!options.length) {
+            const message = document.createElement("p");
+            message.className = "text-xs text-red-300 text-center";
+            message.textContent = "El servidor envió la ronda sin opciones.";
+            optionsContainer.appendChild(message);
+            return;
+        }
         options.forEach(optionText => {
             const btn = document.createElement("button");
             btn.textContent = optionText;

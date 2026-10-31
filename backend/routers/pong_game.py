@@ -214,6 +214,8 @@ class PongRoom:
 
         # username -> {"ws": WebSocket | None}  (ws=None si está desconectado)
         self.players: Dict[str, dict] = {}
+        # Espectadores separados de los jugadores: nunca ocupan plaza ni intervienen en el resultado.
+        self.spectators: Dict[str, dict] = {}
 
         # Personalización
         self.ball_mana: str = self.config["ball_mana"]
@@ -387,6 +389,7 @@ class PongRoom:
         if message.get("type") == "GAME_OVER":
             await self.record_result(message)
         sockets = [p["ws"] for p in list(self.players.values()) if p["ws"] is not None]
+        sockets.extend(s["ws"] for s in list(self.spectators.values()) if s["ws"] is not None)
         if sockets:
             await asyncio.gather(*(safe_send(ws, message) for ws in sockets))
 
@@ -395,9 +398,12 @@ class PongRoom:
             await self.broadcast(self.state_payload())
 
     async def broadcast_info(self):
-        targets = [(u, p["ws"]) for u, p in list(self.players.items()) if p["ws"] is not None]
+        targets = [(u, p["ws"], False) for u, p in list(self.players.items()) if p["ws"] is not None]
+        targets.extend((s["username"], s["ws"], True) for s in list(self.spectators.values())
+                       if s["ws"] is not None)
         if targets:
-            await asyncio.gather(*(safe_send(ws, self.info_payload(u)) for u, ws in targets))
+            await asyncio.gather(*(safe_send(ws, {**self.info_payload(u), "spectator": is_spectator})
+                                   for u, ws, is_spectator in targets))
 
     # ------------------------- Entradas del jugador -------------------------
     def handle_input(self, username: str, data: dict):
@@ -534,6 +540,7 @@ class PongRoom:
     def finish(self, winner_side: Optional[int], reason: str) -> List[dict]:
         if self.finished:
             return []
+        missing_players = [self.slots[i] or f"Jugador {i + 1}" for i in self.missing_slots()] if reason == "no_show" else []
         self.finished = True
         self.phase = "finished"
         self.winner_side = winner_side
@@ -551,6 +558,7 @@ class PongRoom:
             "winner": names[winner_side] if winner_side is not None else None,
             "winner_side": winner_side,
             "reason": reason,        # goal_limit | time | sudden_death | forfeit | no_show | abandoned
+            "missing_players": missing_players,
             "scores": list(self.scores),
             "ranking": ranking,
             "duration": round(self.elapsed, 1),
@@ -943,6 +951,7 @@ class PongManager:
     async def connect_game(self, websocket: WebSocket, room_id: str, username: str,
                            query: Optional[dict] = None) -> Optional[PongRoom]:
         await websocket.accept()
+        spectate_only = (query or {}).get("spectate") == "1"
 
         pending = self._take_pending(room_id)
         room = self.game_rooms.get(room_id)
@@ -951,6 +960,13 @@ class PongManager:
         if room is not None and pending is not None and room.token != pending["token"]:
             self._drop_game_room(room)
             room = None
+
+        # El modo espectador solo puede conectarse a una partida ya iniciada; nunca crea salas.
+        if spectate_only and (room is None or room.finished):
+            await safe_send(websocket, {"type": "ERROR", "code": "NO_ACTIVE_GAME",
+                                        "message": "No hay una partida activa para ver."})
+            await websocket.close(code=1008)
+            return None
 
         if room is None:
             if pending is not None:
@@ -964,12 +980,19 @@ class PongManager:
             self.game_rooms[room_id] = room
             room.loop_task = asyncio.create_task(self._game_loop(room))
 
-        error = room.admit(username)
-        if error:
+        if spectate_only:
+            # Puede mirar desde otra pestaña/dispositivo incluso con la misma cuenta que juega.
+            # El socket de espectador tiene una identidad de conexión propia y nunca ocupa plaza.
+            spectator_id = f"{username}:{uuid.uuid4().hex}"
+            room.spectators[spectator_id] = {"username": username, "ws": websocket}
+        else:
+            error = room.admit(username)
+        if not spectate_only and error:
             await safe_send(websocket, {
                 "type": "ERROR",
                 "code": error,
-                "message": "La sala está llena." if error == "ROOM_FULL" else "No participas en esta partida.",
+                "message": ("La sala está llena." if error == "ROOM_FULL" else
+                            f"La sesión autenticada es «{username}» y no participa en esta partida."),
             })
             try:
                 await websocket.close(code=1008)
@@ -977,12 +1000,12 @@ class PongManager:
                 pass
             return None
 
-        if room.cleanup_task:
+        if not spectate_only and room.cleanup_task:
             room.cleanup_task.cancel()
             room.cleanup_task = None
 
-        player = room.players.get(username)
-        if player:
+        player = room.players.get(username) if not spectate_only else None
+        if not spectate_only and player:
             # Reconexión: se conserva todo, solo cambia el socket
             old_ws = player["ws"]
             player["ws"] = websocket
@@ -991,7 +1014,7 @@ class PongManager:
                     await old_ws.close(code=4000)
                 except Exception:
                     pass
-        else:
+        elif not spectate_only:
             room.players[username] = {"ws": websocket}
 
         # Estado actual para el que entra y aviso al resto
@@ -1002,6 +1025,10 @@ class PongManager:
         return room
 
     async def disconnect_game(self, room: PongRoom, username: str, websocket: WebSocket):
+        for spectator_id, spectator in list(room.spectators.items()):
+            if spectator["ws"] is websocket:
+                del room.spectators[spectator_id]
+                return
         player = room.players.get(username)
         if not player or player["ws"] is not websocket:
             return                       # ya había sido sustituido por una reconexión
@@ -1152,8 +1179,29 @@ def get_active_rooms():
             "goal_limit": cfg["goal_limit"],
             "time_limit": cfg["time_limit"],
             "in_game": in_game,
+            "spectators": len(game.spectators) if in_game else 0,
             "joinable": len(members) < max_players and not in_game,
+            "config": cfg,
         })
+    # Una partida puede seguir activa después de que sus jugadores salgan del lobby.
+    for room_id, game in manager.game_rooms.items():
+        if game.finished:
+            continue
+        entry = next((r for r in rooms if r["room_id"] == room_id), None)
+        if entry is None:
+            rooms.append({
+                "room_id": room_id,
+                "current_players": sum(1 for name in game.slots if name),
+                "max_players": capacity(game.mode),
+                "mode": game.mode,
+                "win_mode": game.win_mode,
+                "goal_limit": game.config["goal_limit"],
+                "time_limit": game.config["time_limit"],
+                "in_game": True,
+                "spectators": len(game.spectators),
+                "joinable": False,
+                "config": game.config,
+            })
     return {"rooms": rooms}
 
 

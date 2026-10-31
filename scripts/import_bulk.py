@@ -11,7 +11,7 @@ DB_USER = os.getenv("DB_USER", "binder_user")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "binder_password")
 
 # Apuntamos al nuevo archivo comprimido en formato JSONL
-DATA_FILE = os.path.join("data", "default-cards.jsonl.gz")
+DATA_FILE = os.getenv("CARD_DATA_FILE", os.path.join("data", "default-cards.jsonl.gz"))
 
 def import_from_local_json():
     if not os.path.exists(DATA_FILE):
@@ -97,6 +97,11 @@ def import_from_local_json():
                 seen_printings.add(printing_unique_id)
 
     cards_batch = list(cards_map.values())
+    conflict_clause = (
+        "ON CONFLICT (scryfall_printing_id) DO UPDATE SET image_uri = EXCLUDED.image_uri"
+        if os.getenv("CARD_DATA_FILE")
+        else "ON CONFLICT (scryfall_printing_id) DO NOTHING"
+    )
 
     try:
         print(f"💾 Guardando {len(cards_batch)} cartas base únicas...")
@@ -112,12 +117,12 @@ def import_from_local_json():
         """, cards_batch)
 
         print(f"💾 Guardando el lote completo de impresiones ({len(printings_batch)} registros)...")
-        execute_values(cursor, """
+        execute_values(cursor, f"""
             INSERT INTO printings (card_id, scryfall_printing_id, set_code, set_name, collector_number, rarity, image_uri, foil, nonfoil)
             SELECT c.id, v.scryfall_printing_id, v.set_code, v.set_name, v.collector_number, v.rarity, v.image_uri, v.foil, v.nonfoil
             FROM (VALUES %s) AS v(card_oracle_id, scryfall_printing_id, set_code, set_name, collector_number, rarity, image_uri, foil, nonfoil)
             JOIN cards c ON c.scryfall_id = v.card_oracle_id::uuid
-            ON CONFLICT (scryfall_printing_id) DO NOTHING
+            {conflict_clause}
         """, printings_batch)
 
         conn.commit()

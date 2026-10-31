@@ -44,9 +44,9 @@ def clean_and_parse_line(line):
 def fetch_types_from_db():
     print("🔌 Extrayendo tipos directamente desde el contenedor de Docker...")
     try:
-        # Usamos docker exec para consultar la base de datos por dentro, sin líos de puertos ni contraseñas externas
+        # Usamos el nombre del servicio Compose; el nombre real del contenedor cambia por proyecto.
         cmd = [
-            "docker", "exec", "-i", "card_binder_db",
+            "docker", "compose", "exec", "-T", "postgres_db",
             "psql", "-U", "binder_user", "-d", "card_binder_db",
             "-t", "-c", "SELECT DISTINCT type_line FROM cards WHERE type_line IS NOT NULL;"
         ]

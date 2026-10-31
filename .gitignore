@@ -1,9 +1,13 @@
 visor bbdd/data/default-cards.json
 **/default-cards.json
+**/default-cards.jsonl.gz
+data/emergency-assets/
+data/emergency/
 *.db
 *.sqlite
 node_modules/
 .env
+.env.example
 
 # >>> reorganize
 _archive/
@@ -12,6 +16,7 @@ certs/
 *.bak
 *.env
 .env.*
+!.env.example
 noesun.env*
 *.crdownload
 pong-client/dist/

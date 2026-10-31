@@ -61,9 +61,14 @@
                 <h2 id="containerTitle" class="font-magic text-lg text-[rgb(var(--c-amber-400))] font-bold">Selecciona un contenedor</h2>
                 <div id="containerStats" class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">—</div>
             </div>
-            <button id="backToGridBtn" class="btn-fantasy text-xs py-1.5 px-3" type="button">
-                ⬅ Volver al listado
-            </button>
+            <div class="flex flex-wrap gap-2">
+                <button id="deleteContainerBtn" class="btn-fantasy text-xs py-1.5 px-3 border border-red-700/60 text-red-300" type="button" disabled title="Solo se pueden eliminar contenedores vacíos">
+                    🗑️ Eliminar contenedor vacío
+                </button>
+                <button id="backToGridBtn" class="btn-fantasy text-xs py-1.5 px-3" type="button">
+                    ⬅ Volver al listado
+                </button>
+            </div>
         </section>
 
         <!-- Espacio de Trabajo Principal (Rejilla de Contenedores / Visor de Slots) -->

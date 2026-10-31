@@ -37,12 +37,6 @@ FORTYTWO_ME_URL = "https://api.intra.42.fr/v2/me"
 
 FORTYTWO_CLIENT_ID = os.getenv("FORTYTWO_CLIENT_ID")
 FORTYTWO_CLIENT_SECRET = os.getenv("FORTYTWO_CLIENT_SECRET")
-FORTYTWO_REDIRECT_URI = os.getenv(
-    "FORTYTWO_REDIRECT_URI",
-    "http://localhost:8080/api/auth/42/callback"
-)
-
-
 def _redirect_uri(request: Request) -> str:
     """URL de retorno de 42 según el host con el que se entró (localhost, IP del PC...).
     Cada una debe estar dada de alta en la app de 42. PUBLIC_BASE_URL la fija a mano si se define."""
@@ -302,7 +296,7 @@ async def login_with_42(request: Request):
         key="oauth42_state",
         value=state,
         httponly=True,
-        secure=False,
+        secure=(request.headers.get("x-forwarded-proto") or request.url.scheme) == "https",
         samesite="lax",
         max_age=600,
         path="/api/auth/42",

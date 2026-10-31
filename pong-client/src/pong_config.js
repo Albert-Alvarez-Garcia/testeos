@@ -25,8 +25,8 @@ export const httpUrl = (path) => `${HTTP_PROTO}://${API_HOST}${path}`;
 export const lobbyWsUrl = (roomId, username) =>
   `${WS_PROTO}://${API_HOST}/api/pong/ws/lobby/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`;
 
-export const gameWsUrl = (roomId, username) =>
-  `${WS_PROTO}://${API_HOST}/api/pong/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`;
+export const gameWsUrl = (roomId, username, spectator = false) =>
+  `${WS_PROTO}://${API_HOST}/api/pong/ws/game/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}${spectator ? "&spectate=1" : ""}`;
 
 // ---------------------------------------------------------------------------
 // Orbes de maná (blanco, azul, negro, rojo, verde).

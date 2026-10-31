@@ -32,6 +32,19 @@ function readInitialName() {
 }
 
 function readSession() {
+  const params = new URLSearchParams(window.location.search);
+  const roomId = params.get("room");
+  if (params.get("spectate") === "1" && roomId) {
+    let config = null;
+    try { config = JSON.parse(params.get("config") || "null"); } catch {}
+    return {
+      roomId,
+      mode: "online",
+      config,
+      username: params.get("user") || readStorage(sessionStorage, NAME_KEY) || "Espectador",
+      spectator: true,
+    };
+  }
   const raw = readStorage(sessionStorage, SESSION_KEY);
   if (!raw) return null;
   try { return JSON.parse(raw); } catch { return null; }
@@ -76,7 +89,13 @@ export default function PongApp() {
   );
 
   const leaveGame = useCallback(() => {
-    if (session) setLastJoin({ roomId: session.roomId, mode: session.mode, config: session.config });
+    if (session?.spectator) {
+      // No reutilizar la sala observada como si fuera un lobby de jugador.
+      setLastJoin(null);
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (session) {
+      setLastJoin({ roomId: session.roomId, mode: session.mode, config: session.config });
+    }
     writeStorage(sessionStorage, SESSION_KEY, null);
     setSession(null);
   }, [session]);
@@ -111,7 +130,7 @@ function PongGame({ session, onExit }) {
   const [timeLeft, setTimeLeft] = useState(null);
   const [gameOverData, setGameOverData] = useState(null);
 
-  const { roomId, mode, config, username } = session;
+  const { roomId, mode, config, username, spectator = false } = session;
   const cfg = config || DEFAULT_CONFIG;
   const t = TABLES[cfg.table_theme] || TABLES.felt_green;
   const m = MANA[cfg.ball_mana] || MANA.red;
@@ -132,6 +151,7 @@ function PongGame({ session, onExit }) {
     let ws = null;
     let closedByUs = false;
     let finished = false;
+    let rejectedByServer = false;
     let attempt = 0;
     let retryTimer = null;
     let animationFrameId = null;
@@ -147,7 +167,7 @@ function PongGame({ session, onExit }) {
     const clamp1 = (v) => Math.max(-1, Math.min(1, v));
 
     function sendInputs(force = false) {
-      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      if (spectator || !ws || ws.readyState !== WebSocket.OPEN) return;
       const msgs =
         mode === "local"
           ? [
@@ -187,12 +207,12 @@ function PongGame({ session, onExit }) {
 
     // ---------- Conexión con reconexión automática ----------
     function connect() {
-      ws = new WebSocket(gameWsUrl(roomId, username));
+      ws = new WebSocket(gameWsUrl(roomId, username, spectator));
 
       ws.onopen = () => {
         attempt = 0;
         lastSent = "";
-        setRoomStatus(`🟢 Conectado a la sala ${roomId}`);
+        setRoomStatus(spectator ? `👁 Viendo la partida ${roomId}` : `🟢 Conectado a la sala ${roomId}`);
         sendInputs(true);
       };
 
@@ -217,13 +237,16 @@ function PongGame({ session, onExit }) {
         } else if (data.type === "GAME_OVER") {
           finished = true;
           setGameOverData(data);
+        } else if (data.type === "ERROR") {
+          rejectedByServer = true;
+          setRoomStatus(`🔴 ${data.message || "No se puede conectar a esta partida."}`);
         }
       };
 
       ws.onclose = (event) => {
         if (closedByUs || finished) return;
         if (event.code === 1008 || event.code === 4000) {
-          setRoomStatus("🔴 No se puede continuar en esta sala.");
+          if (!rejectedByServer) setRoomStatus("🔴 No se puede continuar en esta sala.");
           return;
         }
         setRoomStatus("🔴 Conexión perdida. Reconectando...");
@@ -387,7 +410,7 @@ function PongGame({ session, onExit }) {
       cancelAnimationFrame(animationFrameId);
       if (ws) ws.close();
     };
-  }, [roomId, mode, username, t, m]);
+  }, [roomId, mode, username, spectator, t, m]);
 
   return (
     <main className="scene scene-game" style={accentVars(cfg.ball_mana)}>
@@ -427,7 +450,9 @@ function PongGame({ session, onExit }) {
         </div>
 
         <p className="pong-hint">
-          {mode === "local" ? (
+          {spectator ? (
+            <span>👁 Estás viendo esta partida como espectador.</span>
+          ) : mode === "local" ? (
             <>
               <span><kbd>W</kbd> <kbd>S</kbd> Jugador 1</span>
               <span><kbd>↑</kbd> <kbd>↓</kbd> Jugador 2</span>
@@ -441,9 +466,22 @@ function PongGame({ session, onExit }) {
       {gameOverData && (
         <div className="pong-overlay">
           <div className="pong-modal plate" role="dialog" aria-modal="true" aria-labelledby="over-title">
-            <h2 id="over-title" className="title">Duelo finalizado</h2>
-            <p className="pong-winner-label">Vencedor</p>
-            <p className="pong-winner">{gameOverData.winner || "Empate"}</p>
+            {gameOverData.reason === "no_show" ? (
+              <>
+                <h2 id="over-title" className="title">Partida no iniciada</h2>
+                <p className="pong-winner-label">No se conectaron todos los jugadores.</p>
+                {gameOverData.missing_players?.length > 0 && (
+                  <p className="pong-winner">Faltaba: {gameOverData.missing_players.join(", ")}</p>
+                )}
+                <p className="note">No cuenta como partida jugada ni suma estadísticas.</p>
+              </>
+            ) : (
+              <>
+                <h2 id="over-title" className="title">Duelo finalizado</h2>
+                <p className="pong-winner-label">Vencedor</p>
+                <p className="pong-winner">{gameOverData.winner || "Empate"}</p>
+              </>
+            )}
             <button type="button" className="btn btn-primary btn-lg" onClick={onExit}>Volver al lobby</button>
           </div>
         </div>

@@ -70,7 +70,7 @@ function Entry({ username, onJoin }) {
         const res = await fetch(httpUrl("/api/pong/rooms"));
         const data = await res.json();
         if (stopped) return;
-        setRooms(data.rooms.filter((r) => r.mode === "online" && r.joinable));
+        setRooms(data.rooms.filter((r) => r.mode === "online" && (r.joinable || r.in_game)));
         setRoomsFailed(false);
       } catch {
         if (!stopped) setRoomsFailed(true);
@@ -107,6 +107,7 @@ function Entry({ username, onJoin }) {
         <form className="block" onSubmit={submit}>
           <h2 id="entry-title" className="block-title">Antes del duelo</h2>
           <p className="lead">Elige cómo quieres jugar.</p>
+          <p className="note note-warn">Para jugar a Pong necesitas un teclado. Desde móvil o tablet puedes ver partidas como espectador.</p>
 
           <div className="field">
             <label className="field-label" htmlFor="player-name">Tu nombre</label>
@@ -155,21 +156,25 @@ function Entry({ username, onJoin }) {
                   No se puede contactar con el servidor. Comprueba que el backend está en marcha.
                 </p>
               ) : rooms.length === 0 ? (
-                <p className="note">No hay salas abiertas. Crea la tuya con un código.</p>
+                <p className="note">No hay salas abiertas ni partidas en curso.</p>
               ) : (
                 <ul className="room-list">
                   {rooms.map((r) => (
                     <li key={r.room_id}>
-                      <button
-                        type="button"
-                        className="room-item"
-                        onClick={() => onJoin(finalName(), { roomId: r.room_id, mode: "online" })}
-                      >
+                      <div className="room-item">
                         <span className="room-name">{r.room_id}</span>
                         <span className="room-meta">
-                          {describeWin(r)} · {r.current_players}/{r.max_players}
+                          {r.in_game ? `En curso · ${r.spectators || 0} espectador(es)` : `${describeWin(r)} · ${r.current_players}/${r.max_players}`}
                         </span>
-                      </button>
+                        {r.in_game ? (
+                          <a
+                            className="btn btn-ghost"
+                            href={`?room=${encodeURIComponent(r.room_id)}&spectate=1&user=${encodeURIComponent(finalName())}&config=${encodeURIComponent(JSON.stringify(r.config || {}))}`}
+                          >Ver partida</a>
+                        ) : (
+                          <button type="button" className="btn btn-ghost" onClick={() => onJoin(finalName(), { roomId: r.room_id, mode: "online" })}>Entrar</button>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>

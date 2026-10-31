@@ -2,3 +2,48 @@
 
 /* El logo de 42 se pinta en blanco sea cual sea el color original del SVG (si ya lo quieres tal cual, quita el filter) */
 #logo-42 img { filter: brightness(0) invert(1); }
+
+/* The home page has five fixed-size mana links; size them to the viewport on phones. */
+.home-page {
+    box-sizing: border-box;
+    width: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-height: 100vh;
+    min-height: 100svh;
+}
+
+.home-orb-nav {
+    gap: clamp(.375rem, 1.5vw, 1rem);
+}
+
+.home-page .home-orb-nav .metal-orb {
+    box-sizing: border-box;
+    width: clamp(2.75rem, 7.5vw, 6rem);
+    height: clamp(2.75rem, 7.5vw, 6rem);
+}
+
+@media (max-width: 640px) {
+    .home-page {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+        padding-top: 1rem !important;
+        padding-bottom: 1rem !important;
+    }
+
+    .home-page .home-orb-nav .metal-orb {
+        width: clamp(2.75rem, 13vw, 3.5rem);
+        height: clamp(2.75rem, 13vw, 3.5rem);
+    }
+
+    .home-orb-header {
+        padding-top: 8rem !important;
+    }
+
+    .home-page #chat-box {
+        width: min(24rem, calc(100vw - 1rem));
+        right: .5rem;
+        bottom: .5rem;
+        height: min(28.125rem, calc(100dvh - 1rem));
+    }
+}

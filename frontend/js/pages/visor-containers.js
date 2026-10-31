@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterContainerTypeSelect = document.getElementById('filterContainerType');
     const showAllContainersBtn = document.getElementById('showAllContainersBtn');
     const backToGridBtn = document.getElementById('backToGridBtn');
+    const deleteContainerBtn = document.getElementById('deleteContainerBtn');
 
     // Referencias al Lightbox unificado
     const lightbox = document.getElementById('lightbox');
@@ -103,6 +104,10 @@ document.addEventListener('DOMContentLoaded', () => {
         showAllContainersBtn.classList.add('hidden');
         containerSelector.value = "";
         currentContainerData = null;
+        if (deleteContainerBtn) {
+            deleteContainerBtn.disabled = true;
+            deleteContainerBtn.classList.add('hidden');
+        }
 
         const selectedType = filterContainerTypeSelect ? filterContainerTypeSelect.value : 'all';
         const lista = obtenerContenedoresFiltrados(selectedType);
@@ -188,6 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
             
             containerInfoBar.classList.remove('hidden');
             showAllContainersBtn.classList.remove('hidden');
+            if (deleteContainerBtn) {
+                deleteContainerBtn.classList.remove('hidden');
+                deleteContainerBtn.disabled = true;
+                deleteContainerBtn.title = 'Comprobando si el contenedor está vacío…';
+            }
 
             containerTitle.textContent = currentContainerData.name;
             containerStats.textContent = `Tipo: ${currentContainerData.type.toUpperCase()} | Capacidad Máx: ${currentContainerData.max_capacity || 'N/A'}`;
@@ -200,6 +210,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backToGridBtn) backToGridBtn.addEventListener('click', renderizarRejillaContenedores);
     if (showAllContainersBtn) showAllContainersBtn.addEventListener('click', renderizarRejillaContenedores);
 
+    if (deleteContainerBtn) {
+        deleteContainerBtn.addEventListener('click', async () => {
+            if (!currentContainerData || deleteContainerBtn.disabled) return;
+            const container = currentContainerData;
+            if (!window.confirm(`¿Eliminar el contenedor vacío «${container.name}»? Esta acción no se puede deshacer.`)) return;
+
+            deleteContainerBtn.disabled = true;
+            try {
+                const response = await CBAuth.fetch(`/api/containers/${encodeURIComponent(container.id)}`, { method: 'DELETE' });
+                if (response.status === 409) throw new Error('El contenedor ya tiene cartas y no se puede eliminar.');
+                if (response.status === 404) throw new Error('No se encontró el contenedor. Actualiza el listado.');
+                if (!response.ok) throw new Error('No se pudo eliminar el contenedor.');
+
+                allContainers = allContainers.filter(c => c.id !== container.id);
+                actualizarDesplegableVisorGrafico();
+                renderizarRejillaContenedores();
+            } catch (err) {
+                console.error('Error al eliminar contenedor:', err);
+                alert(err.message || 'No se pudo eliminar el contenedor.');
+                deleteContainerBtn.disabled = false;
+            }
+        });
+    }
+
     async function cargarSlotsContenedor(containerId) {
         visualWorkspace.innerHTML = `<div class="text-center text-[rgb(var(--c-amber-200)/0.5)] py-12 italic text-xs">Cargando estructura del contenedor...</div>`;
         
@@ -208,6 +242,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Error al obtener slots');
             
             const slots = await response.json();
+            if (deleteContainerBtn) {
+                const empty = slots.every(slot => !slot.copy_id);
+                deleteContainerBtn.disabled = !empty;
+                deleteContainerBtn.title = empty
+                    ? 'Eliminar este contenedor vacío'
+                    : 'Vacía el contenedor antes de eliminarlo';
+            }
             const tipo = currentContainerData.type.toLowerCase();
             
             if (tipo.includes('binder')) {

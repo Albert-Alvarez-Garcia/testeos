@@ -157,7 +157,8 @@
             let leaving = false;
 
             function connectLobbyWebSocket() {
-                ws = new WebSocket(`ws://${API_HOST}/api/pong/ws/lobby/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
+                const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+                ws = new WebSocket(`${wsProtocol}//${API_HOST}/api/pong/ws/lobby/${encodeURIComponent(roomId)}?username=${encodeURIComponent(username)}`);
 
                 ws.onopen = () => {
                     roomStatus.textContent = "🟢 Conectado a la arena de Pong";

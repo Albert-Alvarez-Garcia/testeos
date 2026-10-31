@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-setup_https.py · Activa HTTPS para localhost (https://localhost:8443). El acceso por IP sigue en http://IP:8080.
+setup_https.py · Activa HTTPS (https://localhost:8443); HTTP redirige a HTTPS para cualquier host.
 
 Uso, desde la carpeta del proyecto (~/testeo):
     python3 setup_https.py
 
 Qué hace (copia .bak de lo que modifica; se puede repetir sin problema):
   1. Crea certs/cert.pem y certs/key.pem (autofirmado, válido para localhost y 127.0.0.1) con openssl.
-  2. Reescribe nginx.conf: añade el servidor HTTPS (puerto 443 interno) y manda localhost:8080 -> https://localhost:8443.
+  2. Reescribe nginx.conf: añade el servidor HTTPS (puerto 443 interno) y redirige todo HTTP a HTTPS.
   3. docker-compose.yml: publica 8443:443 y monta ./certs en el contenedor web.
   4. frontend/: los WebSocket escritos como ws://${...} pasan a ws:// o wss:// según el protocolo de la página.
 """
@@ -87,15 +87,12 @@ map $http_upgrade $connection_upgrade {{
     ''      close;
 }}
 
-# HTTP (8080): desde la IP del PC se sirve tal cual; desde localhost se redirige a HTTPS
+# HTTP (8080): todos los hosts se redirigen a HTTPS
 server {{
     listen 80;
     server_name _;
-
-    if ($host = localhost) {{
-        return 301 https://localhost:{HTTPS_PORT}$request_uri;
-    }}
-{LOCATIONS}}}
+    return 301 https://$host:{HTTPS_PORT}$request_uri;
+}}
 
 # HTTPS ({HTTPS_PORT} fuera del contenedor)
 server {{
@@ -120,7 +117,7 @@ text = compose.read_text(encoding="utf-8")
 if f'"{HTTPS_PORT}:443"' in text:
     print("• docker-compose.yml ya tiene el puerto HTTPS")
 else:
-    m = re.search(r'(container_name: card_binder_web\n(?:.*\n)*?)(\s+)ports:\n(\s+)- "8080:80"\n', text)
+    m = re.search(r'(  frontend:\n(?:.*\n)*?)(\s+)ports:\n(\s+)- "8080:80"\n', text)
     if not m:
         sys.exit('✘ No encuentro el servicio web con ports "8080:80" en docker-compose.yml. Pásamelo.')
     indent_key, indent_item = m.group(2), m.group(3)

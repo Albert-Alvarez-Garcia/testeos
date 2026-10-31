@@ -78,6 +78,9 @@ def create_container(data: ContainerCreate, current_user: dict = Depends(get_cur
         new_container = cursor.fetchone()
         container_id = new_container["id"]
 
+        from backend.routers.achievements import record_milestone
+        record_milestone(cursor, user_id, "first_container")
+
         def insert_slots(count: int, section: str = 'main', page: int = 1):
             for slot_idx in range(1, count + 1):
                 cursor.execute(
@@ -152,7 +155,8 @@ def add_card_to_container(data: AddCardToContainerRequest, current_user: dict = 
     cursor = conn.cursor()
     try:
         user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
-        cursor.execute("SELECT id FROM containers WHERE id = %s AND user_id = %s;", (data.container_id, user_id))
+        # Serialize card additions with empty-container deletion.
+        cursor.execute("SELECT id FROM containers WHERE id = %s AND user_id = %s FOR UPDATE;", (data.container_id, user_id))
         if not cursor.fetchone():
             raise HTTPException(status_code=403, detail="No tienes permisos sobre este contenedor o no existe.")
 
@@ -231,6 +235,10 @@ def add_card_to_container(data: AddCardToContainerRequest, current_user: dict = 
             )
             new_copies.append(dict(cursor.fetchone()))
 
+        if new_copies:
+            from backend.routers.achievements import record_milestone
+            record_milestone(cursor, user_id, "first_card")
+
         cursor.execute(
             "UPDATE container_slots SET is_occupied = TRUE WHERE id = ANY(%s::uuid[]);",
             (target_slot_ids,)
@@ -246,6 +254,42 @@ def add_card_to_container(data: AddCardToContainerRequest, current_user: dict = 
         conn.rollback()
         print(f"❌ Error al añadir carta al contenedor: {e}")
         raise HTTPException(status_code=500, detail="Error interno al guardar la carta en el contenedor.")
+    finally:
+        cursor.close()
+        conn.close()
+
+
+@router.delete("/{container_id}")
+def delete_empty_container(container_id: str, current_user: dict = Depends(get_current_user)):
+    """Delete a user's container only when it contains no card copies."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+        cursor.execute(
+            "SELECT id FROM containers WHERE id = %s AND user_id = %s FOR UPDATE;",
+            (container_id, user_id),
+        )
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Contenedor no encontrado.")
+
+        cursor.execute(
+            "SELECT 1 FROM card_copies WHERE container_id = %s LIMIT 1;",
+            (container_id,),
+        )
+        if cursor.fetchone():
+            raise HTTPException(status_code=409, detail="Solo se pueden eliminar contenedores vacíos.")
+
+        cursor.execute("DELETE FROM containers WHERE id = %s AND user_id = %s;", (container_id, user_id))
+        conn.commit()
+        return {"status": "success", "message": "Contenedor vacío eliminado."}
+    except HTTPException:
+        conn.rollback()
+        raise
+    except Exception as e:
+        conn.rollback()
+        print(f"❌ Error al eliminar el contenedor: {e}")
+        raise HTTPException(status_code=500, detail="Error interno al eliminar el contenedor.")
     finally:
         cursor.close()
         conn.close()

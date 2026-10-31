@@ -117,6 +117,14 @@ CREATE TABLE IF NOT EXISTS blocked_users (
     CONSTRAINT check_different_block CHECK (user_id <> blocked_id)
 );
 
+-- Hitos permanentes del sistema de logros; otros progresos se calculan al vuelo.
+CREATE TABLE IF NOT EXISTS user_achievements (
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    achievement_id VARCHAR(50) NOT NULL,
+    unlocked_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, achievement_id)
+);
+
 -- Índices para acelerar el sistema social y de bloqueos
 CREATE INDEX IF NOT EXISTS idx_friendships_user ON friendships (user_id, status);
 CREATE INDEX IF NOT EXISTS idx_friendships_friend ON friendships (friend_id, status);

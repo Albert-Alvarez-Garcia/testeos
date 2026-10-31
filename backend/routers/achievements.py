@@ -57,16 +57,43 @@ ACHIEVEMENTS = [
 ]
 
 
+def ensure_achievement_table(cursor) -> None:
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS user_achievements (
+            user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+            achievement_id VARCHAR(50) NOT NULL,
+            unlocked_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            PRIMARY KEY (user_id, achievement_id)
+        );
+    """)
+
+
+def record_milestone(cursor, user_id, achievement_id: str) -> None:
+    """Persist the two one-time milestones. Caller owns the transaction."""
+    ensure_achievement_table(cursor)
+    cursor.execute("""
+        INSERT INTO user_achievements (user_id, achievement_id)
+        VALUES (%s, %s)
+        ON CONFLICT (user_id, achievement_id) DO NOTHING;
+    """, (user_id, achievement_id))
+
+
 @router.get("/")
 def get_achievements(current_user: dict = Depends(get_current_user)):
     """
-    Calcula al vuelo las estadísticas del usuario autenticado y el estado
-    (desbloqueada / progreso) de cada medalla. No se guarda nada en base de datos.
+    Los dos primeros hitos se conservan; los demás reflejan el estado actual.
+    El progreso de los logros cuantitativos se calcula al consultar.
     """
     conn = get_db_connection()
     cursor = conn.cursor()
     try:
         user_id = current_user.get("id") if isinstance(current_user, dict) else current_user.id
+        ensure_achievement_table(cursor)
+
+        # Backfill idempotente: recupera hitos si una acción anterior no llegó a registrarlos.
+        cursor.execute("SELECT 1 FROM containers WHERE user_id = %s LIMIT 1", (user_id,))
+        if cursor.fetchone():
+            record_milestone(cursor, user_id, "first_container")
 
         # Total de cartas en cualquiera de sus contenedores
         cursor.execute(
@@ -79,6 +106,8 @@ def get_achievements(current_user: dict = Depends(get_current_user)):
             (user_id,)
         )
         total_cards = int(cursor.fetchone()["n"])
+        if total_cards:
+            record_milestone(cursor, user_id, "first_card")
 
         # Total de contenedores creados por el usuario
         cursor.execute(
@@ -110,19 +139,27 @@ def get_achievements(current_user: dict = Depends(get_current_user)):
             "complete_containers": complete_containers,
         }
 
+        cursor.execute("""
+            SELECT achievement_id FROM user_achievements WHERE user_id = %s
+        """, (user_id,))
+        permanent = {row["achievement_id"] for row in cursor.fetchall()}
+
         achievements = []
         for a in ACHIEVEMENTS:
             value = stats[a["stat"]]
+            is_milestone = a["id"] in ("first_container", "first_card")
+            unlocked = a["id"] in permanent if is_milestone else value >= a["target"]
             achievements.append({
                 "id": a["id"],
                 "name": a["name"],
                 "description": a["description"],
                 "icon": a["icon"],
                 "target": a["target"],
-                "progress": min(value, a["target"]),
-                "unlocked": value >= a["target"],
+                "progress": a["target"] if unlocked and is_milestone else min(value, a["target"]),
+                "unlocked": unlocked,
             })
 
+        conn.commit()
         return {"stats": stats, "achievements": achievements}
 
     except Exception as e:
