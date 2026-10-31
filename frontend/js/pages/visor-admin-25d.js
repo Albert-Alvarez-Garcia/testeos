@@ -425,7 +425,12 @@ saveInventoryBtn.addEventListener('click', async () => {
         return;
     }
 
-    const cantidadACrear = cardQuantity ? (parseInt(cardQuantity.value, 10) || 1) : 1;
+    const cantidadACrear = cardQuantity ? Number.parseInt(cardQuantity.value, 10) : 1;
+    if (!Number.isInteger(cantidadACrear) || cantidadACrear < 1 || cantidadACrear > 99) {
+        alert("La cantidad debe ser un número entero entre 1 y 99.");
+        cardQuantity?.focus();
+        return;
+    }
 
     const payload = {
         printing_id: printingId,
@@ -439,6 +444,28 @@ saveInventoryBtn.addEventListener('click', async () => {
     saveInventoryBtn.disabled = true;
 
     try {
+        // Validación anticipada: evitamos enviar un POST que sabemos que el servidor rechazará
+        // cuando no queden huecos suficientes. El backend vuelve a comprobarlo dentro de
+        // una transacción para cubrir cambios concurrentes entre esta consulta y el guardado.
+        const slotsResponse = await CBAuth.fetch(
+            `${API_BASE_URL}/containers/${encodeURIComponent(containerId)}/slots`
+        );
+        if (!slotsResponse.ok) {
+            throw new Error("No se pudo comprobar el espacio disponible en el contenedor.");
+        }
+        const slots = await slotsResponse.json();
+        const huecosLibres = Array.isArray(slots)
+            ? slots.filter((slot) => !slot.is_occupied).length
+            : 0;
+
+        if (cantidadACrear > huecosLibres) {
+            alert(
+                `No caben ${cantidadACrear} copias en este contenedor. ` +
+                `Solo quedan ${huecosLibres} hueco(s) libre(s).`
+            );
+            return;
+        }
+
         const response = await CBAuth.fetch(`${API_BASE_URL}/containers/items`, {
             method: 'POST',
             headers: {
@@ -457,6 +484,8 @@ saveInventoryBtn.addEventListener('click', async () => {
                     ? data.detail.map(err => err.msg).join(', ')
                     : String(data.detail);
             }
+            // 409 sigue siendo posible si otra pestaña ocupa huecos tras la comprobación previa.
+            // Se comunica como validación de negocio; no se registra como fallo de conexión.
             alert(errorMsg);
             return;
         }
