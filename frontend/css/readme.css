@@ -3,6 +3,10 @@
 .readme-page { max-width: 62rem; margin: 0 auto; padding: 1.5rem 1.25rem 4rem; }
 
 .readme-top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.readme-language-switch { display: flex; justify-content: flex-end; gap: .5rem; margin: 0 0 1rem; }
+.readme-language-switch button { cursor: pointer; font: inherit; }
+.readme-language-switch button[aria-pressed="true"] { background: rgb(var(--c-gold) / .35); border-color: rgb(var(--c-amber-400)); }
+.readme-language-switch button:focus-visible { outline: 2px solid rgb(var(--c-amber-300)); outline-offset: 3px; }
 .readme-back {
     display: inline-flex; align-items: center; gap: .5rem; text-decoration: none;
     padding: .5rem 1rem; border-radius: .75rem; font-size: .8rem; font-weight: 600; font-family: 'Inter', sans-serif;

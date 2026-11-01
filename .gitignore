@@ -1,26 +1,30 @@
-visor bbdd/data/default-cards.json
-**/default-cards.json
-**/default-cards.jsonl.gz
-data/emergency-assets/
-data/emergency/
-*.db
-*.sqlite
-node_modules/
+# Local secrets (keep the safe template versioned).
 .env
-.env.example
-
-# >>> reorganize
-_archive/
-logs/
-certs/
-*.bak
-*.env
 .env.*
 !.env.example
 noesun.env*
-*.crdownload
-pong-client/dist/
-.DS_Store
-# <<< reorganize
 
+# Local certificates and runtime data.
+certs/
+logs/
+*.db
+*.sqlite
+data/default-cards.json
+data/default-cards.jsonl.gz
+data/emergency/
+data/emergency-assets/
+*.zip
+
+# Build output and Python artifacts.
+node_modules/
+**/node_modules/
+pong-client/dist/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+
+# Local backups and operating-system files.
 *.bak
+*.crdownload
+.DS_Store
+_archive/

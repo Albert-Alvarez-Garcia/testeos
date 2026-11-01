@@ -1,190 +1,220 @@
+*This project has been created as part of the 42 curriculum by albealva, mgrandia, gasroman, avelandr.*
+
 # Card Binder Pro
 
-Aplicación web para **gestionar una colección de cartas de Magic: The Gathering**: buscar cartas, guardarlas en contenedores (archivadores, mazos y cajas), ver informes de la colección, abrir sobres virtuales y jugar online contra otros usuarios, con perfiles, logros y chat.
+Card Binder Pro is a web application for organizing a Magic: The Gathering collection. Users can search for cards, record physical copies, place them in binders, decks or boxes, review their collection, interact with other users and play online games.
 
-Este documento explica el proyecto de forma global y técnica para que cualquier miembro del equipo pueda presentarlo y defenderlo.
+The README is complete apart from the individual author fields, which each team member will fill in before submission.
 
----
+## Description
 
-## 1. Qué hace (visión de producto)
+The project connects a searchable card catalog with a personal inventory. A card is not the same as a printing or a physical copy: one card can have many printings, and a user can own several copies with different conditions, languages, foil finishes and locations.
 
-| Zona | Qué ofrece |
-|---|---|
-| **Acceso** | Registro e inicio de sesión con usuario y contraseña, o con la cuenta de 42 (OAuth). |
-| **Portal** (`index.html`) | Pantalla de inicio con acceso a todas las secciones. Los usuarios de 42 ven un tema visual azul propio. |
-| **Colección** | Buscador y filtros (nombre, tipo, rareza, set, foil), detalle de carta, exportar/importar la colección en JSON, informe e impresión. |
-| **Contenedores** | Crear binders (2x2, 3x3, 4x3), mazos (con sideboard) y cajas; añadir cartas desde el buscador; verlas en una vista de archivador paginada o de mazo; borrar copias. |
-| **Visor 2.5D** | Carta con efecto de perspectiva según el ratón y modo lupa. |
-| **Gacha** | Apertura de sobres virtuales con vídeo y carta aleatoria con GIF. |
-| **Juegos** | Pong isométrico online 1 contra 1 (salas y lobby) y local por teclado. |
-| **Social** | Perfil con avatar y medallas, logros, amigos, usuarios bloqueados y chat con GIFs. |
+Key features include:
 
----
+- Card search with filters, sorting and pagination.
+- Collection management across binders, decks and boxes, including copy condition, language, foil and notes.
+- Import and export of collections in CSV and JSON.
+- Collection reports and visual views of containers.
+- Local and 42 OAuth sign-in, user profiles, avatars, friends, presence and direct messages.
+- Real-time chat and two online games: an isometric Pong game and a multiplayer card-guessing game.
+- Pong lobbies, configurable matches and spectator support.
+- Statistics, match history, achievements and collection progression.
 
-## 2. Arquitectura
+## Technical stack and choices
 
-```
-Navegador ──HTTPS 8443 / HTTP 8080──▶  Nginx (card_binder_web)
-                                         │  sirve HTML, CSS, JS y assets estáticos
-                                         │  proxy inverso: /api/  ──▶  backend:8000
-                                         │                 /ws/   ──▶  WebSocket del backend
-                                         ▼
-                                   FastAPI (card_binder_api)
-                                         │  routers: cards, containers, auth, chat,
-                                         │  game, pong_game, achievements, reports, access
-                                         ▼
-                                  PostgreSQL 15 (card_binder_db)
-                                         volumen persistente: pgdata
-```
-
-- **Tres contenedores Docker** orquestados con `docker-compose.yml`: `card_binder_web`, `card_binder_api`, `card_binder_db`.
-- **Mismo origen**: el navegador solo habla con Nginx; Nginx reenvía `/api/` al backend. Así no hay problemas de CORS y la cookie de sesión viaja sola.
-- **HTTPS** en localhost con certificado autofirmado (carpeta `certs/`); el acceso por IP de red local va por HTTP en el 8080.
-- **Persistencia**: la base de datos y los avatares viven en volúmenes Docker (`pgdata`, `avatars`), por eso `make restart` no borra datos. `make clean` sí elimina volúmenes (ver sección 9).
-
-## 3. Tecnologías
-
-- **Backend**: Python, FastAPI (REST + WebSockets), PostgreSQL.
-- **Frontend**: HTML, CSS y JavaScript sin framework, con Tailwind CSS v4 (CDN) para las utilidades. El Pong tiene además un cliente en React (`pong-client/`).
-- **Infra**: Docker, Docker Compose, Nginx, Makefile.
-- **Datos de cartas**: bulk data de Scryfall (ver sección 5).
-
----
-
-## 4. Modelo de datos (PostgreSQL, `database/init.sql`)
-
-| Tabla | Para qué sirve |
-|---|---|
-| `users` | Cuentas (usuario, contraseña con hash, tipo de autenticación local/42, perfil). |
-| `cards` | Una fila por carta "conceptual" (nombre, tipo, coste de maná...). |
-| `printings` | Cada impresión concreta de una carta (set, número, imagen). Una carta tiene muchas impresiones. |
-| `containers` | Binders, mazos y cajas de un usuario (tipo, capacidad, páginas, sideboard). |
-| `container_slots` | Los huecos de un contenedor (página, posición, sección main/sideboard). |
-| `card_copies` | Las copias físicas que posee el usuario: impresión, estado (NM/LP/MP), foil, idioma, y en qué hueco están. |
-| `chat_messages` | Mensajes del chat. |
-| `friendships`, `blocked_users` | Relaciones sociales. |
-
-Idea clave: **carta ≠ impresión ≠ copia**. La carta es el concepto, la impresión es el arte concreto, y la copia es lo que el usuario tiene en su mano y dónde la guarda.
-
-## 5. Carga de datos de cartas
-
-Scripts en `scripts/` (se ejecutan una vez para poblar la base de datos; `make download` y `make import` los lanzan):
-
-1. `download_bulk.py` descarga el fichero masivo de Scryfall.
-2. `parse_types.py` y `clean_types.py` normalizan los tipos de carta en una taxonomía limpia (`clean_card_types.json`) que alimenta los filtros de tipo y subtipo.
-3. `import_bulk.py` inserta cartas e impresiones en PostgreSQL.
-
----
-
-## 6. Autenticación y seguridad
-
-- **Sesión**: al iniciar sesión el backend emite un **JWT firmado (HS256)** en una cookie **HttpOnly** llamada `cb_session`. Al ser HttpOnly, el JavaScript de la página no puede leerla (protege frente a robo por XSS).
-- **Cierre de sesión**: `POST /api/auth/logout` borra la cookie.
-- **42 OAuth**: el `redirect_uri` se calcula por petición.
-- **Contraseñas**: se guardan con hash, nunca en claro.
-- **Estado de transición**: el frontend aún envía la cabecera `X-Username` además de la cookie, y el backend la acepta mientras `ALLOW_LEGACY_HEADER` esté activo. Es un resto del sistema anterior y se va a eliminar (ver sección 10).
-- **Contenido de usuario**: todo texto introducido por usuarios (nombres de sala, de contenedor, mensajes) se pinta con `textContent` o escapado, nunca como HTML, para evitar XSS. El chat solo acepta GIFs de `giphy.com`.
-- **Secretos** (`.env`): no se suben a git. Lo gestionan las variables de entorno del `docker-compose.yml`.
-
----
-
-## 7. Estructura del repositorio
-
-```
-.
-├── backend/            FastAPI: main.py y un router por área (auth, cards, containers, chat, game...)
-├── database/           init.sql (esquema inicial)
-├── frontend/
-│   ├── *.html          una página por pantalla (URLs en la raíz)
-│   ├── css/            portal.css (paleta y componentes comunes) + un CSS por página
-│   ├── js/shared/      código común: theme, user-menu, section-nav, chat, auth
-│   ├── js/pages/       un JS por página
-│   └── public/assets/  imágenes, vídeo y fondos
-├── docker/             frontend.Dockerfile y nginx.conf (fuera de frontend/ para no servirlos)
-├── certs/              certificado autofirmado para HTTPS local
-├── scripts/            carga de datos de Scryfall
-├── pong-client/        cliente React del Pong
-├── docker-compose.yml
-└── Makefile
-```
-
-## 8. Convenciones del frontend
-
-- **Ningún HTML lleva CSS ni JS en línea**: cada página carga su `css/<pagina>.css` y su `js/pages/<pagina>.js`.
-- **Una sola paleta**: `css/portal.css` define los colores como variables (`--c-gold`, `--c-panel`, `--c-amber-400`...) y variables semánticas (`--bg-app`, `--text-main`, `--accent`, `--danger`...). Los demás CSS solo usan variables, no colores sueltos.
-- **Tema de 42**: `theme.js` añade la clase `theme-42` y carga `theme-42.css`, que solo redefine las variables de color. Cambiar el tema es cambiar la paleta, no reescribir estilos.
-- **Seguridad en la capa visual**: ver sección 6.
-- **Sesión en contenedores**: `js/shared/auth.js` centraliza la lectura de sesión y redirige al login si no hay sesión o el servidor responde 401.
-
----
-
-## 9. Cómo arrancarlo
-
-Requisitos: Docker, Docker Compose, `make` y Python 3 (solo para descargar los datos).
-
-### Primera puesta en marcha
-
-```bash
-cp .env.example .env     # rellenar contraseñas y claves (no subir a git)
-make up                  # construye y levanta base de datos, API y Nginx
-make download            # descarga el bulk data de Scryfall a data/
-make import              # importa cartas e impresiones a PostgreSQL
-```
-
-- Aplicación: `http://localhost:8080` (redirige a `https://localhost:8443` en localhost).
-- `make` a secas muestra el logo y la ayuda.
-
-### Comandos del Makefile
-
-| Comando | Qué hace | Ojo |
+| Area | Technologies | Why |
 |---|---|---|
-| `make up` | `docker compose up --build -d`: construye y levanta los tres servicios. | Reconstruye imágenes: úsalo tras cambiar HTML, CSS, JS o código del backend. |
-| `make down` | Detiene y apaga los contenedores (`--remove-orphans`). | Conserva los datos. |
-| `make restart` | Apaga, elimina los contenedores `card_binder_*` y vuelve a levantar con build. | **Conserva** los volúmenes (`pgdata`, `avatars`): no se pierden usuarios ni colección. |
-| `make logs` | Logs en tiempo real de todos los servicios. | |
-| `make download` | Ejecuta `scripts/download_bulk.py` en tu máquina y deja el JSON en `data/`. | Se hace una vez, o para actualizar cartas. |
-| `make import` | Ejecuta `scripts/import_bulk.py` **dentro del contenedor del backend** y carga los datos en PostgreSQL. | La base de datos debe estar levantada. |
-| `make clean` | `docker compose down -v --rmi local`: elimina contenedores, **volúmenes** e imágenes del proyecto. | **Borra todos los datos** (usuarios, colección, avatares). Después hay que repetir `make up`, `make download` (si no existe `data/`) y `make import`. |
-| `make prune` | `docker system prune -f`: purga contenedores parados, redes y caché sin usar. | Afecta a **todo Docker** en la máquina, no solo a este proyecto. No borra volúmenes. |
+| Main portal | HTML, CSS, JavaScript and Tailwind CSS utilities | Keeps the collection interface lightweight and lets the team use page-specific code with a shared visual palette. |
+| Pong client | React 18 and Vite | Provides a component-based client for the live game interface. React is used in the Pong client; the main portal remains vanilla JavaScript. |
+| Backend | Python and FastAPI | Provides structured API routes, request validation, OpenAPI documentation and WebSocket endpoints. |
+| Database | PostgreSQL 15 | Relational tables and foreign keys represent users, card data, printings, copies, containers and social relationships. |
+| Delivery | Docker Compose and Nginx | Runs the database, API and web server as services; Nginx serves the frontend and proxies API and WebSocket traffic. |
+| Local setup | Make and Python 3 | Provides repeatable setup, catalog import, status and smoke-check commands. |
+| Project documentation | Markdown rendered with Python-Markdown during the frontend image build | The portal displays these same English and Spanish README sources. |
 
-Los ficheros del frontend se copian a la imagen de Nginx, no se montan: cualquier cambio de interfaz necesita `make up` o `make restart` para verse.
+## Architecture
 
----
+```text
+Browser
+  └── HTTPS :8443 / HTTP :8080
+       └── Nginx
+            ├── serves static HTML, CSS, JavaScript and the built React Pong client
+            ├── proxies /api/ to FastAPI
+            └── proxies WebSocket connections to FastAPI
+                 └── FastAPI
+                      └── PostgreSQL
+```
 
-## 10. Puntos débiles conocidos y hoja de ruta
+Docker Compose runs PostgreSQL, the FastAPI backend and Nginx. The database and uploaded avatars use Docker volumes. The Pong client is built into the Nginx image.
 
-Conviene conocerlos antes de la defensa: es mejor decirlos nosotros que que nos los descubran.
+The portal's project overview is generated from `README.md` and `README.es.md` during the frontend image build, keeping its content aligned with the repository documents.
 
-1. **Quitar la cabecera `X-Username`** del frontend y apagar `ALLOW_LEGACY_HEADER`, para que la identidad dependa solo de la cookie firmada.
-2. **Identidad en los WebSockets del Pong**: hoy el usuario lo aporta el cliente; debe sacarse de la cookie al conectar.
-3. **Claves expuestas**: regenerar el secreto de la app de 42 y la clave de Giphy (está en el JS de `gacha`); mejor, que Giphy se consulte desde el backend.
-4. **Cookie sobre HTTP**: por la IP de red local no se puede marcar `Secure`; valorar HTTPS también ahí.
-6. **Gestión de usuarios por token**: caducidad y renovación, cierre de sesión global y protección CSRF.
+## Database schema
 
----
+The main relationships are:
 
-## 11. Preguntas que nos pueden hacer
+```mermaid
+erDiagram
+    USERS ||--o{ CONTAINERS : owns
+    CARDS ||--o{ PRINTINGS : has
+    PRINTINGS ||--o{ CARD_COPIES : identifies
+    CONTAINERS ||--o{ CONTAINER_SLOTS : contains
+    CONTAINERS ||--o{ CARD_COPIES : stores
+    CONTAINER_SLOTS o|--o{ CARD_COPIES : locates
+    USERS ||--o{ USER_ACHIEVEMENTS : unlocks
+    USERS ||--o{ FRIENDSHIPS : relates
+    USERS ||--o{ BLOCKED_USERS : blocks
+```
 
-**¿Por qué FastAPI y PostgreSQL?** FastAPI da una API rápida, tipada y con soporte nativo de WebSockets, necesario para el chat y el Pong. PostgreSQL es relacional y encaja con el modelo (usuarios, contenedores, copias, relaciones entre ellos).
+- `users` stores local and 42 accounts.
+- `cards` stores a card’s shared identity; `printings` stores set-specific editions and image references.
+- `containers`, `container_slots` and `card_copies` model the user’s physical collection and its location.
+- Social relationships are stored in `friendships` and `blocked_users`.
+- `user_achievements` stores permanent collection milestones. Other progress is calculated from current database records.
+- Game results and player rows are created by the statistics service.
 
-**¿Por qué sin framework en el frontend?** Para mantener el proyecto ligero y entender qué hace cada pieza; el estado de cada página es simple. El Pong sí usa React por su lógica de juego en tiempo real.
+The initial schema is in `database/init.sql`; some runtime tables are created by their backend services.
 
-**¿Cómo se protege la sesión?** Cookie HttpOnly con un JWT firmado; el JavaScript no puede leerla. Mientras dura la transición se acepta una cabecera heredada, y está en la hoja de ruta eliminarla.
+## Team information
 
-**¿Qué pasa si se reinicia todo?** Los datos persisten en volúmenes Docker con `make restart`; solo `make clean` los borra.
+| 42 login | Role(s) | Responsibilities |
+|---|---|---|
+| `gasroman` | Product Owner, DBA, Developer | Product priorities and validation; database responsibilities; implementation. |
+| `albealva` | Project Manager, Tech Lead/Architect, QA, DevOps, Developer | Coordination, architecture, quality checks, deployment and implementation. |
+| `mgrandia` | Frontend Developer, Developer | Frontend implementation. |
+| `avelandr` | Frontend Developer, Developer | Frontend implementation. |
 
-**¿Cómo se añade una pantalla nueva?** Un HTML en `frontend/`, un CSS que use las variables de `portal.css`, un JS en `js/pages/`, y, si necesita datos, un router en `backend/`.
+All team members contributed as developers. Individual feature ownership is recorded in the contribution section below for each member to complete.
 
-**¿Por qué carta, impresión y copia son tablas distintas?** Una carta tiene muchas ilustraciones y un usuario puede tener varias copias de la misma, en estados y contenedores distintos.
+## Project management
 
----
+The team used GitHub to organize the project and track its code and tasks. A task tied to a specific role was handled by that role. For other tasks, team members volunteered for the work they felt best prepared to complete.
 
-## 12. Reparto sugerido para la defensa
+The team held one weekly meeting, either on Google Meet or in person, and used WhatsApp for day-to-day communication.
 
-| Tema | Qué explicar |
+## Features and modules
+
+The selected base modules total 14 points: 2 points per Major and 1 per Minor. Each module should be demonstrated as fully functional during evaluation.
+
+| Module | Type | Points | Evidence in the project | Main code locations | Contributors |
+|---|---:|---:|---|---|---|
+| Frontend and backend frameworks | Major | 2 | React in the Pong client and FastAPI in the backend. | `pong-client/package.json`, `backend/main.py` | Fill in author(s) |
+| Real-time features | Major | 2 | WebSockets for game state, lobbies and chat. | `backend/routers/pong_game.py`, `backend/routers/game.py`, `backend/routers/chat.py` | Fill in author(s) |
+| User interaction | Major | 2 | Chat, user profiles and friend relationships. | `backend/routers/social.py`, `backend/routers/profile.py`, `frontend/js/pages/profile.js` | Fill in author(s) |
+| Standard user management | Major | 2 | Profiles, avatars, friends and online presence. | `backend/routers/auth.py`, `backend/routers/profile.py`, `backend/presence.py` | Fill in author(s) |
+| Complete web game | Major | 2 | Pong has live play, rules and win conditions. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` | Fill in author(s) |
+| Remote players | Major | 2 | Online Pong rooms and player reconnection. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` | Fill in author(s) |
+| OAuth 2.0 | Minor | 1 | Sign-in with 42. | `backend/routers/auth.py`, `docker/nginx.conf` | Fill in author(s) |
+| Data import and export | Minor | 1 | Collection import/export in CSV and JSON with validation. | `backend/routers/dataio.py`, `frontend/js/pages/dataio.js` | Fill in author(s) |
+| **Selected base total** |  | **14** |  |  |  |
+
+The first six entries are Majors; the two Minors complete the 14-point base. User interaction is evidenced by social features (chat, profiles and friend relationships), while user management is evidenced by account lifecycle, profile/avatar and presence capabilities. React is used in the Pong client; the main portal uses vanilla JavaScript.
+
+### Engineering challenges and solutions
+
+| Challenge | Approach used | Relevant code | Contributors |
+|---|---|---|---|
+| Representing a physical collection without mixing a card, a printing and an owned copy | Separate relational records and foreign keys connect the card catalog, printings, containers, slots and copies. | `database/init.sql`, `backend/routers/containers.py` | Fill in author(s) |
+| Preventing collection writes from silently exceeding container capacity during concurrent use | The backend validates the operation and returns a conflict response; the interface reports the rejected action so the user can refresh and retry. | `backend/routers/containers.py`, `frontend/js/pages/visor-admin-25d.js` | Fill in author(s) |
+| Keeping OAuth callbacks correct behind Nginx for localhost and LAN access | Forward the original host and port through the proxy and derive the callback from the request; preflight checks local secrets and TLS. | `docker/nginx.conf`, `backend/routers/auth.py`, `tools/prepare_local.py` | Fill in author(s) |
+| Keeping multiplayer state consistent through disconnects and spectator joins | The server owns Pong state and reconnects a player to the existing room; spectator connections are tracked separately from player slots. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` | Fill in author(s) |
+| Starting the project predictably and preparing for an offline evaluation | A Make preflight validates configuration/TLS; catalog bootstrap and the optional emergency catalog use separate commands. | `Makefile`, `tools/prepare_local.py`, `tools/install_emergency_catalog.py` | Fill in author(s) |
+
+These grouped work areas avoid attributing every individual endpoint separately. Each contributor should add their name to the relevant rows and describe their specific contribution in the section below.
+
+### Reserve modules for evaluation
+
+These are alternatives to demonstrate if a base module is not accepted, or additional candidates for the subject’s bonus. The subject allows up to 5 bonus points after the 14-point minimum. We will select only modules that pass their demonstrations.
+
+| Candidate | Points | Demonstration to prepare |
+|---|---:|---|
+| Multiplayer with more than two active players | Major · 2 | Join one card-guessing room with at least three separate users; verify shared rounds, timer, scores and final ranking. Spectators do not count as active players for this requirement. |
+| Game statistics and match history | Minor · 1 | Finish matches, then verify wins/losses, history, opponents, leaderboard and persistence after reload. |
+| Spectator mode | Minor · 1 | Join an ongoing Pong match, verify the initial state and live updates, confirm spectators cannot control paddles, then observe disconnect and match completion. Tests have already included up to ten spectators. |
+| Game customization | Minor · 1 | Change game mode, win condition, score/time limit, orb and table theme; verify defaults and that both players receive the same match configuration. |
+| Gamification | Minor · 1 | Demonstrate achievements, leaderboard and XP/levels; verify permanent first-container/first-card milestones survive collection deletion and dynamic progress follows current database state. |
+| Advanced chat | Minor · 1 | Demonstrate blocking, game invitations from chat, game notifications, profile access, persisted history, typing indicators and read receipts. |
+| Advanced search | Minor · 1 | Combine filters, change sort direction and page through results using 12, 24, 36 and 52 cards per page. |
+| Complete notification system | Minor · 1 | Exercise creation, update and deletion for containers and cards, plus game events; record which changes appear in the bell, pop-ups or messages. |
+| Additional browsers | Minor · 1 | Repeat key flows in Firefox and Opera as well as Chrome; check functionality, layout and browser console. |
+| Custom design system | Minor · 1 | Inventory and locate at least ten reusable components, then show the shared palette, typography and icon system. |
+| Custom collection-management module | Major · 2 | Justify its substantial value beyond generic CRUD; demonstrate ownership isolation, inventory placement and capacity/concurrency behavior. |
+| Collection-progression module | Minor · 1 | Explain how collection milestones differ from the standard gamification module and demonstrate their persistence rules. |
+
+File upload is not included as a reserve claim because the avatar flow has not been verified against every subject requirement, including upload progress and supported file types. The second-game-with-matchmaking Major is also not included because the current room flow is manual rather than automatic matchmaking.
+
+## Instructions
+
+### Prerequisites
+
+- Docker Engine with the Docker Compose plugin.
+- GNU Make.
+- Python 3 and OpenSSL on the host.
+- Internet access for the initial Scryfall catalog download, unless using the emergency catalog.
+
+Node is used inside the frontend Docker build; it does not need to be installed on the host.
+
+### Configure and start
+
+1. Create a local `.env` from the supplied template or copy the team’s private configuration into the repository root. **Do not commit it.**
+2. Fill in the required database credentials, JWT secret and 42 OAuth credentials. The preflight step checks these values and restricts the file permissions.
+3. Run:
+
+   ```bash
+   make up
+   ```
+
+   The preflight creates or validates a self-signed TLS certificate for localhost and the detected LAN IPv4 address, then Docker Compose builds and starts the services.
+4. Load the card catalog:
+
+   ```bash
+   make seed
+   ```
+
+   This downloads the Scryfall bulk file if it is missing locally, then imports it. The first catalog download requires Internet access.
+5. Open `https://localhost:8443`. From another device, use `https://<LAN-IP>:8443`. The local certificate is self-signed, so the browser may ask you to trust it.
+
+For an offline evaluation, place the emergency ZIP outside the repository (default: `/tmp/card-binder-emergency.zip`) and run `make emergency`. The package is an optional fallback; it is not part of the Git repository.
+
+### Useful commands
+
+| Command | Purpose |
 |---|---|
-| Producto y demo | Sección 1: recorrido por colección, contenedores, gacha y Pong. |
-| Arquitectura e infraestructura | Secciones 2 y 3: Docker, Nginx como proxy, volúmenes. |
-| Datos | Secciones 4 y 5: modelo y carga de Scryfall. |
-| Seguridad | Sección 6 y puntos débiles de la sección 10. |
-| Frontend | Sección 8: paleta única, temas, ausencia de CSS/JS en línea. |
+| `make up` | Validate local configuration, create/validate TLS and start the services. |
+| `make restart` | Rebuild and recreate services while preserving Docker volumes. |
+| `make status` | Show service state. |
+| `make logs` | Follow service logs. |
+| `make test` | Run the read-only HTTPS, API and database smoke checks. |
+| `make down` | Stop services while preserving volumes. |
+| `make clean` | Remove the project’s containers, images and volumes; this deletes stored user and collection data. |
+| `make prune` | Run Docker system prune; this can affect unused Docker resources outside this project. |
+
+## Resources and AI use
+
+Project references:
+
+- [FastAPI documentation](https://fastapi.tiangolo.com/)
+- [React documentation](https://react.dev/)
+- [PostgreSQL documentation](https://www.postgresql.org/docs/)
+- [Docker Compose documentation](https://docs.docker.com/compose/)
+- [Tailwind CSS documentation](https://tailwindcss.com/docs)
+- [Scryfall API documentation](https://scryfall.com/docs/api)
+- [GIPHY API documentation](https://developers.giphy.com/docs/)
+
+Claude and ChatGPT were used as advisory tools for the Product Owner, especially for product scope and prioritization. They also assisted with documentation, smoke-test scripts, edge-case test planning, repetitive frontend/backend corrections, refactoring discussions and stability improvements. Human contributors reviewed, corrected and tested relevant suggestions before relying on them. AI is not a feature embedded in the product.
+
+## Individual contributions
+
+Each team member should complete their own row. Group related features, identify the relevant code paths, and explain a significant challenge and how it was addressed. Contributions may include implementation, review, testing or integration; this section does not imply that every feature had a single owner.
+
+| 42 login | Features/modules and code paths | Challenge and solution |
+|---|---|---|
+| `gasroman` | Fill in author | Fill in author |
+| `albealva` | Fill in author | Fill in author |
+| `mgrandia` | Fill in author | Fill in author |
+| `avelandr` | Fill in author | Fill in author |
+
+## Credits
+
+Card catalog data and card image references are provided through Scryfall. GIF search uses GIPHY. The repository includes third-party assets; their applicable license and attribution information should be retained alongside the assets where provided.

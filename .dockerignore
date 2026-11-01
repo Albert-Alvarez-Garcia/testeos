@@ -1,17 +1,24 @@
-# >>> reorganize
 .git
 .env
 .env.*
-_archive
-logs
-tools
-certs
-**/node_modules
-**/*.bak
-**/*.crdownload
-*.md
 noesun.env*
-**/default-cards.json
-**/default-cards.jsonl.gz
-data/emergency-assets
-# <<< reorganize
+_archive/
+logs/
+certs/
+tools/
+node_modules/
+**/node_modules/
+pong-client/dist/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*.bak
+*.crdownload
+*.zip
+*.md
+!README.md
+!README.es.md
+data/default-cards.json
+data/default-cards.jsonl.gz
+data/emergency/
+data/emergency-assets/

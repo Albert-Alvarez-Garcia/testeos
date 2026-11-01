@@ -6,12 +6,22 @@ RUN npm install
 COPY pong-client/ ./
 RUN npm run build
 
+# --- Build the portal documentation from the repository's canonical Markdown files ---
+FROM python:3.12-alpine AS readme-builder
+WORKDIR /docs
+RUN pip install --no-cache-dir Markdown==3.11.2
+COPY README.md README.es.md ./
+COPY docker/render_readme.py ./render_readme.py
+RUN python render_readme.py README.md /output/en.html \
+    && python render_readme.py README.es.md /output/es.html
+
 # --- ETAPA 2: Servir con Nginx ---
 FROM nginx:alpine
 
 # Copiar tus archivos estáticos originales del frontend
 COPY frontend/ /usr/share/nginx/html/
 COPY public/ /usr/share/nginx/html/public/
+COPY --from=readme-builder /output/ /usr/share/nginx/html/readme-content/
 
 # Copiar tu archivo de configuración de Nginx original
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
