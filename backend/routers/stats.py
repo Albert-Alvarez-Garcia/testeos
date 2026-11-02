@@ -11,6 +11,7 @@ def _ensure_tables(cur):
     global _ready
     if _ready:
         return
+    cur.execute("SELECT pg_advisory_xact_lock(727274)")
     cur.execute("""
         CREATE TABLE IF NOT EXISTS game_results (
             id BIGSERIAL PRIMARY KEY,
@@ -32,6 +33,18 @@ def _ensure_tables(cur):
     cur.execute("CREATE INDEX IF NOT EXISTS idx_game_players_user ON game_players (username);")
     _ready = True
 
+def init_stats_tables():
+    """Crea las tablas una vez al arrancar el backend."""
+    try:
+        conn = get_db_connection()
+        try:
+            cur = conn.cursor()
+            _ensure_tables(cur)
+            conn.commit()
+        finally:
+            conn.close()
+    except Exception as e:
+        print(f"⚠️ No se pudieron crear las tablas de stats al arrancar: {e}")
 
 def save_game_result(game: str, room_id: str, ranking: list, winner: str):
     """Guarda una partida terminada. ranking = [{'username','score'}, ...] ordenado de mayor a menor."""

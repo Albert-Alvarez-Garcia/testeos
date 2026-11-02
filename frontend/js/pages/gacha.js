@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const postOpenActions = document.getElementById('post-open-actions');
     const openAnotherBtn = document.getElementById('open-another-btn');
 
-    const FALLBACK_GIF = 'https://media.giphy.com/media/3o7TKSjRrfIPjeiDiM/giphy.gif';
+    const FALLBACK_GIF = 'public/assets/nocapi.png';
 
     const searchKeywords = [
         "wizard cat", "epic warrior", "magic dragon", "cyberpunk samurai", 

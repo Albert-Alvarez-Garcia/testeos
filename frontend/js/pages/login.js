@@ -32,13 +32,20 @@
         return data;
     }
 
-    async function handleLogin(e) {
+   async function handleLogin(e) {
         e.preventDefault();
         const identifier = $('loginUser').value;
         const password = $('loginPass').value;
         try {
             const data = await postJson('/api/auth/login',
                 { username_or_email: identifier, password }, 'Credenciales inválidas');
+
+            // El servidor responde 200 con success:false cuando las credenciales son incorrectas
+            if (data.success === false) {
+                alert('Error al entrar al Grimorio: ' + (data.detail || 'Credenciales inválidas'));
+                return;
+            }
+
             saveSession(data, identifier);
             window.location.href = 'index.html';
         } catch (error) {

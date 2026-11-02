@@ -6,6 +6,10 @@ from backend.routers import cards, containers, auth, chat, game, pong_game, achi
 
 app = FastAPI(title="Card Binder Pro API", version="1.0")
 
+@app.on_event("startup")
+def _startup():
+    stats.init_stats_tables()
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],

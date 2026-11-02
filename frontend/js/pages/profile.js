@@ -353,10 +353,17 @@
 
     searchInput.addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(runSearch, 300); });
     searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); $('send-request-btn').click(); } });
-    $('send-request-btn').addEventListener('click', async () => {
+        $('send-request-btn').addEventListener('click', async () => {
         const name = searchInput.value.trim();
         if (!name) { toast('Escribe el nombre de usuario.', true); return; }
         try {
+            // Comprobamos antes que el usuario existe: así no se envía un POST que devolvería 404
+            const found = await api('/search?q=' + encodeURIComponent(name));
+            const exists = (found.results || []).some(
+                (u) => (u.username || '').toLowerCase() === name.toLowerCase()
+            );
+            if (!exists) { toast('Ningún usuario coincide.', true); return; }
+
             await act('/friends/request', { method: 'POST', json: { username: name } });
             searchInput.value = '';
             $('search-results').replaceChildren();

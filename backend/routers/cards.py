@@ -27,20 +27,7 @@ def filter_cards(
     # Buscamos usando nombre (aunque esté vacío) y/o tipo
     cards = search_cards_by_substring(name, type_line)
 
-    if not cards:
-        filtros = []
-
-        if name:
-            filtros.append(f"nombre '{name}'")
-        if type_line:
-            filtros.append(f"tipo '{type_line}'")
-
-        raise HTTPException(
-            status_code=404,
-            detail=f"No se ha encontrado ninguna carta para {' y '.join(filtros)}."
-        )
-
-    return cards
+    return cards or []
 
 
 @router.get("/types-taxonomy")
