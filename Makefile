@@ -58,13 +58,14 @@ logo:
 
 # Descarga el JSON de Scryfall a la carpeta local data/
 download:
-	python3 scripts/download_bulk.py
+	docker compose run --rm tools sh -c "pip install -q -r requirements.txt && python scripts/download_bulk.py"
+	
 	@echo "✨ Descarga del JSON finalizada."
 
 # Ejecuta el script de importación desde el JSON local
 import:
 	@test -f data/default-cards.jsonl.gz || { echo "Falta data/default-cards.jsonl.gz; ejecuta make download." >&2; exit 1; }
-	docker compose exec -T backend python3 scripts/import_bulk.py
+	docker compose run --rm tools sh -c "pip install -q -r requirements.txt && python scripts/import_bulk.py"
 	@echo "✨ Importación a base de datos finalizada."
 
 # Arranque más descarga/importación inicial; seguro repetirlo si el catálogo ya existe.

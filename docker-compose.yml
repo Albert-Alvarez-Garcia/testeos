@@ -59,6 +59,23 @@ services:
     depends_on:
       - backend
 
+  tools:
+    image: python:3.12-slim
+    profiles: ["tools"]
+    working_dir: /work
+    volumes:
+      - .:/work
+    env_file: .env
+    environment:
+      - DB_HOST=postgres_db
+      - DB_PORT=5432
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      postgres_db:
+        condition: service_healthy
+
 volumes:
   pgdata:
   avatars:
