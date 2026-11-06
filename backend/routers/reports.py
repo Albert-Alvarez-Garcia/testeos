@@ -2,7 +2,7 @@
 reports.py · Informe de colección del usuario.
 
     GET /api/reports/collection         Listado agrupado por carta (paginado, filtrado y ordenado en servidor)
-        Filtros: q, type_line, subtype, container_id
+        Filtros: q, type_line, subtype, container_id, rarity
 
 Se identifica al usuario igual que en el resto de la API: cabecera X-Username.
 """
@@ -80,6 +80,7 @@ def collection_report(
     type_line: Optional[str] = Query(None, max_length=60, description="Tipo de carta (Creature, Land...)"),
     subtype: Optional[str] = Query(None, max_length=60, description="Subtipo (Elf, Aura...)"),
     container_id: Optional[str] = Query(None, description="Solo copias de este contenedor"),
+    rarity: Optional[str] = Query(None, max_length=20),
     sort: str = Query("name", description="name | type | copies | printings | containers | added"),
     direction: str = Query("asc", alias="dir", description="asc | desc"),
     page: int = Query(1, ge=1),
@@ -105,12 +106,23 @@ def collection_report(
         raw_params.append(container_id)
 
     search_where, search_params = _search_clause(q, type_line, subtype)
+    facet_clauses: list[str] = []
+    facet_params: list = []
+    if rarity and rarity.strip():
+        facet_clauses.append("LOWER(COALESCE(rarity, '')) = LOWER(%s)")
+        facet_params.append(rarity.strip())
+    facet_where = " AND ".join(facet_clauses) if facet_clauses else "TRUE"
+    search_where += " AND " + facet_where
+    detail_facet_clauses: list[str] = []
+    if rarity and rarity.strip():
+        detail_facet_clauses.append("LOWER(COALESCE(p.rarity, '')) = LOWER(%s)")
+    detail_facet_where = " AND ".join(detail_facet_clauses) if detail_facet_clauses else "TRUE"
 
     cte = f"""
         WITH raw AS (
             SELECT cc.id AS copy_id, cc.container_id, cc.printing_id, cc.is_foil, cc.created_at,
                    LOWER(c.name) AS name_key, c.name, c.mana_cost, c.type_line, c.oracle_text,
-                   p.set_name,
+                   p.set_name, p.set_code, p.rarity,
                    {CARD_TYPES_SQL} AS card_types
             FROM card_copies cc
             JOIN containers co ON co.id = cc.container_id
@@ -123,10 +135,12 @@ def collection_report(
         ),
         base AS (
             SELECT raw.* FROM raw
-            WHERE name_key IN (SELECT name_key FROM matched)
+            WHERE name_key IN (SELECT name_key FROM matched) AND {facet_where}
         )
     """
-    cte_params = raw_params + search_params
+    # Los filtros de faceta aparecen dos veces en el CTE: al seleccionar
+    # nombres coincidentes y al limitar las copias que forman el resultado.
+    cte_params = raw_params + search_params + facet_params + facet_params
 
     conn = get_db_connection()
     cursor = conn.cursor()
@@ -190,17 +204,19 @@ def collection_report(
                        p.id AS printing_uuid, p.scryfall_printing_id, p.set_code, p.set_name,
                        p.collector_number, p.rarity, p.image_uri,
                        co.id AS container_id, co.name AS container_name, co.type AS container_type,
-                       COUNT(cc.id) AS qty,
-                       COUNT(*) FILTER (WHERE cc.is_foil) AS foil_qty
+                       cc.condition, cc.is_foil, cs.page_number, cs.slot_index, cs.section,
+                       COUNT(cc.id) AS qty
                 FROM card_copies cc
                 JOIN containers co ON co.id = cc.container_id
                 JOIN printings p ON p.id = cc.printing_id
                 JOIN cards c ON c.id = p.card_id
-                WHERE co.user_id = %s AND LOWER(c.name) = ANY(%s){detail_container}
+                LEFT JOIN container_slots cs ON cs.id = cc.slot_id
+                WHERE co.user_id = %s AND LOWER(c.name) = ANY(%s) AND {detail_facet_where}{detail_container}
                 GROUP BY LOWER(c.name), p.id, p.scryfall_printing_id, p.set_code, p.set_name,
-                         p.collector_number, p.rarity, p.image_uri, co.id, co.name, co.type;
+                         p.collector_number, p.rarity, p.image_uri, co.id, co.name, co.type,
+                         cc.condition, cc.is_foil, cs.page_number, cs.slot_index, cs.section;
             """
-            detail_params: list = [user_id, list(by_key.keys())]
+            detail_params: list = [user_id, list(by_key.keys())] + facet_params
             if container_id:
                 detail_params.append(container_id)
             cursor.execute(detail_sql, tuple(detail_params))
@@ -210,13 +226,9 @@ def collection_report(
                 if card is None:
                     continue
                 qty = int(row["qty"])
-                foil = int(row["foil_qty"])
-                container = {
-                    "id": str(row["container_id"]),
-                    "name": row["container_name"],
-                    "type": row["container_type"],
-                    "quantity": qty,
-                }
+                foil_qty = qty if row["is_foil"] else 0
+                container_id_key = str(row["container_id"])
+                condition = (row["condition"] or "—").strip()
 
                 printing_key = str(row["printing_uuid"])
                 printing = card["_prints"].get(printing_key)
@@ -230,16 +242,33 @@ def collection_report(
                         "image_uri": row["image_uri"] or "",
                         "quantity": 0,
                         "foil_quantity": 0,
+                        "conditions": {},
                         "containers": [],
+                        "_containers": {},
                     }
                     card["_prints"][printing_key] = printing
                 printing["quantity"] += qty
-                printing["foil_quantity"] += foil
-                printing["containers"].append(container)
+                printing["foil_quantity"] += foil_qty
+                printing["conditions"][condition] = printing["conditions"].get(condition, 0) + qty
 
-                agg = card["_containers"].get(container["id"])
+                container = printing["_containers"].get(container_id_key)
+                if container is None:
+                    container = {"id": container_id_key, "name": row["container_name"],
+                                 "type": row["container_type"], "quantity": 0,
+                                 "conditions": {}, "positions": []}
+                    printing["_containers"][container_id_key] = container
+                container["quantity"] += qty
+                container["conditions"][condition] = container["conditions"].get(condition, 0) + qty
+                if row["page_number"] is not None or row["slot_index"] is not None:
+                    container["positions"].append({"page": row["page_number"], "slot": row["slot_index"],
+                                                    "section": row["section"], "quantity": qty})
+
+                card_container = {"id": container_id_key, "name": row["container_name"],
+                                  "type": row["container_type"], "quantity": qty}
+
+                agg = card["_containers"].get(container_id_key)
                 if agg is None:
-                    card["_containers"][container["id"]] = dict(container)
+                    card["_containers"][container_id_key] = card_container
                 else:
                     agg["quantity"] += qty
 
@@ -247,7 +276,7 @@ def collection_report(
                 prints = list(card.pop("_prints").values())
                 prints.sort(key=lambda p: ((p["set_name"] or "").lower(), _natural_key(p["collector_number"])))
                 for p in prints:
-                    p["containers"].sort(key=lambda c: c["name"].lower())
+                    p["containers"] = sorted(p.pop("_containers").values(), key=lambda c: c["name"].lower())
                 card["printings"] = prints
                 card["containers"] = sorted(card.pop("_containers").values(), key=lambda c: c["name"].lower())
 

@@ -29,6 +29,8 @@ from backend.routers.auth import (
 UPLOAD_MAX_BYTES = 1 * 1024 * 1024
 SEARCH_MIN_CHARS = 2
 SEARCH_LIMIT = 10
+MANA_THEMES = {"white", "blue", "black", "red", "green", "42"}
+COLLECTION_VISIBILITY = {"hidden", "summary", "stats", "browse"}
 
 
 class ProfileError(Exception):
@@ -98,8 +100,102 @@ def get_profile(user: dict) -> dict:
         "email": user.get("email"),
         "badge": user.get("badge_type"),
         "auth_type": user.get("auth_type"),
+        "mana_theme": user.get("mana_theme"),
+        "profile_private": bool(user.get("profile_private", False)),
+        "collection_visibility": user.get("collection_visibility") or "stats",
         "avatar": avatar_url(user["username"]),
     }
+
+
+def init_theme_preference_schema() -> None:
+    """Migra instalaciones existentes para guardar la paleta elegida en el perfil."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            ALTER TABLE users
+            ADD COLUMN IF NOT EXISTS mana_theme VARCHAR(20)
+            CHECK (mana_theme IS NULL OR mana_theme IN ('white', 'blue', 'black', 'red', 'green', '42'));
+        """)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def init_privacy_schema() -> None:
+    """Añade preferencias de privacidad también en instalaciones ya creadas."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_private BOOLEAN NOT NULL DEFAULT FALSE;")
+        cursor.execute("""
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS collection_visibility VARCHAR(16) NOT NULL DEFAULT 'stats'
+            CHECK (collection_visibility IN ('hidden', 'summary', 'stats', 'browse'));
+        """)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_privacy(user: dict, profile_private: bool, collection_visibility: str) -> dict:
+    if collection_visibility not in COLLECTION_VISIBILITY:
+        raise ProfileError(422, "El nivel de visibilidad de la colección no es válido.")
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+            UPDATE users SET profile_private = %s, collection_visibility = %s
+            WHERE id = %s RETURNING profile_private, collection_visibility;
+        """, (profile_private, collection_visibility, user["id"]))
+        row = cursor.fetchone()
+        if not row:
+            raise ProfileError(404, "No se ha encontrado el perfil.")
+        conn.commit()
+        return {"profile_private": bool(row["profile_private"]), "collection_visibility": row["collection_visibility"]}
+    except ProfileError:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+
+def update_mana_theme(user: dict, theme: str) -> str:
+    """Guarda la paleta seleccionada; el tema 42 solo está disponible para cuentas 42."""
+    if theme not in MANA_THEMES:
+        raise ProfileError(422, "El tema seleccionado no es válido.")
+    if theme == "42" and str(user.get("auth_type") or "").lower() != "42":
+        raise ProfileError(403, "El tema 42 solo está disponible para cuentas de 42.")
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("UPDATE users SET mana_theme = %s WHERE id = %s RETURNING mana_theme;", (theme, user["id"]))
+        row = cursor.fetchone()
+        if not row:
+            raise ProfileError(404, "No se ha encontrado el perfil.")
+        conn.commit()
+        return row["mana_theme"]
+    except ProfileError:
+        conn.rollback()
+        raise
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
 
 
 def _card(row) -> dict:
@@ -116,7 +212,7 @@ def _clean_username(value) -> str:
 
 def _find_user(cursor, username: str):
     cursor.execute(
-        "SELECT id, username, badge_type FROM users WHERE LOWER(username) = LOWER(%s);",
+        "SELECT id, username, badge_type, profile_private FROM users WHERE LOWER(username) = LOWER(%s);",
         (username,),
     )
     return cursor.fetchone()
@@ -223,6 +319,7 @@ def search_users(me_id, query: str) -> List[dict]:
             FROM users u
             WHERE u.id <> %s
               AND u.username ILIKE %s
+              AND u.profile_private = FALSE
               AND NOT EXISTS (SELECT 1 FROM blocked_users b WHERE b.user_id = u.id AND b.blocked_id = %s)
             ORDER BY LOWER(u.username)
             LIMIT %s;
@@ -248,6 +345,8 @@ def send_friend_request(me_id, target_username) -> dict:
     def action(cursor):
         target = _find_user(cursor, name)
         if not target:
+            raise ProfileError(404, "Usuario no encontrado.")
+        if target.get("profile_private"):
             raise ProfileError(404, "Usuario no encontrado.")
         target_id = target["id"]
         if str(target_id) == str(me_id):

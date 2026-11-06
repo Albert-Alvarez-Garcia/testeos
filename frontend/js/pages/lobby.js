@@ -17,15 +17,17 @@
 
         // ---- Sesión: si no hay usuario guardado, se genera UNA vez y se persiste,
         // para que game.html use exactamente el mismo nombre ----
-        let userSession = JSON.parse(localStorage.getItem("cardbinder_user")) ||
-                  JSON.parse(localStorage.getItem("user_session"));
+        const readSession = (key) => {
+            try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; }
+        };
+        let userSession = readSession("cardbinder_user") || readSession("user_session");
         if (!userSession || !userSession.username) {
             userSession = { username: "Conjurador_" + Math.floor(Math.random() * 1000) };
         }
         const urlParams = new URLSearchParams(window.location.search);
         // ?user=Ana permite probar varios jugadores en el mismo navegador (se recuerda por pestaña)
         if (urlParams.get("user")) sessionStorage.setItem("cb_tab_user", urlParams.get("user"));
-        const tabUser = sessionStorage.getItem("cb_tab_user");
+        const tabUser = readSession("cardbinder_user") ? null : sessionStorage.getItem("cb_tab_user");
         if (!tabUser) localStorage.setItem("user_session", JSON.stringify({ username: userSession.username }));
         const username = tabUser || userSession.username;
 
@@ -44,6 +46,7 @@
 
             ws.onopen = () => {
                 roomStatus.textContent = "🟢 Conectado al vestíbulo";
+                roomStatus.dataset.connection = "connected";
             };
 
             ws.onmessage = (event) => {
@@ -62,6 +65,7 @@
             ws.onclose = () => {
                 if (leaving) return;
                 roomStatus.textContent = "🔴 Desconectado. Reconectando...";
+                roomStatus.dataset.connection = "disconnected";
                 clearTimeout(reconnectTimer);
                 reconnectTimer = setTimeout(connectLobbyWebSocket, 2000);
             };
@@ -85,7 +89,7 @@
 
             if (players.length === 0) {
                 const li = document.createElement("li");
-                li.className = "text-xs text-[rgb(var(--c-amber-200)/0.5)] italic";
+                li.className = "lobby-empty-player";
                 li.textContent = "Esperando jugadores...";
                 playersList.appendChild(li);
             }
@@ -94,23 +98,22 @@
                 const isMe = p.username === username;
 
                 const li = document.createElement("li");
-                li.className = "flex justify-between items-center bg-[rgb(var(--c-ink))] border p-2.5 rounded-lg text-xs " +
-                    (isMe ? "border-[rgb(var(--c-amber-400)/0.5)]" : "border-[rgb(var(--c-gold)/0.2)]");
+                li.className = "lobby-player" + (isMe ? " is-you" : "");
 
                 const nameSpan = document.createElement("span");
-                nameSpan.className = "font-medium text-[rgb(var(--c-amber-100))] flex items-center gap-1.5";
+                nameSpan.className = "lobby-player-name";
                 nameSpan.textContent = p.username + (isMe ? " (tú)" : "");
 
                 if (p.is_host) {
                     const hostBadge = document.createElement("span");
-                    hostBadge.className = "bg-[rgb(var(--c-amber-500)/0.2)] text-[rgb(var(--c-amber-400))] text-[10px] px-1.5 py-0.5 rounded font-bold border border-[rgb(var(--c-amber-500)/0.3)]";
+                    hostBadge.className = "lobby-badge is-host";
                     hostBadge.textContent = "HOST";
                     nameSpan.appendChild(hostBadge);
                 }
 
                 if (p.spectator) {
                     const eye = document.createElement("span");
-                    eye.className = "text-[10px] px-1.5 py-0.5 rounded font-bold border border-[rgb(var(--c-gold)/0.3)] text-[rgb(var(--c-amber-200)/0.7)]";
+                    eye.className = "lobby-badge is-spectator";
                     eye.textContent = "👁 ESPECTADOR";
                     nameSpan.appendChild(eye);
                 }
@@ -149,11 +152,11 @@
             const div = document.createElement("div");
 
             const strong = document.createElement("strong");
-            strong.className = isMe ? "text-emerald-400" : "text-[rgb(var(--c-amber-400))]";
+            strong.className = "lobby-message-author" + (isMe ? " is-you" : "");
             strong.textContent = `${author}: `;
 
             const span = document.createElement("span");
-            span.className = "text-[rgb(var(--c-amber-100)/0.9)] break-words";
+            span.className = "lobby-message-text";
             span.textContent = message;   // textContent: sin inyección de HTML
 
             div.appendChild(strong);
@@ -170,7 +173,7 @@
 
         function appendSystemMessage(text) {
             const div = document.createElement("div");
-            div.className = "text-[rgb(var(--c-amber-200)/0.4)] italic";
+            div.className = "lobby-system-message";
             div.textContent = `— ${text}`;
             chatMessages.appendChild(div);
             trimChat();
@@ -199,7 +202,7 @@
                 // Si por algún motivo no llega la orden de arranque, se reactiva
                 setTimeout(() => {
                     startGameBtn.disabled = false;
-                    startGameBtn.textContent = "🚀 Comenzar Partida";
+                startGameBtn.innerHTML = 'Comenzar partida <span aria-hidden="true">→</span>';
                 }, 4000);
             }
         });

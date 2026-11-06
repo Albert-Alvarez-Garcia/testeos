@@ -25,14 +25,16 @@ document.addEventListener("DOMContentLoaded", () => {
         if (roomStatus) roomStatus.textContent = `Error JavaScript: ${String(event.reason || "promesa rechazada").slice(0, 100)}`;
     });
 
-    const userSession = JSON.parse(localStorage.getItem("user_session")) ||
-                        JSON.parse(localStorage.getItem("cardbinder_user")) || {
+    const readSession = (key) => {
+        try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; }
+    };
+    const userSession = readSession("cardbinder_user") || readSession("user_session") || {
                             username: "Conjurador"
                         };
     const urlParams = new URLSearchParams(window.location.search);
     // ?user=Ana permite probar varios jugadores en el mismo navegador (se recuerda por pestaña)
     if (urlParams.get("user")) sessionStorage.setItem("cb_tab_user", urlParams.get("user"));
-    const username = sessionStorage.getItem("cb_tab_user") || userSession.username || "Jugador";
+    const username = (readSession("cardbinder_user") ? null : sessionStorage.getItem("cb_tab_user")) || userSession.username || "Jugador";
     const roomId = urlParams.get("room") || "sala-1";
 
     console.info("Adivina la Carta · cliente v3 · usuario:", username, "· sala:", roomId);

@@ -27,16 +27,16 @@
         return;
     }
 
-    // ---------- Tema 42: fondo propio (theme.js) y logo abajo a la derecha ----------
-    const isFortyTwo = (u) => !!u && (u.auth_type === '42' || /42/.test(String(u.badge || '')));
-
-    function applyTheme(on) {
-        if (on && window.cbEnableTheme42) window.cbEnableTheme42();
-        const logo = document.getElementById('logo-42');
-        if (logo) logo.classList.toggle('hidden', !on);
-    }
-
-    document.addEventListener('DOMContentLoaded', () => applyTheme(isFortyTwo(user)));
-    // user-menu.js avisa cuando el servidor confirma el perfil (tipo de cuenta incluido)
-    window.addEventListener('cb:profile', (e) => applyTheme(e.detail.auth_type === '42' || isFortyTwo(user)));
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchForm = document.querySelector('.hero-search');
+        const searchInput = document.getElementById('home-card-search');
+        if (searchForm && searchInput) {
+            searchForm.addEventListener('submit', (event) => {
+                if (!searchInput.value.trim()) {
+                    event.preventDefault();
+                    searchInput.focus();
+                }
+            });
+        }
+    });
 })();

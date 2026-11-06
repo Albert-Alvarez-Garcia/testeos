@@ -6,57 +6,82 @@
         const roomNameInput = document.getElementById("room-name-input");
         const refreshBtn = document.getElementById("refresh-btn");
 
-        const escapeHtml = (v) => String(v ?? '').replace(/[&<>'"]/g,
-            (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[c]));
-
         // Cargar usuario guardado previamente si existe
-        const savedSession = JSON.parse(localStorage.getItem("user_session")) || 
-                             JSON.parse(localStorage.getItem("cardbinder_user"));
+        const readSession = (key) => {
+            try { return JSON.parse(localStorage.getItem(key) || 'null'); } catch (_) { return null; }
+        };
+        const savedSession = readSession("cardbinder_user") || readSession("user_session");
         if (savedSession && savedSession.username) {
             usernameInput.value = savedSession.username;
+            if (readSession("cardbinder_user")) {
+                usernameInput.readOnly = true;
+                usernameInput.title = "Tu nombre de perfil se usa en las partidas.";
+                document.getElementById("player-name-hint").textContent = "Usamos el nombre de tu perfil en las partidas.";
+            }
         } else {
             usernameInput.value = "Conjurador_" + Math.floor(Math.random() * 1000);
         }
 
+        let refreshing = false;
         async function fetchActiveRooms() {
+            if (refreshing) return;
+            refreshing = true;
+            roomsList.setAttribute("aria-busy", "true");
             try {
-                const response = await fetch("/api/game/rooms");
+                const response = await fetch("/api/game/rooms", { headers: { Accept: "application/json" } });
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
                 const data = await response.json();
                 renderRooms(data.rooms);
             } catch (error) {
                 console.error("Error al obtener las salas:", error);
-                roomsList.innerHTML = `<div class="text-xs text-red-400 text-center py-4">Error al conectar con el servidor.</div>`;
+                const errorState = document.createElement("div");
+                errorState.className = "rooms-empty rooms-error";
+                errorState.innerHTML = `<span class="rooms-empty-icon" aria-hidden="true">!</span><strong>No se pudieron cargar las salas</strong><span>Comprueba tu conexión e inténtalo de nuevo.</span>`;
+                roomsList.replaceChildren(errorState);
+            } finally {
+                refreshing = false;
+                roomsList.setAttribute("aria-busy", "false");
             }
         }
 
         function renderRooms(rooms) {
-            roomsList.innerHTML = "";
+            roomsList.replaceChildren();
             if (!rooms || rooms.length === 0) {
-                roomsList.innerHTML = `<div class="text-xs text-[rgb(var(--c-amber-200)/0.4)] italic text-center py-8">No hay salas abiertas en este momento. ¡Crea una!</div>`;
+                const empty = document.createElement("div");
+                empty.className = "rooms-empty";
+                empty.innerHTML = `<span class="rooms-empty-icon" aria-hidden="true">✧</span><strong>No hay salas abiertas ahora</strong><span>Crea una sala y anima a tus amigos a unirse.</span>`;
+                roomsList.appendChild(empty);
                 return;
             }
 
             rooms.forEach(room => {
-                const div = document.createElement("div");
-                div.className = "flex justify-between items-center bg-[rgb(var(--c-ink))] border border-[rgb(var(--c-gold)/0.2)] p-3 rounded-xl text-xs";
-
-                const infoDiv = document.createElement("div");
-                // Los nombres de sala los escribe cualquier usuario: se escapan antes de pintarlos
-                infoDiv.innerHTML = `
-                    <div class="font-bold text-[rgb(var(--c-amber-200))] text-sm mb-0.5">🏛️ ${escapeHtml(room.room_id)}</div>
-                    <div class="text-[11px] text-[rgb(var(--c-amber-200)/0.6)]">Ocupación: <span class="text-emerald-400 font-semibold">${escapeHtml(room.current_players)}/${escapeHtml(room.max_players)}</span> jugadores</div>
-                `;
-
+                const card = document.createElement("article");
+                card.className = "room-card";
+                const info = document.createElement("div");
+                info.className = "room-card-info";
+                const titleRow = document.createElement("div");
+                titleRow.className = "room-title-row";
+                const title = document.createElement("h3");
+                title.className = "room-card-title";
+                title.textContent = room.room_id || "Sala sin nombre";
+                const state = document.createElement("span");
+                state.className = `room-state${room.in_game ? " is-playing" : " is-waiting"}`;
+                state.textContent = room.in_game ? "En partida" : "Esperando jugadores";
+                titleRow.append(title, state);
+                const details = document.createElement("p");
+                details.className = "room-card-details";
+                details.textContent = `${room.current_players ?? 0} de ${room.max_players ?? 0} jugadores`;
+                info.append(titleRow, details);
                 if (room.in_game || room.spectators) {
-                    const st = document.createElement("div");
-                    st.className = "text-[11px] text-amber-300 mt-0.5";
-                    st.textContent = (room.in_game ? `▶ En curso · ronda ${room.round || 1} · ` : "") + `👁 ${room.spectators || 0} espectador(es)`;
-                    infoDiv.appendChild(st);
+                    const spectatorInfo = document.createElement("p");
+                    spectatorInfo.className = "room-spectators";
+                    spectatorInfo.textContent = `${room.in_game ? `Ronda ${room.round || 1} · ` : ""}${room.spectators || 0} espectadores`;
+                    info.appendChild(spectatorInfo);
                 }
-
                 const joinBtn = document.createElement("button");
-                joinBtn.className = "bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded-lg text-xs transition-all cursor-pointer";
-                joinBtn.textContent = room.in_game ? "👁 Ver partida" : "Unirse";
+                joinBtn.className = "room-action-btn";
+                joinBtn.type = "button";
+                joinBtn.textContent = room.in_game ? "Ver partida →" : "Entrar al vestíbulo →";
                 
                 joinBtn.addEventListener("click", () => {
                     const username = usernameInput.value.trim() || "Conjurador";
@@ -66,9 +91,8 @@
                         : `lobby.html?room=${encodeURIComponent(room.room_id)}`;
                 });
 
-                div.appendChild(infoDiv);
-                div.appendChild(joinBtn);
-                roomsList.appendChild(div);
+                card.append(info, joinBtn);
+                roomsList.appendChild(card);
             });
         }
 

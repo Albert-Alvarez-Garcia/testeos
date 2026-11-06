@@ -9,7 +9,7 @@ HEADERS = {
     "Accept": "application/json"
 }
 
-def search_cards_by_substring(name: str, card_type: str = None):
+def search_cards_by_substring(name: str, card_type: str = None, subtype: str = None):
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -30,6 +30,9 @@ def search_cards_by_substring(name: str, card_type: str = None):
         if card_type and card_type.strip():
             query += " AND LOWER(c.type_line) LIKE LOWER(%s)"
             params.append(f"%{card_type.strip()}%")
+        if subtype and subtype.strip():
+            query += " AND LOWER(c.type_line) LIKE LOWER(%s)"
+            params.append(f"%{subtype.strip()}%")
         
         # Orden estable: las impresiones de una misma carta salen juntas
         query += " ORDER BY c.name ASC, p.set_name ASC, p.collector_number ASC;"
@@ -41,8 +44,16 @@ def search_cards_by_substring(name: str, card_type: str = None):
             return [dict(card) for card in local_cards]
 
         # Fallback con Scryfall solicitando explícitamente todas las impresiones (unique=prints)
-        print(f"🌐 [Scryfall API] Sin coincidencias locales. Consultando todas las impresiones en API para: {name}...")
-        scryfall_url = f"https://api.scryfall.com/cards/search?q={quote(name)}&unique=prints"
+        search_terms = [name.strip()] if name and name.strip() else []
+        for type_filter in (card_type, subtype):
+            if type_filter and type_filter.strip():
+                safe_type = type_filter.strip().replace('"', '\\"')
+                search_terms.append(f't:"{safe_type}"')
+        scryfall_query = " ".join(search_terms)
+        if not scryfall_query:
+            return []
+        print(f"🌐 [Scryfall API] Sin coincidencias locales. Consultando impresiones para: {scryfall_query}...")
+        scryfall_url = f"https://api.scryfall.com/cards/search?q={quote(scryfall_query)}&unique=prints"
         response = requests.get(scryfall_url, headers=HEADERS)
         
         if response.status_code != 200:
@@ -164,7 +175,8 @@ def get_user_by_username(username: str):
     cursor = conn.cursor()
     try:
         cursor.execute("""
-            SELECT id, username, email, password_hash, badge_type, auth_type
+            SELECT id, username, email, password_hash, badge_type, auth_type, mana_theme,
+                   profile_private, collection_visibility
             FROM users
             WHERE LOWER(username) = LOWER(%s);
         """, (username.strip(),))

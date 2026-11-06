@@ -1,17 +1,18 @@
 /* chat.js · Chat flotante con GIFs (Giphy). Estilos: .chat-* en css/portal.css */
 document.addEventListener("DOMContentLoaded", () => {
     const floatBtn = document.getElementById("chat-float-btn");
-    const chatBox = document.getElementById("chat-box");
-    const closeBtn = document.getElementById("chat-close-btn");
-    const chatForm = document.getElementById("chat-form");
-    const chatInput = document.getElementById("chat-input");
-    const messagesContainer = document.getElementById("chat-messages");
+    const chatBox = document.getElementById("pong-global-chat") || document.getElementById("chat-box");
+    const insideChat = (id) => chatBox?.querySelector(`#${id}`) || document.getElementById(id);
+    const closeBtn = insideChat("chat-close-btn");
+    const chatForm = insideChat("chat-form");
+    const chatInput = insideChat("chat-input");
+    const messagesContainer = insideChat("chat-messages");
 
     // Buscador de Giphy
-    const stickerToggleBtn = document.getElementById("sticker-toggle-btn");
-    const stickerPicker = document.getElementById("sticker-picker");
-    const giphySearchInput = document.getElementById("giphy-search-input");
-    const giphyResults = document.getElementById("giphy-results");
+    const stickerToggleBtn = insideChat("sticker-toggle-btn");
+    const stickerPicker = insideChat("sticker-picker");
+    const giphySearchInput = insideChat("giphy-search-input");
+    const giphyResults = insideChat("giphy-results");
 
     let ws = null;
     let historyLoaded = false;

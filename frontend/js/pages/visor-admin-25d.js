@@ -25,7 +25,7 @@ const modeStatus = document.getElementById('modeStatus');
 
 const cardQuantity = document.getElementById('cardQuantity');
 const cardState = document.getElementById('cardState');
-const cardOwned = document.getElementById('cardOwned');
+const cardOwnedStatus = document.getElementById('cardOwnedStatus');
 const saveInventoryBtn = document.getElementById('saveInventoryBtn');
 const filterContainerTypeSelect = document.getElementById('filterContainerType');
 
@@ -34,6 +34,9 @@ let currentSelectedCard = null;
 let globalTaxonomy = {};
 let allContainersList = [];
 let currentCardOwnership = null;
+let ownershipRequestId = 0;
+let searchRequestId = 0;
+let searchController = null;
 
 const ZOOM_SCALE = 2; 
 const MAGNIFIER_SIZE = 160; 
@@ -41,6 +44,8 @@ const MAGNIFIER_SIZE = 160;
 document.addEventListener('DOMContentLoaded', async () => {
     const searchInput = document.getElementById('searchInput');
     const cardLocation = document.getElementById('cardLocation');
+    const initialQuery = new URLSearchParams(location.search).get('q');
+    if (initialQuery && searchInput) searchInput.value = initialQuery;
     try {
         const response = await fetch(`${API_BASE_URL}/cards/types-taxonomy`);
         globalTaxonomy = await response.json();
@@ -66,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (filterContainerTypeSelect) {
         filterContainerTypeSelect.addEventListener('change', actualizarDesplegableContenedores);
     }
+    if (initialQuery && initialQuery.trim().length >= 2) realizarBusqueda();
 });
 
 // ============================================================================
@@ -97,10 +103,16 @@ function actualizarDesplegableContenedores() {
     if (!cardLocation) return;
 
     const lastSelected = localStorage.getItem('last_selected_container');
+    const filterType = filterContainerTypeSelect?.value || 'all';
     
     cardLocation.innerHTML = '<option value="">Selecciona un contenedor...</option>';
     
-    allContainersList.forEach(c => {
+    allContainersList.filter((c) => {
+        const type = String(c.type || '').toLowerCase();
+        if (filterType === 'all') return true;
+        if (filterType === 'binder') return type.startsWith('binder');
+        return type === filterType || type.startsWith(`${filterType}_`);
+    }).forEach(c => {
         const option = document.createElement('option');
         option.value = c.id; 
         const contieneCarta = currentCardOwnership?.containers?.some(
@@ -150,6 +162,9 @@ if (macroCategorySelect) {
 }
 
 async function realizarBusqueda() {
+    const requestId = ++searchRequestId;
+    if (searchController) searchController.abort();
+    searchController = new AbortController();
     const searchInput = document.getElementById('searchInput');
     const query = searchInput.value.trim();
     const macroCategory = macroCategorySelect ? macroCategorySelect.value.trim() : '';
@@ -163,17 +178,27 @@ async function realizarBusqueda() {
         return;
     }
 
-    try {
-        let url = `${API_BASE_URL}/cards/filter?`;
-        if (hasValidText) {
-            url += `name=${encodeURIComponent(query)}`;
-        } else {
-            url += `name=`;
-        }
-        if (macroCategory) url += `&type_line=${encodeURIComponent(macroCategory)}`;
-        if (subtype) url += `&subtype=${encodeURIComponent(subtype)}`;
+    currentSelectedCard = null;
+    currentCardOwnership = null;
+    ownershipRequestId += 1;
+    saveInventoryBtn.disabled = true;
+    detailsColumn.classList.remove('has-selection');
+    cardImage.src = 'public/assets/capicarta.png';
+    document.getElementById('visorCardName').textContent = 'Selecciona una carta';
+    document.getElementById('visorCardMana').textContent = '';
+    document.getElementById('visorCardType').textContent = '—';
+    if (cardOwnedStatus) {
+        cardOwnedStatus.textContent = 'Elige una impresión para comprobar si ya está en tu colección.';
+        cardOwnedStatus.classList.remove('is-owned', 'is-checking', 'is-error');
+    }
+    mostrarMensajeResultados('Buscando impresiones…');
 
-        const response = await fetch(url);        
+    try {
+        const params = new URLSearchParams({ name: hasValidText ? query : '' });
+        if (macroCategory) params.set('type_line', macroCategory);
+        if (subtype) params.set('subtype', subtype);
+        const response = await fetch(`${API_BASE_URL}/cards/filter?${params}`, { signal: searchController.signal });
+        if (requestId !== searchRequestId) return;
         if (!response.ok) {
             if (response.status === 404) {
                 manejarSinResultados();
@@ -193,8 +218,11 @@ async function realizarBusqueda() {
         detailsColumn.classList.add('has-selection');
 
         cards.forEach((cardData, index) => {
-            const item = document.createElement('div');
+            const item = document.createElement('button');
+            item.type = 'button';
             item.className = 'result-card-item';
+            item.setAttribute('aria-pressed', 'false');
+            item.dataset.printingId = cardData.scryfall_printing_id || '';
             
             const imgSrc = cardData.image_uri ? cardData.image_uri : "public/assets/nocapi.png";
 
@@ -220,6 +248,7 @@ async function realizarBusqueda() {
         });
 
     } catch (error) {
+        if (error.name === 'AbortError' || requestId !== searchRequestId) return;
         console.error("Error:", error);
         mostrarMensajeResultados('Error de conexión con el servidor.', true);
     }
@@ -237,6 +266,13 @@ function manejarSinResultados() {
     mostrarMensajeResultados('Vaya... No se ha encontrado ninguna carta. ¡Prueba otra búsqueda!');
     cardImage.src = "public/assets/nocapi.png";
     currentSelectedCard = null;
+    currentCardOwnership = null;
+    ownershipRequestId += 1;
+    if (saveInventoryBtn) saveInventoryBtn.disabled = true;
+    if (cardOwnedStatus) {
+        cardOwnedStatus.textContent = 'Selecciona una impresión para consultar si ya está en tu colección.';
+        cardOwnedStatus.classList.remove('is-owned', 'is-checking', 'is-error');
+    }
     detailsColumn.classList.remove('has-selection');
 }
 
@@ -250,9 +286,16 @@ if (searchInput) {
 // 5. SELECCIÓN DE CARTA Y VISOR INTERACTIVO
 // ============================================================================
 async function comprobarPropiedadCarta(cardData) {
+    const requestId = ++ownershipRequestId;
     if (!cardData || !cardData.scryfall_printing_id) {
         currentCardOwnership = null;
+        if (cardOwnedStatus) cardOwnedStatus.textContent = 'No se pudo comprobar esta impresión.';
         return;
+    }
+    if (cardOwnedStatus) {
+        cardOwnedStatus.textContent = 'Comprobando tu colección…';
+        cardOwnedStatus.classList.add('is-checking');
+        cardOwnedStatus.classList.remove('is-owned', 'is-error');
     }
 
     try {
@@ -262,14 +305,25 @@ async function comprobarPropiedadCarta(cardData) {
 
         if (!response.ok) {
             console.error('Error comprobando propiedad de carta:', response.status);
+            if (requestId !== ownershipRequestId) return;
             currentCardOwnership = null;
+            if (requestId === ownershipRequestId && cardOwnedStatus) {
+                cardOwnedStatus.textContent = 'No se pudo comprobar si ya tienes esta impresión.';
+                cardOwnedStatus.classList.add('is-error');
+                cardOwnedStatus.classList.remove('is-checking');
+            }
             return;
         }
 
-        currentCardOwnership = await response.json();
-
-        if (cardOwned) {
-            cardOwned.value = currentCardOwnership.owned ? 'true' : 'false';
+        const ownership = await response.json();
+        if (requestId !== ownershipRequestId) return;
+        currentCardOwnership = ownership;
+        if (cardOwnedStatus) {
+            cardOwnedStatus.textContent = ownership.owned
+                ? `Ya tienes ${ownership.quantity} ${ownership.quantity === 1 ? 'copia' : 'copias'} de esta impresión.`
+                : 'Aún no tienes esta impresión en tu colección.';
+            cardOwnedStatus.classList.toggle('is-owned', Boolean(ownership.owned));
+            cardOwnedStatus.classList.remove('is-checking', 'is-error');
         }
 
         // Ya no sobrescribimos cardQuantity aquí para permitir que el usuario elija cuántas copias desea añadir libremente.
@@ -278,13 +332,22 @@ async function comprobarPropiedadCarta(cardData) {
 
     } catch (error) {
         console.error('Error de conexión comprobando propiedad:', error);
-        currentCardOwnership = null;
+        if (requestId === ownershipRequestId) currentCardOwnership = null;
+        if (requestId === ownershipRequestId && cardOwnedStatus) {
+            cardOwnedStatus.textContent = 'No se pudo comprobar si ya tienes esta impresión.';
+            cardOwnedStatus.classList.add('is-error');
+            cardOwnedStatus.classList.remove('is-checking');
+        }
     }
 }
 
 function seleccionarCarta(cardData) {
     currentSelectedCard = cardData;
     detailsColumn.classList.add('has-selection');
+    if (saveInventoryBtn) saveInventoryBtn.disabled = false;
+    document.querySelectorAll('.result-card-item').forEach((item) => {
+        item.setAttribute('aria-pressed', String(item.dataset.printingId === String(cardData.scryfall_printing_id || '')));
+    });
     
     if (cardData.image_uri) {
         cardImage.src = cardData.image_uri;
@@ -304,14 +367,10 @@ function seleccionarCarta(cardData) {
     }
 
     if (cardQuantity) cardQuantity.value = 1;
-    cardState.value = cardData.state ?? 'NM';
+    if (cardState) cardState.value = cardData.state ?? 'NM';
     
     const cardLocation = document.getElementById('cardLocation');
     const lastContainer = localStorage.getItem('last_selected_container');
-
-    if (cardOwned) {
-        cardOwned.value = 'false';
-    }
 
     if (cardLocation) {
         cardLocation.value = lastContainer || '';
@@ -327,9 +386,11 @@ toggleBtn.addEventListener('click', () => {
     isMagnifierEnabled = !isMagnifierEnabled;
     if (isMagnifierEnabled) {
         toggleBtn.classList.add('active');
+        toggleBtn.setAttribute('aria-pressed', 'true');
         modeStatus.textContent = 'ACTIVADO';
     } else {
         toggleBtn.classList.remove('active');
+        toggleBtn.setAttribute('aria-pressed', 'false');
         modeStatus.textContent = 'DESACTIVADO';
         magnifier.classList.remove('is-visible');
     }
@@ -405,7 +466,8 @@ function mostrarNotificacionFlotante(mensaje) {
 }
 
 saveInventoryBtn.addEventListener('click', async () => {
-    if (!currentSelectedCard) {
+    const selectedCard = currentSelectedCard;
+    if (!selectedCard) {
         alert("Selecciona una carta primero.");
         return;
     }
@@ -418,7 +480,7 @@ saveInventoryBtn.addEventListener('click', async () => {
     }
 
     // Impresión exacta (arte/colección) elegida; nunca el scryfall_id de la carta, que es común a todas sus impresiones.
-    const printingId = currentSelectedCard.scryfall_printing_id;
+    const printingId = selectedCard.scryfall_printing_id;
 
     if (!printingId) {
         alert("Error: La carta seleccionada no tiene un ID de impresión válido.");
@@ -490,13 +552,15 @@ saveInventoryBtn.addEventListener('click', async () => {
             return;
         }
 
-        mostrarNotificacionFlotante(`¡${data.added}x ${currentSelectedCard.name} añadida(s) al contenedor con éxito!`);
-        comprobarPropiedadCarta(currentSelectedCard);
+        mostrarNotificacionFlotante(`¡${data.added}x ${selectedCard.name} añadida(s) al contenedor con éxito!`);
+        if (currentSelectedCard?.scryfall_printing_id === selectedCard.scryfall_printing_id) {
+            comprobarPropiedadCarta(selectedCard);
+        }
 
     } catch (error) {
         console.error("Error al guardar inventario:", error);
         alert(`Hubo un error de conexión: ${error.message}`);
     } finally {
-        saveInventoryBtn.disabled = false;
+        saveInventoryBtn.disabled = !currentSelectedCard;
     }
 });

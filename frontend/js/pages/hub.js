@@ -1,8 +1,6 @@
 /********************************************************************************
- * [MODULE]: PÁGINAS INTERMEDIAS (hub.js)
- * [DESCRIPTION]: Comprueba la sesión y rellena los datos vivos de cada página intermedia.
- *   - body[data-hub="coleccion"]: totales de la colección
- *   - body[data-hub="juegos"]:    acceso a Pong (solo cuentas de 42), preguntado al servidor
+ * [MODULE]: HUB DE JUEGOS (hub.js)
+ * [DESCRIPTION]: Comprueba el acceso a Pong para mostrarlo solo a cuentas de 42.
  ********************************************************************************/
 (() => {
     'use strict';
@@ -27,27 +25,6 @@
     const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => (
         { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
     ));
-    const fmt = (n) => Number(n || 0).toLocaleString('es-ES');
-
-    // ------------------------------------------------------------------------
-    // Mi colección: totales en la tarjeta principal
-    // ------------------------------------------------------------------------
-    async function loadCollectionStats() {
-        try {
-            // Totales del informe (/api/reports/collection) y nº de contenedores (/api/containers/)
-            const [rep, cont] = await Promise.all([apiGet('/reports/collection?page_size=1'), apiGet('/containers/')]);
-            if (!rep.ok) return; // sin totales la página sigue funcionando
-            const r = await rep.json();
-            const list = cont.ok ? await cont.json() : null;
-            const values = { copies: r.total_copies, cards: r.total_cards, containers: Array.isArray(list) ? list.length : '—' };
-            for (const [key, value] of Object.entries(values)) {
-                document.querySelectorAll(`[data-stat="${key}"]`).forEach((el) => { el.textContent = fmt(value); });
-            }
-        } catch (e) {
-            console.warn('No se pudieron cargar los totales:', e);
-        }
-    }
-
     // ------------------------------------------------------------------------
     // Juegos: Pong solo para cuentas de 42 (la decisión la toma el servidor)
     // ------------------------------------------------------------------------
@@ -98,7 +75,5 @@
         }
     }
 
-    const page = document.body.dataset.hub;
-    if (page === 'coleccion') loadCollectionStats();
-    if (page === 'juegos') checkPong();
+    if (document.body.dataset.hub === 'juegos') checkPong();
 })();

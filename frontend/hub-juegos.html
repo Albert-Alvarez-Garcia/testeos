@@ -7,20 +7,14 @@
     <title>Card Binder Pro — Juegos</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/hub.css">
+    <link rel="stylesheet" href="css/games-shell.css">
     <script src="js/shared/theme.js"></script>
+    <script src="js/shared/user-menu.js"></script>
 </head>
-<body class="hub-body" data-hub="juegos">
-
-    <header class="hub-header">
-        <a class="hub-logo" href="index.html" title="Volver al inicio">
-            <img src="public/assets/logomagic.png" alt="Card Binder Pro">
-        </a>
-        <nav class="hub-crumbs" aria-label="Ruta">
-            <a href="index.html">Inicio</a><span aria-hidden="true">›</span><span aria-current="page">Juegos</span>
-        </nav>
-    </header>
-
+<body class="games-shell hub-body" data-shell-page="games" data-hub="juegos">
+<div class="app-main">
     <main class="hub-main">
         <h1>Juegos</h1>
         <p class="hub-lead">Juega con otros conjuradores.</p>
@@ -38,8 +32,9 @@
             <div id="pongSlot" aria-live="polite"></div>
         </div>
     </main>
-
+    </div>
     <script src="js/pages/hub.js"></script>
     <script src="js/shared/footer.js"></script>
+    <script src="js/shared/app-shell.js"></script>
 </body>
 </html>

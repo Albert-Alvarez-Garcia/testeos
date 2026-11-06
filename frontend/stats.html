@@ -4,73 +4,92 @@
     <meta charset="UTF-8">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🃏%3C/text%3E%3C/svg%3E">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Binder Pro - Estadísticas</title>
+    <title>Estadísticas y ranking · Card Binder Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/stats.css">
     <script src="js/shared/theme.js"></script>
+    <script src="js/shared/user-menu.js"></script>
 </head>
-<body class="min-h-screen flex flex-col">
-    <header class="border-b border-[rgb(var(--c-gold-dark))] bg-[rgb(var(--c-bg-app)/0.8)] backdrop-blur-sm sticky top-0 z-50">
-        <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-            <h1 class="text-xl font-bold font-magic tracking-wider text-[rgb(var(--c-accent))]">📊 Estadísticas y ranking</h1>
-            <a href="index.html" class="text-sm text-[color:var(--text-muted)] hover:text-[rgb(var(--c-accent-hi))] transition">← Volver al Inicio</a>
+<body class="stats-page" data-shell-page="stats">
+<div class="app-main">
+    <main class="stats-content">
+        <header class="stats-heading">
+            <div>
+                <p class="stats-eyebrow">TU TRAYECTORIA</p>
+                <h1>Estadísticas y ranking</h1>
+                <p>Tu progreso en la mesa y entre conjuradores.</p>
+            </div>
+            <label class="stats-filter" for="game-filter">
+                <span>Juego</span>
+                <select id="game-filter" class="fantasy-input">
+                    <option value="">Todos los juegos</option>
+                    <option value="guess_card">Adivina la Carta</option>
+                    <option value="pong">Pong</option>
+                </select>
+            </label>
+        </header>
+
+        <section class="xp-panel" aria-labelledby="h-level">
+            <div class="xp-panel-heading">
+                <div>
+                    <p class="stats-kicker">PROGRESO DEL ARCHIVO</p>
+                    <h2 id="h-level">Nivel y experiencia</h2>
+                </div>
+                <div class="xp-level"><span>NIVEL</span><strong id="xp-level">1</strong></div>
+            </div>
+            <div class="xp-progress-copy"><span id="xp-text">Cargando experiencia…</span></div>
+            <div class="xp-track" id="xp-bar-wrap" role="progressbar" aria-label="Progreso al siguiente nivel" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+                <div id="xp-bar"></div>
+            </div>
+            <p id="xp-breakdown" class="xp-breakdown"></p>
+            <p id="xp-error" class="stats-error" role="status" hidden>No se pudo cargar tu progreso.</p>
+        </section>
+
+        <section class="stats-summary-section" aria-labelledby="h-summary">
+            <div class="stats-section-heading">
+                <div><p class="stats-kicker">BALANCE PERSONAL</p><h2 id="h-summary">Tu resumen</h2></div>
+                <p id="summary-status" class="stats-status" role="status">Cargando estadísticas…</p>
+            </div>
+            <div id="summary" class="stats-summary" aria-live="polite"></div>
+        </section>
+
+        <div class="stats-columns">
+            <section class="stats-panel history-panel" aria-labelledby="h-history">
+                <div class="stats-section-heading">
+                    <div><p class="stats-kicker">TU ACTIVIDAD</p><h2 id="h-history">Historial de partidas</h2></div>
+                </div>
+                <div class="stats-table-wrap">
+                    <table class="stats-table">
+                        <thead><tr><th>Fecha</th><th>Juego</th><th>Resultado</th><th>Puntos</th><th>Rivales</th></tr></thead>
+                        <tbody id="history"></tbody>
+                    </table>
+                </div>
+                <p id="history-empty" class="stats-empty" hidden>Aún no has jugado ninguna partida.</p>
+            </section>
+
+            <section class="stats-panel board-panel" aria-labelledby="h-board">
+                <div class="stats-section-heading">
+                    <div><p class="stats-kicker">LA COMUNIDAD</p><h2 id="h-board">Ranking</h2></div>
+                    <span class="ranking-tag">TOP 10</span>
+                </div>
+                <div class="stats-table-wrap">
+                    <table class="stats-table">
+                        <thead><tr><th>#</th><th>Jugador</th><th>Victorias</th><th>Partidas</th><th>Puntos</th></tr></thead>
+                        <tbody id="board"></tbody>
+                    </table>
+                </div>
+                <p id="board-empty" class="stats-empty" hidden>Todavía no hay partidas registradas.</p>
+                <p id="stats-error" class="stats-error" role="status" hidden>No se pudieron cargar las estadísticas. Vuelve a intentarlo más tarde.</p>
+            </section>
         </div>
-    </header>
-
-    <main class="max-w-5xl mx-auto px-4 py-8 grow w-full space-y-8">
-        <div class="flex items-center gap-3">
-            <label for="game-filter" class="text-sm text-[color:var(--text-muted)]">Juego</label>
-            <select id="game-filter" class="fantasy-input rounded-lg px-3 py-2 text-sm">
-                <option value="">Todos</option>
-                <option value="guess_card">Adivina la Carta</option>
-                <option value="pong">Pong</option>
-            </select>
-        </div>
-
-        <section aria-labelledby="h-level" class="fantasy-panel p-5">
-            <h2 id="h-level" class="text-lg font-bold font-magic text-[rgb(var(--c-accent))] mb-3">Nivel y experiencia</h2>
-            <div class="flex items-baseline gap-3 mb-2">
-                <span class="text-3xl font-bold text-[rgb(var(--c-accent))]">Nivel <span id="xp-level">1</span></span>
-                <span id="xp-text" class="text-sm text-[color:var(--text-muted)]"></span>
-            </div>
-            <div class="w-full h-3 rounded-full bg-[rgb(var(--c-bg-app)/0.8)] border border-[rgb(var(--c-gold-dark))] overflow-hidden"
-                 role="progressbar" aria-label="Progreso al siguiente nivel" aria-valuemin="0" aria-valuemax="100" id="xp-bar-wrap">
-                <div id="xp-bar" class="h-full bg-[rgb(var(--c-accent))] transition-all" style="width:0%"></div>
-            </div>
-            <p id="xp-breakdown" class="mt-3 text-xs text-[color:var(--text-muted)]"></p>
-        </section>
-
-        <section aria-labelledby="h-summary">
-            <h2 id="h-summary" class="text-lg font-bold font-magic text-[rgb(var(--c-accent))] mb-3">Tu resumen</h2>
-            <div id="summary" class="grid grid-cols-2 md:grid-cols-5 gap-3"></div>
-        </section>
-
-        <section aria-labelledby="h-history" class="fantasy-panel p-5">
-            <h2 id="h-history" class="text-lg font-bold font-magic text-[rgb(var(--c-accent))] mb-3">Historial de partidas</h2>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left">
-                    <thead class="text-[color:var(--text-muted)]"><tr>
-                        <th class="py-2 pr-3">Fecha</th><th class="pr-3">Juego</th><th class="pr-3">Resultado</th>
-                        <th class="pr-3">Puntos</th><th>Rivales</th></tr></thead>
-                    <tbody id="history"></tbody>
-                </table>
-            </div>
-            <p id="history-empty" class="text-sm text-[color:var(--text-muted)] hidden">Aún no has jugado ninguna partida.</p>
-        </section>
-
-        <section aria-labelledby="h-board" class="fantasy-panel p-5">
-            <h2 id="h-board" class="text-lg font-bold font-magic text-[rgb(var(--c-accent))] mb-3">🏆 Ranking (top 10)</h2>
-            <table class="w-full text-sm text-left">
-                <thead class="text-[color:var(--text-muted)]"><tr>
-                    <th class="py-2 pr-3">#</th><th class="pr-3">Jugador</th><th class="pr-3">Victorias</th>
-                    <th class="pr-3">Partidas</th><th>Puntos</th></tr></thead>
-                <tbody id="board"></tbody>
-            </table>
-            <p id="board-empty" class="text-sm text-[color:var(--text-muted)] hidden">Todavía no hay partidas registradas.</p>
-        </section>
     </main>
-    <script src="js/shared/auth.js"></script>
-    <script src="js/pages/stats.js"></script>
-    <script src="js/shared/footer.js"></script>
+</div>
+<script src="js/shared/auth.js"></script>
+<script src="js/pages/stats.js"></script>
+<script src="js/shared/footer.js"></script>
+<script src="js/shared/app-shell.js"></script>
 </body>
 </html>

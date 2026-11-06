@@ -49,12 +49,14 @@
             border:1px solid ${c('gold', .4)};color:${c('amber-300')}}
         .um-actions{display:flex;align-items:center;gap:.5rem;padding-left:.5rem;border-left:1px solid ${c('gold', .4)}}
         .um-rel{position:relative}
-        .um-bell{position:relative;padding:0 .375rem;font-size:1.125rem;line-height:1.5;background:none;border:none;
-            color:${c('amber-300')};cursor:pointer;transition:color .2s}
-        .um-bell:hover{color:${c('amber-100')}}
+        .um-die-btn{position:relative;display:grid;place-items:center;width:2.7rem;height:2.7rem;padding:0;overflow:visible;
+            border:1px solid ${c('gold', .45)};border-radius:50%;background:${c('panel', .82)};cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s}
+        .um-die-btn:hover,.um-die-btn[aria-expanded="true"]{transform:translateY(-1px);border-color:${c('accent-hi')};box-shadow:0 0 14px ${c('accent', .28)}}
+        .um-die-btn:focus-visible{outline:2px solid ${c('accent-hi')};outline-offset:3px}
+        .um-die-icon{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35))}
         .um-count{position:absolute;top:-.375rem;right:-.375rem;min-width:18px;height:18px;padding:0 .25rem;
-            border-radius:9999px;background:#dc2626;color:#fff;font-size:.625rem;font-weight:700;
-            display:flex;align-items:center;justify-content:center}
+            border:2px solid ${c('panel')};border-radius:9999px;background:${c('accent-hi')};color:${c('ink-3')};font-size:.625rem;font-weight:800;
+            display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.35)}
         .um-notif{position:absolute;right:0;top:100%;margin-top:.75rem;width:18rem;max-height:20rem;overflow-y:auto;
             z-index:1010;display:flex;flex-direction:column;gap:.5rem;background:${c('panel', .95)};
             border:2px solid ${c('gold')};border-radius:1rem;box-shadow:0 25px 50px -12px rgba(0,0,0,.6);
@@ -88,7 +90,7 @@
     }
 
     const API_BASE = '';
-    const LOGIN_PAGE = 'login.html';
+    const LOGIN_PAGE = '/login.html';
 
     function init() {
         // Evita duplicarlo si la página ya lo trae
@@ -101,6 +103,7 @@
             window.location.href = LOGIN_PAGE;
             return;
         }
+        const is42User = userData.auth_type === '42' || /42/.test(String(userData.badge || ''));
 
         const escapeHtml = (v) => String(v ?? '').replace(/[&<>'"]/g,
             (t) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[t] || t));
@@ -121,28 +124,67 @@
             <div id="achievements-grid" class="medal-grid"></div>`;
 
         document.body.prepend(achievementsPanel);
-        document.body.prepend(userMenuContainer);
+        const userMenuSlot = document.getElementById('user-menu-slot');
+        if (userMenuSlot) {
+            userMenuContainer.classList.add('um-topbar-account');
+            userMenuSlot.appendChild(userMenuContainer);
+        } else {
+            document.body.prepend(userMenuContainer);
+        }
 
         // ---------- Contenido ----------
         userMenuContainer.innerHTML = `
-            <div class="um-user">
-                <span class="um-name">${escapeHtml(userData.username)}</span>
-                <span class="um-badge">(${escapeHtml(userData.badge)})</span>
-            </div>
-            <div class="um-actions">
-                <div class="um-rel">
-                    <button id="notif-btn" type="button" aria-label="Notificaciones" aria-expanded="false"
-                        class="um-bell">
-                        🔔
-                        <span id="notif-count" class="um-count hidden"></span>
-                    </button>
-                    <div id="notif-menu" class="um-notif hidden"></div>
-                </div>
+            <button id="account-menu-toggle" class="um-account-toggle" type="button" aria-expanded="false" aria-controls="account-menu-actions">
+                <span class="um-account-avatar" id="user-avatar-slot"></span>
+                <span class="um-user">
+                    <span class="um-name">${escapeHtml(userData.username)}</span>
+                    <span class="um-badge">${escapeHtml(userData.badge)}</span>
+                </span>
+                <span class="um-account-chevron" aria-hidden="true">⌄</span>
+            </button>
+            <div class="um-actions hidden" id="account-menu-actions">
                 <button id="profile-btn" class="um-btn">Logros</button>
-                <a href="profile.html" class="um-btn">Perfil</a>
-                <a href="stats.html" class="um-btn">Estadísticas</a>
+                <a href="/profile.html" class="um-btn">Perfil</a>
+                <a href="/stats.html" class="um-btn">Estadísticas</a>
                 <button id="logout-btn" class="um-btn um-btn-out">Salir</button>
+                <div class="mana-themes" aria-label="Tema de la interfaz">
+                    <span>Tema de maná</span>
+                    <div class="mana-theme-list">
+                        <button type="button" aria-label="Tema blanco" title="Blanco" data-home-theme="white"><img src="/public/assets/blanco-removebg-preview.png" alt=""></button>
+                        <button type="button" aria-label="Tema azul" title="Azul" data-home-theme="blue"><img src="/public/assets/azul-removebg-preview.png" alt=""></button>
+                        <button type="button" aria-label="Tema negro" title="Negro" data-home-theme="black"><img src="/public/assets/negro-removebg-preview.png" alt=""></button>
+                        <button type="button" aria-label="Tema rojo" title="Rojo" data-home-theme="red"><img src="/public/assets/rojo-removebg-preview.png" alt=""></button>
+                        <button type="button" aria-label="Tema verde" title="Verde" data-home-theme="green"><img src="/public/assets/verde-removebg-preview.png" alt=""></button>
+                        ${is42User ? '<button type="button" aria-label="Tema 42" title="42" data-home-theme="42"><img src="/public/assets/42_Logo.svg" alt=""></button>' : ''}
+                    </div>
+                </div>
             </div>`;
+
+        const notificationLauncher = document.createElement('div');
+        notificationLauncher.className = 'um-notif-launcher';
+        notificationLauncher.innerHTML = `
+            <div class="um-rel">
+                <button id="notif-btn" type="button" class="um-die-btn" aria-label="Notificaciones" aria-expanded="false" aria-controls="notif-menu">
+                    <img class="um-die-icon" src="/public/assets/dado.png" alt="">
+                    <span id="notif-count" class="um-count hidden" aria-live="polite"></span>
+                </button>
+                <div id="notif-menu" class="um-notif hidden"></div>
+            </div>`;
+        const notificationSlot = document.getElementById('notification-slot');
+        if (notificationSlot) notificationSlot.appendChild(notificationLauncher);
+        else userMenuContainer.prepend(notificationLauncher);
+
+        const themeButtons = [...userMenuContainer.querySelectorAll('[data-home-theme]')];
+        const syncThemeButtons = () => {
+            const activeTheme = document.documentElement.dataset.manaTheme || 'white';
+            themeButtons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.homeTheme === activeTheme)));
+        };
+        themeButtons.forEach((button) => button.addEventListener('click', () => {
+            if (window.cbSetManaTheme) window.cbSetManaTheme(button.dataset.homeTheme);
+            syncThemeButtons();
+        }));
+        document.addEventListener('cb:theme', syncThemeButtons);
+        syncThemeButtons();
 
         // ---------- Avatar ----------
         const initial = (userData.username || '?').trim().charAt(0).toUpperCase() || '?';
@@ -195,7 +237,9 @@
             } else {
                 next = buildInitialAvatar();
             }
+            const avatarSlot = document.getElementById('user-avatar-slot');
             if (avatarEl && avatarEl.isConnected) avatarEl.replaceWith(next);
+            else if (avatarSlot) avatarSlot.appendChild(next);
             else userMenuContainer.prepend(next);
             avatarEl = next;
         }
@@ -215,6 +259,7 @@
                 const me = await res.json();
                 // Otras partes de la página (p. ej. index.js) reaccionan al perfil confirmado por el servidor
                 if (me.auth_type === '42' && window.cbEnableTheme42) window.cbEnableTheme42();
+                if (me.mana_theme && window.cbApplyManaTheme) window.cbApplyManaTheme(me.mana_theme);
                 window.dispatchEvent(new CustomEvent('cb:profile', { detail: me }));
                 if (me.avatar) {
                     if (me.avatar === userData.avatar) return;
@@ -236,6 +281,21 @@
             localStorage.removeItem('cardbinder_user');
             window.location.href = LOGIN_PAGE;
         });
+
+        // ---------- Menú de cuenta ----------
+        const accountToggle = document.getElementById('account-menu-toggle');
+        const accountActions = document.getElementById('account-menu-actions');
+        function setAccountMenuOpen(open) {
+            accountActions.classList.toggle('hidden', !open);
+            accountToggle.setAttribute('aria-expanded', String(open));
+        }
+        accountToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            setAccountMenuOpen(accountActions.classList.contains('hidden'));
+        });
+        accountActions.addEventListener('click', (e) => e.stopPropagation());
+        document.addEventListener('click', () => setAccountMenuOpen(false));
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') setAccountMenuOpen(false); });
 
         // ---------- Notificaciones ----------
         const notifBtn = document.getElementById('notif-btn');
@@ -264,6 +324,7 @@
 
         function renderNotifications(n) {
             notifCount.textContent = n.total > 99 ? '99+' : String(n.total);
+            notifBtn.setAttribute('aria-label', n.total ? `${n.total} notificaciones` : 'Notificaciones');
             notifCount.classList.toggle('hidden', !n.total);
             notifCount.classList.toggle('flex', !!n.total);
             const rows = [

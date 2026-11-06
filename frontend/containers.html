@@ -1,109 +1,131 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🃏%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%83%8F%3C/text%3E%3C/svg%3E">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Binder Pro — Gestión de Contenedores</title>
+    <title>Contenedores · Card Binder Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/portal.css">
-    <link rel="stylesheet" href="css/visor-admin-25d.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/containers.css">
     <script src="js/shared/theme.js"></script>
+    <script src="js/shared/user-menu.js"></script>
 </head>
-<body>
+<body class="containers-page" data-shell-page="containers">
+    <div class="app-main">
+        <main class="containers-content">
+            <header class="containers-heading">
+                <div>
+                    <p class="containers-eyebrow">TU ARCHIVO PERSONAL</p>
+                    <h1>Contenedores</h1>
+                    <p>Organiza tus cartas en archivadores, mazos y cajas.</p>
+                </div>
+            </header>
 
-    <header>
-        <div class="logo-container">
-            <a href="index.html" title="Ir al Inicio" class="logo-link">
-                <img src="public/assets/logomagic.png" alt="Logo">
-            </a>
-            <span class="app-subtitle">Binder Pro — Gestión de Contenedores</span>
-        </div>
-    </header>
+            <section class="container-summary" aria-label="Resumen de almacenamiento">
+                <div class="container-summary-primary">
+                    <article><span class="summary-icon" aria-hidden="true">▣</span><div><span>Contenedores</span><strong id="summaryTotal">—</strong></div></article>
+                </div>
+                <div class="container-summary-storage">
+                    <article><span class="summary-icon" aria-hidden="true">▤</span><div><span>Huecos ocupados</span><strong id="summaryUsed">—</strong></div></article>
+                    <article><span class="summary-icon" aria-hidden="true">◇</span><div><span>Huecos disponibles</span><strong id="summaryFree">—</strong></div></article>
+                </div>
+            </section>
 
-    <main>
-        <div class="management-layout">
-            
-            <!-- Panel Izquierdo: Crear Nuevo Contenedor con Subcampos -->
-            <section class="create-container-panel fantasy-panel">
-                <h3 class="panel-title">Crear Nuevo Contenedor</h3>
-                <form id="createContainerForm">
-                    <div class="form-group">
-                        <label>NOMBRE DEL CONTENEDOR</label>
-                        <input type="text" id="containerName" placeholder="Ej. Binder Principal, Mazo Modern" required>
-                    </div>
+            <div id="containerStatus" class="container-status" role="status" aria-live="polite" hidden></div>
 
-                    <div class="form-group">
-                        <label>TIPO DE CONTENEDOR</label>
-                        <select id="containerType" required>
-                            <option value="">Selecciona un tipo...</option>
-                            <option value="binder">Binder / Archivador</option>
-                            <option value="deck">Mazo (Deck)</option>
-                            <option value="box">Caja (Box)</option>
-                        </select>
-                    </div>
-
-                    <!-- Subcampos para Binder -->
-                    <div id="binderFields" class="dynamic-fields">
+            <div class="management-layout">
+                <section class="create-container-panel" aria-labelledby="createContainerTitle">
+                    <header class="panel-heading">
+                        <p class="panel-kicker">AMPLÍA TU ARCHIVO</p>
+                        <h2 id="createContainerTitle">Crear contenedor</h2>
+                        <p>Elige el formato y ajusta su capacidad.</p>
+                    </header>
+                    <form id="createContainerForm">
                         <div class="form-group">
-                            <label>TAMAÑO DEL BINDER</label>
-                            <select id="binderSize">
-                                <option value="binder_s">Binder Pequeño (2x2 - 4 slots/pág)</option>
-                                <option value="binder_m" selected>Binder Mediano (3x3 - 9 slots/pág)</option>
-                                <option value="binder_xl">Binder Grande (4x3 - 12 slots/pág)</option>
+                            <label for="containerName">Nombre</label>
+                            <input type="text" id="containerName" name="name" maxlength="100" placeholder="Ej. Binder de raras, Mazo Modern…" autocomplete="off" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="containerType">Tipo de contenedor</label>
+                            <select id="containerType" name="type" required>
+                                <option value="">Selecciona un tipo…</option>
+                                <option value="binder">Archivador</option>
+                                <option value="deck">Mazo</option>
+                                <option value="box">Caja</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label>NÚMERO DE PÁGINAS</label>
-                            <input type="number" id="binderPages" value="40" min="1" max="200">
+
+                        <fieldset id="binderFields" class="dynamic-fields">
+                            <legend>Formato del archivador</legend>
+                            <div class="form-group">
+                                <label for="binderSize">Distribución por página</label>
+                                <select id="binderSize" name="binderSize">
+                                    <option value="binder_s">Pequeño · 2 × 2 · 4 cartas</option>
+                                    <option value="binder_m" selected>Mediano · 3 × 3 · 9 cartas</option>
+                                    <option value="binder_xl">Grande · 4 × 3 · 12 cartas</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="binderPages">Número de páginas</label>
+                                <input type="number" id="binderPages" name="pages" value="40" min="1" max="200" inputmode="numeric">
+                                <small class="field-hint" id="binderCapacityHint">Capacidad total: 360 cartas</small>
+                            </div>
+                        </fieldset>
+
+                        <fieldset id="deckFields" class="dynamic-fields">
+                            <legend>Capacidad del mazo</legend>
+                            <div class="form-group">
+                                <label for="deckMainCapacity">Mazo principal</label>
+                                <input type="number" id="deckMainCapacity" name="mainCapacity" value="60" min="1" max="250" inputmode="numeric">
+                            </div>
+                            <div class="form-group">
+                                <label for="deckSideboardCapacity">Reserva</label>
+                                <input type="number" id="deckSideboardCapacity" name="sideboardCapacity" value="15" min="0" max="50" inputmode="numeric">
+                            </div>
+                        </fieldset>
+
+                        <fieldset id="boxFields" class="dynamic-fields">
+                            <legend>Capacidad de la caja</legend>
+                            <div class="form-group">
+                                <label for="boxCapacity">Número de cartas</label>
+                                <input type="number" id="boxCapacity" name="boxCapacity" value="1000" min="1" max="5000" inputmode="numeric">
+                            </div>
+                        </fieldset>
+
+                        <button type="submit" class="container-submit" id="createContainerButton"><span aria-hidden="true">＋</span> Crear contenedor</button>
+                    </form>
+                </section>
+
+                <section class="containers-list-container" aria-labelledby="containerListTitle">
+                    <header class="list-header">
+                        <div>
+                            <p class="panel-kicker">ALMACENAMIENTO</p>
+                            <h2 id="containerListTitle">Mis contenedores</h2>
+                            <p id="containerCountLabel" class="list-count">Cargando…</p>
                         </div>
+                        <div class="list-controls">
+                            <label class="visually-hidden" for="containerSearch">Buscar contenedor</label>
+                            <input id="containerSearch" class="container-search" type="search" placeholder="Buscar por nombre…" autocomplete="off">
+                            <label class="visually-hidden" for="filterContainerType">Filtrar por tipo</label>
+                            <select id="filterContainerType" class="list-filter">
+                                <option value="all">Todos los tipos</option>
+                                <option value="binder">Archivadores</option>
+                                <option value="deck">Mazos</option>
+                                <option value="box">Cajas</option>
+                            </select>
+                        </div>
+                    </header>
+                    <div id="containersListWrapper" class="containers-grid" aria-live="polite" aria-busy="true">
+                        <p id="loadingMessage" class="list-message">Cargando tus contenedores…</p>
                     </div>
+                </section>
+            </div>
+        </main>
+    </div>
 
-                    <!-- Subcampos para Deck (Mazo) -->
-                    <div id="deckFields" class="dynamic-fields">
-                        <div class="form-group">
-                            <label>CAPACIDAD MAZO PRINCIPAL</label>
-                            <input type="number" id="deckMainCapacity" value="60" min="1" max="250">
-                        </div>
-                        <div class="form-group">
-                            <label>CAPACIDAD RESERVA (SIDEBOARD)</label>
-                            <input type="number" id="deckSideboardCapacity" value="15" min="0" max="50">
-                        </div>
-                    </div>
-
-                    <!-- Subcampos para Box (Caja) -->
-                    <div id="boxFields" class="dynamic-fields">
-                        <div class="form-group">
-                            <label>CAPACIDAD MÁXIMA DE CARTAS</label>
-                            <input type="number" id="boxCapacity" value="1000" min="1" max="5000">
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-fantasy btn-submit">Guardar Contenedor</button>
-                </form>
-            </section>
-
-            <!-- Panel Derecho: Listado de Contenedores Existentes -->
-            <section class="containers-list-container fantasy-panel">
-                <div class="list-header">
-                    <h3 class="panel-title">📦 Contenedores Existentes</h3>
-                    
-                    <select id="filterContainerType" class="list-filter">
-                        <option value="all">Todos los tipos</option>
-                        <option value="binder">Binders</option>
-                        <option value="deck">Mazos (Decks)</option>
-                        <option value="box">Cajas (Boxes)</option>
-                    </select>
-                </div>
-
-                <div id="containersListWrapper">
-                    <p id="loadingMessage" class="muted">Cargando listado de contenedores...</p>
-                </div>
-            </section>
-
-        </div>
-    </main>
-
+    <script src="js/shared/app-shell.js"></script>
     <script src="js/shared/auth.js"></script>
     <script src="js/pages/containers.js"></script>
     <script src="js/shared/footer.js"></script>

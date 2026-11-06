@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const visualWorkspace = document.getElementById('visualWorkspace');
     const filterContainerTypeSelect = document.getElementById('filterContainerType');
     const showAllContainersBtn = document.getElementById('showAllContainersBtn');
-    const backToGridBtn = document.getElementById('backToGridBtn');
     const deleteContainerBtn = document.getElementById('deleteContainerBtn');
 
     // Referencias al Lightbox unificado
@@ -59,7 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const paramContainerId = new URLSearchParams(window.location.search).get('container_id');
             if (paramContainerId && containerSelector) {
-                const existe = allContainers.some(c => c.id === paramContainerId);
+                const existe = allContainers.some(c => String(c.id) === paramContainerId);
                 if (existe) {
                     containerSelector.value = paramContainerId;
                     containerSelector.dispatchEvent(new Event('change'));
@@ -67,10 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            renderizarRejillaContenedores();
+            volverAGestionContenedores();
         } catch (err) {
             console.error("Error al cargar contenedores:", err);
             visualWorkspace.innerHTML = `<div class="text-center text-red-400 py-12 text-xs">Error al conectar con el servidor para obtener los contenedores.</div>`;
+            visualWorkspace.setAttribute('aria-busy', 'false');
         }
     }
 
@@ -82,11 +82,14 @@ document.addEventListener('DOMContentLoaded', () => {
         containerSelector.innerHTML = '<option value="">-- Elige un contenedor --</option>';
         
         const containersFiltered = obtenerContenedoresFiltrados(selectedType);
+        if (currentContainerData && !containersFiltered.some(c => String(c.id) === String(currentContainerData.id))) {
+            containersFiltered.unshift(currentContainerData);
+        }
 
         containersFiltered.forEach(c => {
             const option = document.createElement('option');
             option.value = c.id;
-            option.textContent = `${c.name || 'Sin nombre'} [${(c.type || 'general').toUpperCase()}]`;
+            option.textContent = `${c.name || 'Sin nombre'} · ${tipoContenedorLabel(c.type)}`;
             containerSelector.appendChild(option);
         });
 
@@ -95,88 +98,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function obtenerContenedoresFiltrados(typeFilter) {
         if (!typeFilter || typeFilter === 'all') return allContainers;
-        return allContainers.filter(c => (c.type || c.tipo || '').toLowerCase().includes(typeFilter.toLowerCase()));
+        return allContainers.filter(c => (c.type || c.tipo || '').toLowerCase() === typeFilter);
     }
 
-    // --- RENDERIZADO DE LA REJILLA DE TODOS LOS CONTENEDORES (FORMATO ORIGINAL RESTAURADO) ---
-    function renderizarRejillaContenedores() {
-        containerInfoBar.classList.add('hidden');
-        showAllContainersBtn.classList.add('hidden');
-        containerSelector.value = "";
-        currentContainerData = null;
-        if (deleteContainerBtn) {
-            deleteContainerBtn.disabled = true;
-            deleteContainerBtn.classList.add('hidden');
+    function tipoContenedorLabel(type = '') {
+        const labels = {
+            binder_s: 'Archivador pequeño', binder_m: 'Archivador mediano', binder_xl: 'Archivador grande',
+            deck: 'Mazo', box: 'Caja'
+        };
+        return labels[String(type).toLowerCase()] || String(type || 'Contenedor').replaceAll('_', ' ');
+    }
+
+    function resumenCapacidad(container) {
+        const main = Number(container.max_capacity || 0);
+        if (String(container.type).toLowerCase() === 'deck' && container.sideboard_capacity != null) {
+            const sideboard = Number(container.sideboard_capacity || 0);
+            return `${tipoContenedorLabel(container.type)} · ${main.toLocaleString('es-ES')} principal + ${sideboard.toLocaleString('es-ES')} reserva · ${(main + sideboard).toLocaleString('es-ES')} cartas`;
         }
+        return `${tipoContenedorLabel(container.type)} · ${main.toLocaleString('es-ES')} huecos`;
+    }
 
-        const selectedType = filterContainerTypeSelect ? filterContainerTypeSelect.value : 'all';
-        const lista = obtenerContenedoresFiltrados(selectedType);
-
-        if (!lista || lista.length === 0) {
-            visualWorkspace.innerHTML = `
-                <div class="fantasy-panel p-12 text-center">
-                    <p class="text-[rgb(var(--c-amber-200)/0.6)] text-sm mb-2">No se encontraron contenedores para el filtro seleccionado.</p>
-                    <span class="text-xs text-[rgb(var(--c-amber-200)/0.4)]">Crea nuevos binders o mazos desde el panel principal.</span>
-                </div>
-            `;
-            return;
-        }
-
-        let html = `
-            <div class="mb-4 flex justify-between items-center">
-                <h2 class="font-magic text-base font-bold text-[rgb(var(--c-amber-400))] uppercase tracking-wider">🏰 Tus Bóvedas y Archivadores (${lista.length})</h2>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        `;
-
-        lista.forEach(c => {
-            const tipoUpper = (c.type || 'GENERAL').toUpperCase();
-            const icon = tipoUpper.includes('BINDER') ? '📖' : tipoUpper.includes('DECK') ? '🎴' : '📦';
-            
-            html += `
-                <div data-container-id="${esc(c.id)}" class="container-card fantasy-panel rounded-2xl p-5 cursor-pointer flex flex-col justify-between h-[170px]">
-                    <div>
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-magic font-bold text-[rgb(var(--c-amber-300))] text-base flex items-center gap-2">
-                                <span>${icon}</span> ${esc(c.name || 'Sin Nombre')}
-                            </h3>
-                            <span class="bg-[rgb(var(--c-amber-500)/0.2)] text-[rgb(var(--c-amber-400))] text-[10px] px-2 py-0.5 rounded-full border border-[rgb(var(--c-amber-500)/0.3)] font-bold">
-                                ${esc(tipoUpper)}
-                            </span>
-                        </div>
-                        <p class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">Capacidad Máxima: <strong class="text-[rgb(var(--c-amber-300))]">${esc(c.max_capacity || 'N/A')}</strong> slots</p>
-                    </div>
-
-                    <div class="flex justify-between items-center border-t border-[rgb(var(--c-gold)/0.2)] pt-3 mt-2">
-                        <span class="text-[11px] text-[rgb(var(--c-amber-200)/0.5)]">Haz clic para desplegar ➔</span>
-                        <button class="btn-fantasy text-xs py-1.5 px-3">
-                            Inspeccionar
-                        </button>
-                    </div>
-                </div>
-            `;
-        });
-
-        html += `</div>`;
-        visualWorkspace.innerHTML = html;
-
-        visualWorkspace.querySelectorAll('[data-container-id]').forEach(card => {
-            card.addEventListener('click', () => {
-                const id = card.getAttribute('data-container-id');
-                if (id && containerSelector) {
-                    containerSelector.value = id;
-                    containerSelector.dispatchEvent(new Event('change'));
-                }
-            });
-        });
+    // El listado único vive en containers.html. Esta ruta solo presenta el detalle.
+    function volverAGestionContenedores() {
+        window.location.replace('containers.html');
     }
 
     if (filterContainerTypeSelect) {
         filterContainerTypeSelect.addEventListener('change', () => {
             actualizarDesplegableVisorGrafico();
-            if (!currentContainerData) {
-                renderizarRejillaContenedores();
-            }
+            if (!currentContainerData) volverAGestionContenedores();
         });
     }
 
@@ -184,11 +134,11 @@ document.addEventListener('DOMContentLoaded', () => {
         containerSelector.addEventListener('change', async (e) => {
             const containerId = e.target.value;
             if (!containerId) {
-                renderizarRejillaContenedores();
+                volverAGestionContenedores();
                 return;
             }
 
-            currentContainerData = allContainers.find(c => c.id === containerId);
+            currentContainerData = allContainers.find(c => String(c.id) === containerId);
             if (!currentContainerData) return;
             
             containerInfoBar.classList.remove('hidden');
@@ -200,15 +150,12 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             containerTitle.textContent = currentContainerData.name;
-            containerStats.textContent = `Tipo: ${currentContainerData.type.toUpperCase()} | Capacidad Máx: ${currentContainerData.max_capacity || 'N/A'}`;
+            containerStats.textContent = resumenCapacidad(currentContainerData);
 
             currentBinderPage = 1;
             await cargarSlotsContenedor(containerId);
         });
     }
-
-    if (backToGridBtn) backToGridBtn.addEventListener('click', renderizarRejillaContenedores);
-    if (showAllContainersBtn) showAllContainersBtn.addEventListener('click', renderizarRejillaContenedores);
 
     if (deleteContainerBtn) {
         deleteContainerBtn.addEventListener('click', async () => {
@@ -225,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 allContainers = allContainers.filter(c => c.id !== container.id);
                 actualizarDesplegableVisorGrafico();
-                renderizarRejillaContenedores();
+                volverAGestionContenedores();
             } catch (err) {
                 console.error('Error al eliminar contenedor:', err);
                 alert(err.message || 'No se pudo eliminar el contenedor.');
@@ -235,6 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function cargarSlotsContenedor(containerId) {
+        visualWorkspace.setAttribute('aria-busy', 'true');
         visualWorkspace.innerHTML = `<div class="text-center text-[rgb(var(--c-amber-200)/0.5)] py-12 italic text-xs">Cargando estructura del contenedor...</div>`;
         
         try {
@@ -258,7 +206,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (err) {
             console.error("Error:", err);
-            visualWorkspace.innerHTML = `<div class="text-center text-red-400 py-12 text-xs">Error al cargar la estructura del contenedor.</div>`;
+            visualWorkspace.innerHTML = `<div class="workspace-message">No se pudo cargar el contenido. Comprueba la conexión y vuelve a elegir el contenedor.</div>`;
+        } finally {
+            visualWorkspace.setAttribute('aria-busy', 'false');
         }
     }
 

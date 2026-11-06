@@ -11,19 +11,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const postOpenActions = document.getElementById('post-open-actions');
     const openAnotherBtn = document.getElementById('open-another-btn');
 
-    const FALLBACK_GIF = 'public/assets/nocapi.png';
+    const FALLBACK_GIF = '/public/assets/nocapi.png';
 
     const searchKeywords = [
         "wizard cat", "epic warrior", "magic dragon", "cyberpunk samurai", 
         "funny monster", "cute wizard", "space alien", "dark knight", "golden beast",
-        "42 Code Master", "Soul HUnter"
+        "arcane library", "mana spirit"
     ];
 
     const titlesPool = [
-        "Capibara Suprema Mágica", "Orco Albañil Nivel 99", "Gatete Archimago",
-        "Guerrero de la Niebla", "Señor de los Servidores", "Dragón de C++ Compilado",
-        "Hechicero Bugged", "Caballero del Stack Overflow", "Espectro de la Base de Datos",
-        "Guerrero manco en silla de ruedas", "Angel salido sin genitales", "Dios inclusivo"
+        "Familiar de la Niebla", "Archivista del Inframundo", "Gatete Archimago",
+        "Guerrero del Crepúsculo", "Señor de los Servidores", "Dragón de Código Antiguo",
+        "Hechicero Errante", "Caballero de la Biblioteca", "Espectro de la Base de Datos",
+        "Gólem de Datos", "Ángel del Alba", "Oráculo del Caos"
     ];
 
     openBtn.addEventListener('click', async () => {

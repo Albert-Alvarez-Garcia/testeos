@@ -1,31 +1,92 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Card Binder Pro: documentación completa del proyecto.">
-    <title>Card Binder Pro · Project overview</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="css/portal.css">
-    <link rel="stylesheet" href="css/readme.css">
-    <script src="js/shared/theme.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="author" content="Alberto Álvarez García">
+<title>Card Binder Pro — Alberto Álvarez García</title>
+<style>
+:root{color-scheme:dark;--bg:#100e0b;--panel:#19150f;--text:#eee9df;--muted:#b1aa9d;--accent:#d6bd7a;--line:#413522;--link:#ead597}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% 0,#292113 0,transparent 48%),var(--bg);color:var(--text);font:16px/1.68 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+main{width:min(1060px,100% - 36px);margin:44px auto;padding:clamp(22px,5vw,60px);border:1px solid var(--line);border-radius:18px;background:rgb(25 21 15 / .94);box-shadow:0 24px 90px #0008}
+h1,h2,h3,h4{font-family:Cinzel,Georgia,serif;line-height:1.25;color:#f4eddf}h1{font-size:clamp(2rem,5vw,3rem);margin:.2em 0 .75em}h2{margin-top:2.2em;padding-bottom:.45em;border-bottom:1px solid var(--line);font-size:1.65rem}h3{margin-top:1.8em;color:var(--accent);font-size:1.2rem}h4{color:var(--accent)}p,li{color:var(--muted)}strong{color:var(--text)}a{color:var(--link)}a:hover{color:#fff}ul,ol{padding-left:1.45rem}li{margin:.35em 0}code{padding:.12em .35em;border:1px solid #40351f;border-radius:4px;background:#0e0c09;color:#f0dca5;font: .88em ui-monospace,SFMono-Regular,Consolas,monospace}pre{overflow:auto;padding:1rem 1.2rem;border:1px solid var(--line);border-radius:10px;background:#0d0b08;color:#e6dcc7;font-size:.86rem}.table-wrap{overflow-x:auto;margin:1.2rem 0}table{width:100%;border-collapse:collapse;font-size:.89rem}th,td{padding:.68rem .8rem;border:1px solid var(--line);text-align:left;vertical-align:top}th{color:var(--accent);background:#211b11;font-weight:700}td{color:var(--muted)}tr:nth-child(even) td{background:#1d1811}hr{border:0;border-top:1px solid var(--line);margin:2rem 0}blockquote{margin:1rem 0;padding:.2rem 1rem;border-left:3px solid var(--accent);color:var(--muted)}@media(max-width:640px){main{width:100%;margin:0;padding:24px 18px;border:0;border-radius:0}body{font-size:15px}th,td{padding:.55rem;min-width:110px}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
-<body>
-    <main class="readme-page">
-        <header class="readme-top">
-            <a href="index.html" class="readme-back"><span aria-hidden="true">←</span> <span data-i18n="back">Volver al portal</span></a>
-            <img src="public/assets/logomagic.png" alt="Card Binder Pro" class="readme-logo">
-        </header>
-        <nav class="readme-language-switch" aria-label="Selector de idioma">
-            <button type="button" class="readme-back" data-language="es" aria-pressed="true">Español</button>
-            <button type="button" class="readme-back" data-language="en" aria-pressed="false">English</button>
-        </nav>
-        <article class="readme-card" id="readme-content" aria-live="polite" aria-busy="true">
-            <p role="status">Cargando documentación…</p>
-        </article>
-    </main>
-    <script src="js/shared/auth.js"></script>
-    <script src="js/pages/readme.js"></script>
-    <script src="js/shared/footer.js"></script>
-</body>
+<body><main>
+<p><em>Proyecto desarrollado íntegramente por Alberto Álvarez García (<code>albealva</code>) como parte del currículo de 42.</em></p>
+<h1>Card Binder Pro</h1>
+<p>Card Binder Pro es una aplicación web para organizar una colección de Magic: The Gathering. Permite buscar cartas, registrar copias físicas, ubicarlas en archivadores, mazos o cajas, revisar la colección, relacionarse con otros usuarios y jugar online.</p>
+<h2>Descripción</h2>
+<p>El proyecto conecta un catálogo de cartas con un inventario personal. Una carta no es lo mismo que una impresión ni que una copia física: una carta puede tener muchas impresiones, y una persona puede guardar varias copias con estados, idiomas, acabados foil y ubicaciones distintos.</p>
+<p>Funciones principales:</p>
+<ul><li>Buscar cartas con filtros, ordenación y paginación.</li><li>Gestionar la colección en archivadores, mazos y cajas, incluyendo estado, idioma, foil y notas.</li><li>Importar y exportar colecciones en CSV y JSON.</li><li>Consultar informes y vistas de los contenedores.</li><li>Iniciar sesión con cuenta local o OAuth de 42; usar perfiles, avatares, amistades, presencia y mensajes directos.</li><li>Elegir un tema visual de maná; las cuentas de 42 también pueden elegir su tema exclusivo.</li><li>Configurar la privacidad del perfil y decidir si las amistades pueden explorar la colección.</li><li>Usar chat en tiempo real y jugar a dos juegos online: Pong isométrico y Adivina Cartas multijugador.</li><li>Abrir sobres en una experiencia de azar con animación y revelaciones aleatorias.</li><li>Crear salas y partidas de Pong configurables, con modo espectador.</li><li>Consultar estadísticas, historial, logros y progreso de colección.</li></ul>
+<h2>Tecnologías y decisiones</h2>
+<div class="table-wrap"><table><thead><tr><th>Área</th><th>Tecnologías</th><th>Motivo</th></tr></thead><tbody><tr><td>Portal principal</td><td>HTML, CSS, JavaScript y utilidades Tailwind CSS</td><td>Mantiene ligera la interfaz de colección y permite organizar código por página con una paleta visual compartida.</td></tr><tr><td>Cliente de Pong</td><td>React 18 y Vite</td><td>Ofrece una interfaz de juego en vivo basada en componentes. React se usa en Pong; el portal principal sigue en JavaScript vanilla.</td></tr><tr><td>Backend</td><td>Python y FastAPI</td><td>Estructura las rutas API, valida peticiones y ofrece documentación OpenAPI y WebSockets.</td></tr><tr><td>Base de datos</td><td>PostgreSQL 15</td><td>Las tablas relacionales y claves foráneas representan usuarios, cartas, impresiones, copias, contenedores y relaciones sociales.</td></tr><tr><td>Despliegue</td><td>Docker Compose y Nginx</td><td>Ejecuta la base de datos, la API y el servidor web; Nginx sirve el frontend y redirige API y WebSockets.</td></tr><tr><td>Entorno local</td><td>Make y Python 3</td><td>Facilita la preparación, la importación del catálogo, la consulta del estado y las pruebas de humo.</td></tr><tr><td>Documentación</td><td>Markdown convertido con Python-Markdown durante la compilación del frontend</td><td>El portal muestra estas mismas fuentes en inglés y español.</td></tr></tbody></table></div>
+<h2>Arquitectura</h2>
+<pre><code class="language-text">Navegador
+  └── HTTPS :8443 / HTTP :8080
+       └── Nginx
+            ├── sirve HTML, CSS, JavaScript y el cliente React compilado
+            ├── redirige /api/ a FastAPI
+            └── redirige WebSockets a FastAPI
+                 └── FastAPI
+                      └── PostgreSQL</code></pre>
+<p>Docker Compose ejecuta PostgreSQL, el backend FastAPI y Nginx. La base de datos y los avatares usan volúmenes Docker. El cliente Pong se compila dentro de la imagen de Nginx.</p>
+<p>La página «Sobre el proyecto» se genera durante la compilación del frontend a partir de la documentación del repositorio.</p>
+<h3>Interfaz compartida</h3>
+<p>Las páginas del portal que usan la navegación común indican su sección con <code>data-shell-page</code>. <code>frontend/js/shared/app-shell.js</code> genera el menú lateral y la barra superior; <code>frontend/js/shared/user-menu.js</code> aporta la cuenta, las notificaciones y el selector de temas. <code>frontend/js/shared/theme.js</code> aplica el tema guardado y sincroniza la preferencia del usuario con la API. Cada página mantiene su propio contenido y sus estilos, mientras que Pong integra este mismo marco alrededor de su cliente React.</p>
+<h2>Esquema de base de datos</h2>
+<p>Las relaciones principales son:</p>
+<pre><code class="language-mermaid">erDiagram
+    USERS ||--o{ CONTAINERS : owns
+    CARDS ||--o{ PRINTINGS : has
+    PRINTINGS ||--o{ CARD_COPIES : identifies
+    CONTAINERS ||--o{ CONTAINER_SLOTS : contains
+    CONTAINERS ||--o{ CARD_COPIES : stores
+    CONTAINER_SLOTS o|--o{ CARD_COPIES : locates
+    USERS ||--o{ USER_ACHIEVEMENTS : unlocks
+    USERS ||--o{ FRIENDSHIPS : relates
+    USERS ||--o{ BLOCKED_USERS : blocks</code></pre>
+<ul><li><code>users</code> guarda cuentas locales y de 42, el tema de maná (<code>mana_theme</code>) y las preferencias de privacidad (<code>profile_private</code>, <code>collection_visibility</code>). <code>GET /api/profile/me</code> devuelve estos ajustes; <code>PATCH /api/profile/preferences</code> actualiza el tema y <code>PATCH /api/profile/privacy</code> actualiza la visibilidad del perfil y la colección. La API añade las columnas al iniciar en instalaciones existentes.</li><li><code>cards</code> representa la identidad común de una carta; <code>printings</code> guarda las ediciones e imágenes de cada set.</li><li><code>containers</code>, <code>container_slots</code> y <code>card_copies</code> modelan la colección física y su ubicación.</li><li>Las relaciones sociales se guardan en <code>friendships</code> y <code>blocked_users</code>. Los perfiles privados no aparecen en las búsquedas. La colección se puede ocultar, compartir como resumen, compartir con estadísticas o permitir su exploración; la vista de amistad permite filtrar y exportar cartas y ediciones, pero nunca revela contenedores ni ubicaciones.</li><li><code>user_achievements</code> conserva los hitos permanentes de colección. Otros progresos se calculan a partir de los datos actuales.</li><li>El servicio de estadísticas crea las tablas de resultados de partidas y jugadores.</li></ul>
+<p>El esquema inicial está en <code>database/init.sql</code>; algunos servicios del backend crean tablas durante la ejecución. Al iniciar, la API añade <code>users.mana_theme</code> y las columnas de privacidad a las instalaciones existentes si aún no existen.</p>
+<h2>Organización del desarrollo</h2>
+<p>El alcance, la planificación, la implementación, la integración y la documentación de esta versión se realizaron de forma individual. GitHub se utilizó para mantener el código y el historial del proyecto.</p>
+<h2>Funciones y módulos</h2>
+<p>Los módulos base seleccionados suman 14 puntos: 2 por cada Major y 1 por cada Minor. Cada módulo debe demostrarse como plenamente funcional durante la evaluación.</p>
+<div class="table-wrap"><table><thead><tr><th>Módulo</th><th>Tipo</th><th>Puntos</th><th>Evidencia en el proyecto</th><th>Rutas principales</th></tr></thead><tbody><tr><td>Framework frontend y backend</td><td>Major</td><td>2</td><td>React en el cliente de Pong y FastAPI en el backend.</td><td><code>pong-client/package.json</code>, <code>backend/main.py</code></td></tr><tr><td>Funciones en tiempo real</td><td>Major</td><td>2</td><td>WebSockets para estado de juegos, salas y chat.</td><td><code>backend/routers/pong_game.py</code>, <code>backend/routers/game.py</code>, <code>backend/routers/chat.py</code></td></tr><tr><td>Interacción entre usuarios</td><td>Major</td><td>2</td><td>Chat, perfiles y relaciones de amistad.</td><td><code>backend/routers/social.py</code>, <code>backend/routers/profile.py</code>, <code>frontend/js/pages/profile.js</code></td></tr><tr><td>Gestión estándar de usuarios</td><td>Major</td><td>2</td><td>Perfiles, avatares, amistades y presencia online.</td><td><code>backend/routers/auth.py</code>, <code>backend/routers/profile.py</code>, <code>backend/presence.py</code></td></tr><tr><td>Juego web completo</td><td>Major</td><td>2</td><td>Pong con partidas en vivo, reglas y condiciones de victoria.</td><td><code>backend/routers/pong_game.py</code>, <code>pong-client/src/pong_App.jsx</code></td></tr><tr><td>Jugadores remotos</td><td>Major</td><td>2</td><td>Salas de Pong online y reconexión de jugadores.</td><td><code>backend/routers/pong_game.py</code>, <code>pong-client/src/pong_App.jsx</code></td></tr><tr><td>OAuth 2.0</td><td>Minor</td><td>1</td><td>Inicio de sesión con 42.</td><td><code>backend/routers/auth.py</code>, <code>docker/nginx.conf</code></td></tr><tr><td>Importación y exportación de datos</td><td>Minor</td><td>1</td><td>CSV y JSON con validación de importación.</td><td><code>backend/routers/dataio.py</code>, <code>frontend/js/pages/dataio.js</code></td></tr><tr><td><strong>Total base seleccionado</strong></td><td></td><td><strong>14</strong></td><td></td><td></td></tr></tbody></table></div>
+<p>Los primeros seis módulos son Majors; los dos Minors completan la base de 14. La interacción entre usuarios se demuestra con funciones sociales (chat, perfiles y amistades), mientras que la gestión estándar se demuestra con cuentas, perfiles/avatares y presencia. React se usa en Pong; el portal principal usa JavaScript vanilla.</p>
+<h3>Retos técnicos y soluciones</h3>
+<div class="table-wrap"><table><thead><tr><th>Reto</th><th>Solución aplicada</th><th>Código relacionado</th></tr></thead><tbody><tr><td>Representar una colección física sin mezclar carta, impresión y copia</td><td>Registros relacionales separados y claves foráneas conectan catálogo, impresiones, contenedores, huecos y copias.</td><td><code>database/init.sql</code>, <code>backend/routers/containers.py</code></td></tr><tr><td>Evitar que escrituras simultáneas superen la capacidad del contenedor</td><td>El backend valida la operación y devuelve conflicto; la interfaz explica el rechazo para que se pueda actualizar y reintentar.</td><td><code>backend/routers/containers.py</code>, <code>frontend/js/pages/visor-admin-25d.js</code></td></tr><tr><td>Mantener correctos los callbacks OAuth detrás de Nginx en localhost y por IP LAN</td><td>El proxy conserva host y puerto; el callback se deriva de la petición y el preflight valida secretos y TLS local.</td><td><code>docker/nginx.conf</code>, <code>backend/routers/auth.py</code>, <code>tools/prepare_local.py</code></td></tr><tr><td>Mantener consistente el estado multijugador ante desconexiones y espectadores</td><td>El servidor conserva el estado de Pong y reconecta al jugador a la sala existente; las conexiones de espectadores se separan de las plazas de jugador.</td><td><code>backend/routers/pong_game.py</code>, <code>pong-client/src/pong_App.jsx</code></td></tr><tr><td>Arrancar el proyecto de forma predecible y preparar una evaluación sin Internet</td><td>El preflight de Make valida configuración/TLS; la carga habitual y el catálogo de emergencia usan comandos separados.</td><td><code>Makefile</code>, <code>tools/prepare_local.py</code>, <code>tools/install_emergency_catalog.py</code></td></tr></tbody></table></div>
+<p>Estos retos resumen algunas de las decisiones técnicas abordadas durante el desarrollo individual de la aplicación.</p>
+<h3>Módulos de reserva para la evaluación</h3>
+<p>Son alternativas para demostrar si no se acepta un punto base, o candidatos adicionales para el bonus. El subject permite hasta 5 puntos de bonus después de alcanzar 14. Solo se seleccionarán módulos que superen su demostración.</p>
+<div class="table-wrap"><table><thead><tr><th>Candidato</th><th>Puntos</th><th>Demostración que preparar</th></tr></thead><tbody><tr><td>Multijugador con más de dos jugadores activos</td><td>Major · 2</td><td>Entrar con al menos tres usuarios distintos a una sala de Adivina Cartas; comprobar rondas, temporizador, puntuaciones y clasificación compartidos. Los espectadores no cuentan como jugadores activos.</td></tr><tr><td>Estadísticas e historial de partidas</td><td>Minor · 1</td><td>Terminar partidas y comprobar victorias/derrotas, historial, oponentes, clasificación y persistencia tras recargar.</td></tr><tr><td>Modo espectador</td><td>Minor · 1</td><td>Entrar en una partida Pong ya iniciada, comprobar estado inicial y actualizaciones en directo, verificar que el espectador no controla palas y observar desconexión y fin. Ya se han probado hasta diez espectadores.</td></tr><tr><td>Personalización del juego</td><td>Minor · 1</td><td>Cambiar modo, condición de victoria, límite de puntos/tiempo, orbe y tapete; comprobar opciones por defecto y configuración idéntica para ambos jugadores.</td></tr><tr><td>Gamificación</td><td>Minor · 1</td><td>Demostrar logros, clasificación y XP/niveles; comprobar que primer contenedor/primera carta persisten tras vaciar la colección y que el progreso dinámico sigue el estado actual de la base de datos.</td></tr><tr><td>Chat avanzado</td><td>Minor · 1</td><td>Demostrar bloqueo, invitaciones a partidas desde el chat, avisos de juego, acceso a perfiles, historial persistente, indicador de escritura y confirmaciones de lectura.</td></tr><tr><td>Búsqueda avanzada</td><td>Minor · 1</td><td>Combinar filtros, cambiar sentido de ordenación y recorrer resultados con 12, 24, 36 y 52 cartas por página.</td></tr><tr><td>Sistema de notificaciones completo</td><td>Minor · 1</td><td>Probar creación, modificación y borrado de contenedores y cartas, además de eventos de juego; registrar qué aparece en campana, pop-ups o mensajes.</td></tr><tr><td>Navegadores adicionales</td><td>Minor · 1</td><td>Repetir flujos importantes en Firefox y Opera, además de Chrome; revisar funcionalidad, aspecto y consola.</td></tr><tr><td>Sistema de diseño propio</td><td>Minor · 1</td><td>Inventariar y localizar al menos diez componentes reutilizables y mostrar la paleta, tipografía e iconos compartidos.</td></tr><tr><td>Módulo propio de gestión de colecciones</td><td>Major · 2</td><td>Justificar su valor sustancial frente a un CRUD genérico; demostrar aislamiento de propiedad, ubicación de inventario y capacidad/concurrencia.</td></tr><tr><td>Módulo propio de progresión de colección</td><td>Minor · 1</td><td>Explicar cómo los hitos de colección se diferencian de la gamificación estándar y demostrar sus reglas de persistencia.</td></tr></tbody></table></div>
+<p>La subida de archivos no se incluye como reserva porque el flujo de avatar no se ha verificado frente a todos los requisitos del subject, incluido el progreso de carga y los tipos admitidos. Tampoco se incluye el Major de segundo juego con matchmaking: las salas actuales se eligen manualmente, sin emparejamiento automático.</p>
+<h2>Instrucciones</h2>
+<h3>Requisitos previos</h3>
+<ul><li>Docker Engine y el complemento Docker Compose.</li><li>GNU Make.</li><li>Python 3 y OpenSSL instalados en el equipo.</li><li>Internet para la primera descarga del catálogo Scryfall, salvo que se use el catálogo de emergencia.</li></ul>
+<p>Node se usa dentro de la compilación Docker del frontend; no hace falta instalarlo en el equipo anfitrión.</p>
+<h3>Configurar y arrancar</h3>
+<ol><li>Crea un <code>.env</code> local desde la plantilla en la raíz del repositorio. <strong>No lo subas a Git.</strong></li><li>Rellena credenciales de base de datos, secreto JWT y credenciales OAuth de 42. La preparación previa valida estos valores y restringe los permisos del fichero.</li><li>Ejecuta:</li></ol>
+<pre><code class="language-bash">   make up</code></pre>
+<p>La preparación crea o valida un certificado TLS autofirmado para localhost y la IPv4 LAN detectada. Después Docker Compose construye e inicia los servicios.</p>
+<ol><li>Carga el catálogo de cartas:</li></ol>
+<pre><code class="language-bash">   make seed</code></pre>
+<p>Si falta el archivo bulk local, lo descarga de Scryfall y luego lo importa. La primera descarga requiere Internet.</p>
+<ol><li>Abre <code>https://localhost:8443</code>. Desde otro dispositivo usa <code>https://&lt;IP-LAN&gt;:8443</code>. El certificado local es autofirmado; el navegador puede pedir que se confíe en él.</li></ol>
+<p>Para una evaluación sin Internet, coloca el ZIP de emergencia fuera del repositorio (por defecto <code>/tmp/card-binder-emergency.zip</code>) y ejecuta <code>make emergency</code>. Es una alternativa opcional, no se guarda en Git.</p>
+<h3>Comandos útiles</h3>
+<div class="table-wrap"><table><thead><tr><th>Comando</th><th>Para qué sirve</th></tr></thead><tbody><tr><td><code>make up</code></td><td>Valida configuración, prepara TLS e inicia los servicios.</td></tr><tr><td><code>make restart</code></td><td>Reconstruye y recrea servicios conservando volúmenes Docker.</td></tr><tr><td><code>make status</code></td><td>Muestra el estado de los servicios.</td></tr><tr><td><code>make logs</code></td><td>Sigue los logs de los servicios.</td></tr><tr><td><code>make test</code></td><td>Ejecuta comprobaciones de humo de solo lectura para HTTPS, API y base de datos.</td></tr><tr><td><code>make down</code></td><td>Detiene servicios y conserva volúmenes.</td></tr><tr><td><code>make clean</code></td><td>Elimina contenedores, imágenes y volúmenes del proyecto; borra los datos guardados.</td></tr><tr><td><code>make prune</code></td><td>Ejecuta Docker system prune; puede afectar recursos Docker no usados fuera de este proyecto.</td></tr></tbody></table></div>
+<h2>Recursos y uso de IA</h2>
+<p>Referencias del proyecto:</p>
+<ul><li><a href="https://fastapi.tiangolo.com/">Documentación de FastAPI</a></li><li><a href="https://react.dev/">Documentación de React</a></li><li><a href="https://www.postgresql.org/docs/">Documentación de PostgreSQL</a></li><li><a href="https://docs.docker.com/compose/">Documentación de Docker Compose</a></li><li><a href="https://tailwindcss.com/docs">Documentación de Tailwind CSS</a></li><li><a href="https://scryfall.com/docs/api">Documentación de la API Scryfall</a></li><li><a href="https://developers.giphy.com/docs/">Documentación de la API GIPHY</a></li></ul>
+<p>Utilicé Claude y ChatGPT como herramientas de asesoría para el alcance, la priorización, la documentación, la planificación de pruebas, la depuración y la revisión de código. Revisé y validé las sugerencias antes de incorporarlas. La IA no es una función integrada en el producto.</p>
+<h2>Autor</h2>
+<ul><li><strong>Nombre:</strong> Alberto Álvarez García</li><li><strong>Login de 42:</strong> <code>albealva</code></li></ul>
+<h2>Créditos</h2>
+<p>Los datos del catálogo y las referencias a imágenes de cartas se obtienen de Scryfall. La búsqueda de GIF usa GIPHY. El repositorio incluye recursos de terceros; cuando se proporciona información de licencia o atribución junto a esos recursos, debe conservarse.</p>
+</main></body>
 </html>

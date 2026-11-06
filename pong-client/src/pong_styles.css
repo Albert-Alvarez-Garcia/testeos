@@ -5,37 +5,15 @@
            6 Altar isométrico · 7 Pantalla de juego · 8 Adaptación y movimiento reducido
    ========================================================================== */
 
-@font-face {
-  font-family: "MagicTheGathering";
-  src: url("/public/assets/MAGIC.TTF") format("truetype");
-  font-display: swap;
-}
-
 /* --- 1. PALETA Y TIPOGRAFÍA --- */
 :root {
-  --c-bg-app: 8 5 3;
-  --c-ink: 11 7 5;
-  --c-ink-3: 15 10 6;
-  --c-panel: 20 14 9;
-  --c-raised: 44 29 15;
-  --c-raised-3: 42 29 19;
-  --c-gold: 179 146 88;
-  --c-gold-dark: 140 109 54;
+  --accent: rgb(var(--c-accent));
+  --accent-ink: #14100a;
   --c-gold-darker: 90 69 40;
-  --c-accent: 212 175 55;
-  --c-bronze: 92 67 35;
-  --c-bronze-deep: 28 19 10;
-  --c-cream: 254 243 199;
-  --c-amber-200: 253 230 138;
-  --c-amber-400: 251 191 36;
-
-  --accent: #ff5a36;
-  --accent-ink: #14101c;
-
   --muted: rgb(var(--c-amber-200) / 0.62);
   --danger: #f08a73;
 
-  --font-magic: "MagicTheGathering", "Cinzel", Georgia, serif;
+  --font-magic: "Cinzel", Georgia, serif;
   --font-inscription: "Cinzel", "Trajan Pro", Georgia, serif;
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
@@ -48,8 +26,8 @@ html, body, #root { margin: 0; min-height: 100%; }
 
 body {
   background:
-    linear-gradient(rgb(var(--c-bg-app) / 0.55), rgb(var(--c-bg-app) / 0.82)),
-    url("/public/assets/fondomejorado.jpg") center / cover fixed,
+    linear-gradient(rgb(var(--c-bg-app) / 0.48), rgb(var(--c-bg-app) / 0.78)),
+    url("/public/assets/Weathered Embossed Leather Damask.png") center / cover fixed,
     rgb(var(--c-bg-app));
   color: rgb(var(--c-cream));
   font: 400 15px/1.55 var(--font-body);
@@ -71,8 +49,9 @@ ul { padding: 0; list-style: none; }
 .scene {
   position: relative;
   isolation: isolate;
-  min-height: 100vh;
-  padding: 60px 48px;
+  min-height: calc(100vh - 70px);
+  min-height: calc(100svh - 70px);
+  padding: 34px clamp(18px, 4vw, 48px) 48px;
   max-width: 1500px;
   margin: 0 auto;
 }
@@ -92,7 +71,21 @@ ul { padding: 0; list-style: none; }
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
-.home-link { position: fixed; top: 16px; left: 16px; z-index: 1000; }
+.pong-topbar {
+  position: relative; z-index: 5; min-height: 70px; width: min(1500px, 100%); margin: 0 auto;
+  padding: 10px clamp(18px, 4vw, 48px); display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 20px;
+  border-bottom: 1px solid rgb(var(--c-gold) / 0.24);
+  background: linear-gradient(100deg, rgb(var(--c-ink) / 0.94), rgb(var(--c-panel) / 0.78), rgb(var(--c-ink) / 0.94));
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2); backdrop-filter: blur(12px);
+}
+.pong-brand { display: flex; align-items: center; gap: 11px; min-width: 0; color: rgb(var(--c-cream)); text-decoration: none; }
+.pong-brand img { width: 40px; height: 40px; object-fit: contain; filter: drop-shadow(0 0 8px color-mix(in srgb, var(--accent) 26%, transparent)); }
+.pong-brand span { display: flex; flex-direction: column; gap: 3px; }
+.pong-brand strong { font: 700 0.76rem/1.1 var(--font-inscription); letter-spacing: 0.08em; }
+.pong-brand small { font: 500 0.54rem/1.2 var(--font-body); letter-spacing: 0.18em; color: var(--muted); }
+.pong-breadcrumb { font: 600 0.61rem var(--font-inscription); letter-spacing: 0.2em; color: var(--muted); text-align: center; }
+.pong-breadcrumb span { padding: 0 9px; color: var(--accent); }
+.pong-home-link { justify-self: end; white-space: nowrap; }
 
 /* --- 3. MATERIALES --- */
 .plate {
@@ -545,6 +538,9 @@ kbd {
 .pong-winner-label { font: 600 0.68rem var(--font-inscription); letter-spacing: 0.4em; text-transform: uppercase; color: var(--muted); }
 .pong-winner { font: 400 clamp(2rem, 6vw, 2.8rem)/1.1 var(--font-magic); letter-spacing: 0.05em; color: var(--accent); text-shadow: 0 2px 0 rgb(0 0 0 / 0.9), 0 0 26px color-mix(in srgb, var(--accent) 60%, transparent); overflow-wrap: anywhere; }
 
+.pong-touch-controls { display: none; }
+.pong-touch-hint { color: var(--muted); }
+
 /* --- 8. ADAPTACIÓN Y MOVIMIENTO --- */
 @media (max-width: 1279px) {
   .lobby { padding: 36px 24px; grid-template-columns: minmax(0, 1fr) minmax(320px, 26rem); grid-template-areas: "stage console" "stage side"; }
@@ -557,7 +553,7 @@ kbd {
 }
 @media (max-width: 899px) {
   .lobby { padding: 24px 16px; grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "console" "side"; gap: 24px; }
-  .scene { padding: 24px 16px; }
+  .scene { padding: 26px 16px 36px; }
   .scene-room, .scene-entry { grid-template-columns: minmax(0, 1fr); grid-template-areas: "stage" "console" "side"; gap: 24px; }
   .scene-room .stage { grid-row: auto; }
   .stage { position: relative; top: 0; height: auto; min-height: 0; gap: 18px; }
@@ -570,6 +566,26 @@ kbd {
   .plate { padding: 24px 20px 26px; }
   .pong-scoreboard { gap: 8px; }
   .pong-head { flex-wrap: wrap; }
+  .pong-topbar { min-height: 62px; grid-template-columns: 1fr auto; gap: 10px; padding: 8px 16px; }
+  .pong-breadcrumb { display: none; }
+  .pong-brand img { width: 36px; height: 36px; }
+  .pong-home-link { padding: 10px 13px; font-size: 0.59rem; letter-spacing: 0.1em; }
+  .pong-touch-controls { display: grid; grid-template-columns: 1fr; gap: 10px; width: 100%; margin-top: 4px; }
+  .pong-touch-controls.is-local { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pong-touch-pad { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid rgb(var(--c-gold) / 0.26); background: rgb(var(--c-ink) / 0.8); }
+  .pong-touch-pad > span { font: 600 0.59rem var(--font-inscription); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .pong-touch-pad > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pong-touch-pad .btn { min-height: 50px; padding: 8px; font-size: 1rem; letter-spacing: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .pong-touch-pad .btn:active { --edge-color: var(--accent); background: color-mix(in srgb, var(--accent) 18%, transparent); }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .pong-touch-controls { display: grid; }
+  .pong-touch-controls.is-local { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pong-touch-pad { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1px solid rgb(var(--c-gold) / 0.26); background: rgb(var(--c-ink) / 0.8); }
+  .pong-touch-pad > span { font: 600 0.59rem var(--font-inscription); letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+  .pong-touch-pad > div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pong-touch-pad .btn { min-height: 50px; padding: 8px; font-size: 1rem; letter-spacing: 0; touch-action: none; user-select: none; -webkit-user-select: none; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -585,4 +601,199 @@ kbd {
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* --- Identidad compartida con Card Binder Pro --- */
+.pong-topbar {
+  border-bottom-color: rgb(var(--c-gold) / 0.2);
+  background: rgb(var(--c-ink) / 0.9);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
+}
+.pong-brand img { filter: none; }
+.pong-breadcrumb span { color: rgb(var(--c-accent)); }
+.pong-home-link { border-radius: 8px; }
+
+/* Pong conserva su arena, dentro del marco de navegación común del portal. */
+body.games-shell {
+  min-height: 100dvh;
+  background: rgb(var(--c-bg-app));
+}
+body.games-shell::before { display: block; }
+html.theme-42 body.games-shell { background-image: none !important; }
+body.games-shell .app-main { min-height: calc(100dvh - 44px); }
+body.games-shell #root { min-height: 0; }
+@media (max-width: 640px) {
+  body.games-shell .app-main .um-topbar-account { top: auto; right: auto; left: auto; }
+  body.games-shell .app-main .um-topbar-account .um-user { flex: 0 1 auto; width: auto; }
+}
+.scene {
+  width: min(1500px, 100%);
+  min-height: calc(100svh - 7rem);
+  padding-top: clamp(24px, 4vh, 42px);
+}
+.scene::before { display: none; }
+.pong-global-chat {
+  position: fixed;
+  z-index: 1100;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  display: none;
+  flex-direction: column;
+  width: min(24rem, calc(100vw - 2rem));
+  height: min(30rem, calc(100dvh - 2rem));
+  overflow: hidden;
+  border: 1px solid rgb(var(--c-gold) / .42);
+  border-radius: 1rem;
+  color: rgb(var(--c-cream));
+  background: rgb(var(--c-panel) / .97);
+  box-shadow: 0 24px 60px rgb(0 0 0 / .55);
+  backdrop-filter: blur(18px);
+}
+.pong-global-chat[style*="display: flex"] { display: flex; }
+.pong-global-chat > header { display: flex; align-items: center; justify-content: space-between; padding: .8rem 1rem; border-bottom: 1px solid rgb(var(--c-gold) / .2); font: 600 .75rem Cinzel, Georgia, serif; }
+.pong-global-chat > header button { border: 0; color: rgb(var(--c-accent-hi)); background: transparent; font-size: 1.3rem; cursor: pointer; }
+.pong-global-chat-messages { display: flex; flex: 1; flex-direction: column; gap: .55rem; overflow-y: auto; padding: .85rem; font-size: .78rem; }
+.pong-global-chat #chat-form { display: flex; gap: .5rem; padding: .7rem; border-top: 1px solid rgb(var(--c-gold) / .2); }
+.pong-global-chat #chat-input { flex: 1; min-width: 0; padding: .6rem .7rem; border: 1px solid rgb(var(--c-gold) / .24); border-radius: .5rem; color: rgb(var(--c-cream)); background: rgb(var(--c-ink) / .75); font-size: .75rem; }
+.pong-global-chat #chat-form button { padding: 0 .75rem; border: 1px solid rgb(var(--c-accent-hi) / .4); border-radius: .5rem; color: rgb(var(--c-ink)); background: rgb(var(--c-accent-hi)); font-size: .72rem; font-weight: 700; cursor: pointer; }
+
+.plate {
+  padding: 24px;
+  border: 1px solid rgb(var(--c-gold) / 0.22);
+  border-radius: 14px;
+  background: linear-gradient(145deg, rgb(var(--c-panel) / 0.96), rgb(var(--c-ink-3) / 0.96));
+  box-shadow: 0 14px 32px rgb(0 0 0 / 0.2);
+  filter: none;
+}
+.plate::before, .plate::after { display: none; }
+.plate-sm { padding: 18px 20px; }
+.plate-frame { padding: 12px; border-radius: 16px; }
+
+.title {
+  font-family: var(--font-inscription);
+  font-weight: 600;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  text-shadow: none;
+}
+.stage-motto { color: rgb(var(--c-cream) / 0.7); letter-spacing: 0.24em; }
+.stage-motto::before, .stage-motto::after { color: rgb(var(--c-accent)); }
+.block-title, .sub-title {
+  display: block;
+  font: 600 0.66rem/1.4 var(--font-body);
+  letter-spacing: 0.14em;
+  color: rgb(var(--c-accent));
+  text-shadow: none;
+}
+.block-title::before, .block-title::after { display: none; }
+.status { letter-spacing: 0.1em; }
+
+.btn {
+  --edge-color: rgb(var(--c-gold) / 0.3);
+  padding: 11px 17px;
+  border: 1px solid var(--edge-color);
+  border-radius: 8px;
+  background: rgb(var(--c-ink) / 0.78);
+  color: rgb(var(--c-cream));
+  font: 600 0.72rem var(--font-body);
+  letter-spacing: 0.06em;
+  text-shadow: none;
+  filter: none;
+  box-shadow: none;
+}
+.btn::before, .btn::after { display: none; }
+.btn:hover:not(:disabled) {
+  border-color: rgb(var(--c-accent) / 0.7);
+  background: rgb(var(--c-raised-2));
+  color: rgb(var(--c-cream));
+  filter: none;
+  box-shadow: 0 0 0 3px rgb(var(--c-accent) / 0.08);
+}
+.btn:active:not(:disabled) { transform: translateY(1px); filter: none; }
+.btn-primary {
+  border-color: rgb(var(--c-accent));
+  background: rgb(var(--c-accent));
+  color: var(--accent-ink);
+  box-shadow: 0 8px 20px rgb(var(--c-accent) / 0.14);
+}
+.btn-primary:hover:not(:disabled) {
+  border-color: rgb(var(--c-accent-hi));
+  background: rgb(var(--c-accent-hi));
+  color: var(--accent-ink);
+  filter: none;
+  box-shadow: 0 8px 22px rgb(var(--c-accent) / 0.22);
+}
+.btn-ghost { background: rgb(var(--c-ink) / 0.5); }
+.btn-lg { padding: 14px 20px; font-size: 0.76rem; letter-spacing: 0.1em; }
+
+.room-item, .roster-item {
+  border-radius: 9px;
+  background: rgb(var(--c-ink) / 0.72);
+  box-shadow: inset 0 0 0 1px rgb(var(--c-gold) / 0.18);
+}
+.room-item:hover {
+  box-shadow: inset 0 0 0 1px rgb(var(--c-accent) / 0.68), 0 8px 18px rgb(0 0 0 / 0.18);
+}
+.room-item:active { transform: translateY(1px); }
+.roster-item { padding-top: 12px; padding-bottom: 12px; }
+.chat-list {
+  border-radius: 9px;
+  background: rgb(var(--c-ink) / 0.72);
+  box-shadow: inset 0 0 0 1px rgb(var(--c-gold) / 0.18);
+}
+.chat-msg { background: transparent; border: 0; border-radius: 0; padding: 0; margin: 0; }
+.text-input {
+  border-radius: 8px;
+  box-shadow: inset 0 0 0 1px rgb(var(--c-gold) / 0.24);
+}
+.text-input:focus-visible { box-shadow: inset 0 0 0 1px rgb(var(--c-accent)), 0 0 0 3px rgb(var(--c-accent) / 0.1); }
+
+.scene-entry {
+  min-height: min(900px, calc(100svh - 70px));
+  grid-template-columns: minmax(0, 1.05fr) minmax(350px, 0.85fr);
+  gap: clamp(28px, 5vw, 74px);
+  align-items: center;
+  padding-top: 28px;
+  padding-bottom: 34px;
+}
+.scene-entry .stage {
+  position: relative;
+  top: auto;
+  height: auto;
+  min-height: 0;
+  gap: 8px;
+}
+.scene-entry .stage-title { gap: 10px; }
+.scene-entry .stage-title .title { font-size: clamp(2rem, 3.5vw, 3rem); }
+.scene-entry .altar { width: min(620px, 100%); height: 390px; }
+.scene-entry .altar > .iso-scene { transform: scale(0.94); }
+.scene-entry .console { width: 100%; max-width: 520px; justify-self: end; }
+
+.scene-room {
+  align-items: center;
+  gap: clamp(18px, 2vw, 28px);
+}
+.scene-room .stage {
+  position: relative;
+  top: auto;
+  height: auto;
+  min-height: 0;
+}
+.scene-room .altar { width: 100%; height: 340px; }
+.scene-room .altar > .iso-scene { transform: scale(0.88); }
+
+@media (max-width: 899px) {
+  .scene-entry {
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "stage" "console";
+    align-items: stretch;
+    gap: 22px;
+    padding-top: 24px;
+  }
+  .scene-entry .altar { height: 310px; }
+  .scene-entry .altar > .iso-scene { transform: scale(0.72); }
+  .scene-entry .console { max-width: none; }
+  .scene-room { align-items: stretch; }
+  .scene-room .altar { height: 300px; }
 }

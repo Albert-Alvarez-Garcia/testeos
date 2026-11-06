@@ -1,126 +1,143 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🃏%3C/text%3E%3C/svg%3E">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Binder Pro — Workspace y Visor 2.5D</title>
+    <title>Añadir cartas · Card Binder Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/visor-admin-25d.css">
     <script src="js/shared/theme.js"></script>
+    <script src="js/shared/user-menu.js"></script>
 </head>
-<body>
-
-    <header>
-        <div class="logo-container">
-            <a href="index.html" title="Ir al Inicio" class="logo-link">
-                <img src="public/assets/logomagic.png" alt="Logo">
-            </a>
-            <span class="app-subtitle">Binder Pro</span>
-        </div>
-
-        <div class="header-search-container">
-          <input type="text" id="searchInput" placeholder="Buscar carta...">
-
-          <select id="macroCategorySelect">
-              <option value="">Cualquier tipo...</option>
-          </select>
-
-          <select id="subtypeSelect" disabled>
-              <option value="">Cualquier subtipo...</option>
-          </select>
-
-          <button id="searchBtn" class="btn-fantasy">Buscar</button>
-        </div>
-    </header>
-
-    <main>
-        <div class="workspace-grid">
-
-            <!-- Columna izquierda: visor 2.5D -->
-            <div class="visor-column fantasy-panel">
-
-                <button id="toggleMagnifierBtn" class="visor-mode-btn btn-fantasy">
-                    🔍 Modo Lupa: <span id="modeStatus">DESACTIVADO</span>
-                </button>
-
-                <div class="card-perspective-container" id="cardContainer">
-                    <div class="interactive-card" id="interactiveCard">
-                        <img id="dynamicCardImg" src="public/assets/capicarta.png" alt="Vista previa de la carta">
-                    </div>
-                    <div class="card-magnifier" id="cardMagnifier"></div>
+<body class="add-cards-page" data-shell-page="add">
+<div class="app-main">
+<main class="add-cards-content">
+            <header class="add-cards-heading">
+                <div>
+                    <p class="add-cards-eyebrow">AMPLÍA TU ARCHIVO</p>
+                    <h1>Añadir cartas</h1>
+                    <p>Busca una impresión, elige dónde guardarla y registra tus copias.</p>
                 </div>
+                <a class="add-cards-secondary" href="report.html">← Volver a mi colección</a>
+            </header>
 
-                <div class="visor-card-details" id="visorCardDetails">
-                    <div class="visor-card-head">
-                        <span id="visorCardName">Selecciona una carta</span>
-                        <span id="visorCardMana"></span>
+            <section class="card-search-panel" aria-label="Buscar cartas en el catálogo">
+                <div class="card-search-main">
+                    <label for="searchInput">Nombre de la carta</label>
+                    <input type="search" id="searchInput" placeholder="Ej. Lightning Bolt, Sol Ring…" autocomplete="off">
+                </div>
+                <div class="card-search-filter">
+                    <label for="macroCategorySelect">Tipo</label>
+                    <select id="macroCategorySelect"><option value="">Cualquier tipo</option></select>
+                </div>
+                <div class="card-search-filter">
+                    <label for="subtypeSelect">Subtipo</label>
+                    <select id="subtypeSelect" disabled><option value="">Cualquier subtipo</option></select>
+                </div>
+                <button id="searchBtn" class="card-search-submit" type="button"><span aria-hidden="true">⌕</span> Buscar cartas</button>
+            </section>
+
+            <div class="add-workspace">
+                <section class="results-panel" aria-labelledby="resultsTitle">
+                    <header class="panel-heading">
+                        <div><p class="panel-kicker">CATÁLOGO</p><h2 id="resultsTitle">Resultados de búsqueda</h2></div>
+                        <span class="panel-hint">Selecciona una impresión</span>
+                    </header>
+                    <div class="results-list" id="resultsList" aria-live="polite" aria-relevant="additions text">
+                        <p>Busca por nombre o tipo para ver las impresiones disponibles.</p>
                     </div>
-                    <div id="visorCardType">—</div>
+                </section>
+
+                <aside class="details-column" aria-label="Impresión seleccionada e inventario">
+                    <section class="selected-print-panel" aria-labelledby="selectedPrintTitle">
+                        <header class="panel-heading selected-heading">
+                            <div><p class="panel-kicker">IMPRESIÓN SELECCIONADA</p><h2 id="selectedPrintTitle">Vista previa</h2></div>
+                            <button id="toggleMagnifierBtn" class="visor-mode-btn" type="button" aria-pressed="false" title="Activa la lupa y mueve el puntero sobre la carta">Lupa <span id="modeStatus">desactivada</span></button>
+                        </header>
+                        <div class="card-perspective-container" id="cardContainer">
+                            <div class="interactive-card" id="interactiveCard">
+                                <img id="dynamicCardImg" src="public/assets/capicarta.png" alt="Vista previa de la impresión seleccionada">
+                            </div>
+                            <div class="card-magnifier" id="cardMagnifier" aria-hidden="true"></div>
+                        </div>
+                        <div class="visor-card-details" id="visorCardDetails" aria-live="polite">
+                            <div class="visor-card-head"><span id="visorCardName">Selecciona una carta</span><span id="visorCardMana"></span></div>
+                            <div id="visorCardType">—</div>
+                        </div>
+                        <div class="ownership-indicator" id="cardOwnedStatus" role="status">La colección se comprobará al elegir una impresión.</div>
+                    </section>
+
+                    <section class="inventory-panel" aria-labelledby="inventoryTitle">
+                        <header class="panel-heading inventory-heading">
+                            <div><p class="panel-kicker">GUARDAR COPIAS</p><h2 id="inventoryTitle">Ubicación e inventario</h2></div>
+                        </header>
+                        <div class="inventory-form">
+                            <div class="inv-row inv-row-location">
+                                <div class="filter-container-field">
+                                    <label for="filterContainerType">Tipo de contenedor</label>
+                                    <select id="filterContainerType">
+                                        <option value="all">Todos</option>
+                                        <option value="binder">Archivadores</option>
+                                        <option value="deck">Mazos</option>
+                                        <option value="box">Cajas</option>
+                                    </select>
+                                </div>
+                                <div class="location-field">
+                                    <label for="cardLocation">Guardar en</label>
+                                    <select id="cardLocation" required><option value="">Selecciona un contenedor…</option></select>
+                                </div>
+                            </div>
+                            <a href="containers.html" class="inv-manage-link"><span class="inv-manage-icon" aria-hidden="true">▣</span> Gestionar contenedores</a>
+                            <div class="inv-row inv-row-state">
+                                <div>
+                                    <label for="cardQuantity">Cantidad de copias</label>
+                                    <input type="number" id="cardQuantity" value="1" min="1" max="99" inputmode="numeric">
+                                </div>
+                                <div>
+                                    <label for="cardState">Estado</label>
+                                    <select id="cardState">
+                                        <option value="NM">Near Mint (NM)</option>
+                                        <option value="LP">Lightly Played (LP)</option>
+                                        <option value="MP">Moderately Played (MP)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <button class="card-save-button" id="saveInventoryBtn" type="button" disabled>Guardar en mi colección <span aria-hidden="true">→</span></button>
+                            <p class="save-help">Comprobaremos los huecos disponibles antes de guardar.</p>
+                        </div>
+                    </section>
+                </aside>
+            </div>
+        </main>
+    </div>
+
+    <div id="chat-box" class="fixed bottom-24 right-6 w-80 md:w-96 h-[450px] bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] rounded-2xl shadow-2xl backdrop-blur-md hidden flex-col z-50 overflow-hidden font-sans">
+        <div class="bg-[rgb(var(--c-panel-2))] border-b border-[rgb(var(--c-gold)/0.4)] px-4 py-3 flex justify-between items-center text-[rgb(var(--c-amber-100))]">
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span><span class="font-bold tracking-wide text-sm">Sala Global de Conjuradores 🌐</span></div>
+            <button id="chat-close-btn" class="text-[rgb(var(--c-amber-400))] hover:text-white transition-colors cursor-pointer text-lg font-bold px-1" type="button">✕</button>
+        </div>
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col bg-[rgb(var(--c-ink-2)/0.6)] text-sm"></div>
+        <form id="chat-form" class="bg-[rgb(var(--c-panel-2))] border-t border-[rgb(var(--c-gold)/0.4)] p-3 flex items-center space-x-2 relative">
+            <div class="relative">
+                <button type="button" id="sticker-toggle-btn" class="bg-[rgb(var(--c-gold)/0.2)] hover:bg-[rgb(var(--c-gold)/0.4)] border border-[rgb(var(--c-gold)/0.6)] text-[rgb(var(--c-amber-200))] px-2.5 py-2 rounded-xl text-xs transition-colors cursor-pointer" title="Buscar GIF">✨ GIF</button>
+                <div id="sticker-picker" class="absolute bottom-12 left-0 w-64 bg-[rgb(var(--c-panel-2))] border-2 border-[rgb(var(--c-gold))] rounded-xl p-3 shadow-2xl hidden flex flex-col space-y-2 z-50 font-sans">
+                    <input type="text" id="giphy-search-input" placeholder="Buscar GIF…" autocomplete="off" class="bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.6)] rounded-lg px-2.5 py-1.5 text-[rgb(var(--c-amber-100))] text-xs">
+                    <div id="giphy-results" class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto"><span class="chat-hint">Escribe algo para buscar…</span></div>
+                    <div class="pt-1.5 border-t border-[rgb(var(--c-gold)/0.3)] flex justify-center items-center"><img src="public/assets/Poweredby_100px-Black_VertLogo.png" alt="Powered by Giphy" class="h-4 opacity-75 object-contain"></div>
                 </div>
             </div>
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje…" autocomplete="off" class="flex-1 bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.6)] rounded-xl px-3 py-2 text-[rgb(var(--c-amber-100))] text-xs" required>
+            <button type="submit" class="bg-[rgb(var(--c-gold)/0.3)] hover:bg-[rgb(var(--c-gold)/0.6)] border border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-200))] px-4 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer">Enviar</button>
+        </form>
+    </div>
 
-            <!-- Columna derecha: resultados e inventario -->
-            <div class="details-column fantasy-panel">
-                <h2>📋 Resultados de Búsqueda</h2>
-                <div class="results-list" id="resultsList">
-                    <p>Realiza una búsqueda arriba para listar cartas...</p>
-                </div>
-
-                <h2>⚙️ Gestión de Inventario y Estado</h2>
-                <div class="inventory-form">
-
-                    <div class="inv-row inv-row-location">
-                        <div>
-                            <label for="filterContainerType">Filtrar contenedores</label>
-                            <select id="filterContainerType">
-                                <option value="all">Todos los tipos</option>
-                                <option value="binder">Archivadores</option>
-                                <option value="deck">Mazos</option>
-                                <option value="box">Cajas</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="cardLocation">Ubicación / Contenedor</label>
-                            <select id="cardLocation" required>
-                                <option value="">Selecciona un contenedor...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <a href="containers.html" target="_blank" rel="noopener" class="inv-manage-link">⚙️ Gestionar</a>
-                        </div>
-                    </div>
-
-                    <div class="inv-row inv-row-state">
-                        <div>
-                            <label for="cardOwned">¿En posesión?</label>
-                            <select id="cardOwned">
-                                <option value="true">Sí</option>
-                                <option value="false">No</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label for="cardQuantity" title="Número de copias a añadir">Añadir cant.</label>
-                            <input type="number" id="cardQuantity" value="1" min="1" max="99">
-                        </div>
-                        <div>
-                            <label for="cardState">Estado de la Carta</label>
-                            <select id="cardState">
-                                <option value="NM">Near Mint (NM)</option>
-                                <option value="LP">Lightly Played (LP)</option>
-                                <option value="MP">Moderately Played (MP)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button class="btn-fantasy btn-save" id="saveInventoryBtn">Guardar Cambios de Inventario</button>
-                </div>
-            </div>
-
-        </div>
-    </main>
-
+    <script src="js/shared/app-shell.js"></script>
     <script src="js/shared/auth.js"></script>
+    <script src="js/shared/chat.js"></script>
     <script src="js/pages/visor-admin-25d.js"></script>
     <script src="js/shared/footer.js"></script>
 </body>

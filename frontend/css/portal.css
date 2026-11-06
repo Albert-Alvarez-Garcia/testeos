@@ -37,6 +37,13 @@
     --c-amber-900: 120 53 15;
 }
 
+/* Paletas Mana compartidas: la estructura y el contraste se mantienen; cambia el acento. */
+html[data-mana-theme="white"] { --c-gold: 196 169 112; --c-gold-dark: 145 119 68; --c-accent: 236 218 164; --c-accent-hi: 255 239 190; --c-bronze: 96 78 43; --c-bronze-deep: 30 26 19; }
+html[data-mana-theme="blue"] { --c-gold: 86 165 210; --c-gold-dark: 53 121 164; --c-accent: 71 181 224; --c-accent-hi: 145 220 247; --c-bronze: 30 78 112; --c-bronze-deep: 8 25 40; }
+html[data-mana-theme="black"] { --c-gold: 157 126 181; --c-gold-dark: 111 82 139; --c-accent: 185 145 222; --c-accent-hi: 220 191 245; --c-bronze: 75 52 95; --c-bronze-deep: 24 17 32; }
+html[data-mana-theme="red"] { --c-gold: 203 111 87; --c-gold-dark: 148 67 52; --c-accent: 224 103 73; --c-accent-hi: 255 160 125; --c-bronze: 111 49 35; --c-bronze-deep: 35 18 15; }
+html[data-mana-theme="green"] { --c-gold: 112 167 112; --c-gold-dark: 70 125 76; --c-accent: 118 194 120; --c-accent-hi: 180 230 166; --c-bronze: 48 92 53; --c-bronze-deep: 15 33 20; }
+
 /* --- 2. VARIABLES SEMÁNTICAS Y BASE --- */
 @font-face {
     font-family: 'MagicTheGathering';

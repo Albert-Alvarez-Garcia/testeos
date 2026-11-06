@@ -10,6 +10,10 @@ CREATE TABLE IF NOT EXISTS users (
     intra_id VARCHAR(50) UNIQUE,              -- ID único oficial de la Intra de 42 (si aplica)
     auth_type VARCHAR(20) DEFAULT 'local',    -- 'local' o '42'
     badge_type VARCHAR(30) DEFAULT 'civil_homebrewer', -- 'official_42', 'civil_homebrewer', etc.
+    mana_theme VARCHAR(20) CHECK (mana_theme IS NULL OR mana_theme IN ('white', 'blue', 'black', 'red', 'green', '42')),
+    profile_private BOOLEAN NOT NULL DEFAULT FALSE,
+    collection_visibility VARCHAR(16) NOT NULL DEFAULT 'stats'
+        CHECK (collection_visibility IN ('hidden', 'summary', 'stats', 'browse')),
     avatar_path VARCHAR(255) DEFAULT 'avatar1.jpg', -- Avatar por defecto (predeterminado o subido)
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

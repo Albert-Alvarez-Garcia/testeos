@@ -9,73 +9,63 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <!-- Estilos del portal: fondo (fondomejorado.jpg) y paleta, igual que index.html -->
     <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/games-shell.css">
     <script src="js/shared/theme.js"></script>
+    <script src="js/shared/user-menu.js"></script>
 </head>
-<body class="font-ui min-h-screen flex flex-col items-center justify-center p-4 pt-20 md:pt-4 relative">
-
-    <!-- 🔙 BOTÓN DE RETORNO AL INICIO -->
-    <div class="absolute top-6 left-6 z-40">
-        <a href="index.html" class="bg-[rgb(var(--c-panel)/0.9)] border border-[rgb(var(--c-gold)/0.6)] px-4 py-2 rounded-xl text-[rgb(var(--c-amber-200))] text-xs font-semibold hover:bg-[rgb(var(--c-gold)/0.3)] transition-colors shadow-2xl backdrop-blur-md flex items-center space-x-2">
-            <span>← Volver al Inicio</span>
-        </a>
-    </div>
-
-    <!-- 📊 ENLACE A ESTADÍSTICAS Y RANKING -->
-    <div class="absolute top-6 right-6 z-40">
-        <a href="stats.html" class="bg-[rgb(var(--c-panel)/0.9)] border border-[rgb(var(--c-gold)/0.6)] px-4 py-2 rounded-xl text-[rgb(var(--c-amber-200))] text-xs font-semibold hover:bg-[rgb(var(--c-gold)/0.3)] transition-colors shadow-2xl backdrop-blur-md flex items-center space-x-2">
-            <span>📊 Estadísticas y ranking</span>
-        </a>
-    </div>
-
-    <!-- Cabecera principal -->
-    <div class="w-full max-w-3xl text-center mb-8 drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)]">
-        <h1 class="magic-title text-3xl md:text-4xl text-[rgb(var(--c-amber-400))] font-bold mb-2">⚔️ Salas de Duelo - Card Binder</h1>
-        <p class="text-xs md:text-sm text-[rgb(var(--c-amber-200)/0.7)]">Elige una sala activa para unirte o crea tu propio campo de batalla.</p>
-    </div>
-
-    <!-- Panel de Creación y Listado -->
-    <div class="w-full max-w-3xl grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-        <!-- Columna Izquierda: Crear Sala -->
-        <div class="bg-[rgb(var(--c-panel)/0.9)] backdrop-blur-md border border-[rgb(var(--c-gold)/0.4)] rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
-            <div>
-                <h2 class="magic-title text-sm font-bold text-[rgb(var(--c-amber-400))] mb-4 uppercase tracking-wider">🏰 Crear Sala</h2>
-                <form id="create-room-form" class="space-y-4">
-                    <div>
-                        <label class="block text-[11px] text-[rgb(var(--c-amber-200)/0.7)] mb-1">Nombre de tu Mago/Jugador:</label>
-                        <input type="text" id="username-input" required placeholder="Tu nombre..."
-                            class="w-full bg-[rgb(var(--c-ink))] border border-[rgb(var(--c-gold)/0.3)] text-[rgb(var(--c-amber-100))] text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-[rgb(var(--c-amber-400))]">
-                    </div>
-                    <div>
-                        <label class="block text-[11px] text-[rgb(var(--c-amber-200)/0.7)] mb-1">Nombre de la Sala:</label>
-                        <input type="text" id="room-name-input" required placeholder="ej. DueloLegendario"
-                            class="w-full bg-[rgb(var(--c-ink))] border border-[rgb(var(--c-gold)/0.3)] text-[rgb(var(--c-amber-100))] text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-[rgb(var(--c-amber-400))]">
-                    </div>
-                    <button type="submit" class="w-full bg-[rgb(var(--c-amber-600))] hover:bg-[rgb(var(--c-amber-500))] text-black font-bold py-3 px-4 rounded-xl text-xs transition-all shadow-lg cursor-pointer">
-                        ✨ Crear y Entrar
-                    </button>
-                </form>
-            </div>
+<body class="games-shell font-ui" data-shell-page="rooms">
+<div class="app-main">
+<main class="games-content rooms-content">
+    <header class="rooms-heading">
+        <div>
+            <p class="games-eyebrow">ADIVINA LA CARTA</p>
+            <h1>Salas de juego</h1>
+            <p>Crea una mesa para tus amigos o únete a una partida abierta.</p>
         </div>
+        <a class="rooms-stats-link" href="stats.html"><span aria-hidden="true">⌁</span> Estadísticas y ranking <span aria-hidden="true">→</span></a>
+    </header>
 
-        <!-- Columna Derecha: Listado de Salas Activas -->
-        <div class="md:col-span-2 bg-[rgb(var(--c-panel)/0.9)] backdrop-blur-md border border-[rgb(var(--c-gold)/0.4)] rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
-            <div>
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="magic-title text-sm font-bold text-[rgb(var(--c-amber-400))] uppercase tracking-wider">📜 Salas Abiertas</h2>
-                    <button id="refresh-btn" class="text-xs text-[rgb(var(--c-amber-200)/0.7)] hover:text-[rgb(var(--c-amber-400))] underline cursor-pointer">Actualizar</button>
-                </div>
-
-                <!-- Contenedor de la lista de salas -->
-                <div id="rooms-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-1">
-                    <div class="text-xs text-[rgb(var(--c-amber-200)/0.4)] italic text-center py-8">Buscando campos de batalla activos...</div>
-                </div>
+    <div class="rooms-layout">
+        <section class="rooms-panel create-room-panel" aria-labelledby="create-room-title">
+            <div class="rooms-panel-heading">
+                <span class="rooms-panel-icon" aria-hidden="true">＋</span>
+                <div><p class="games-eyebrow">EMPIEZA UNA PARTIDA</p><h2 id="create-room-title">Crear sala</h2></div>
             </div>
-        </div>
+            <p class="rooms-panel-copy">Ponle nombre a la mesa e invita a otros conjuradores.</p>
+            <form id="create-room-form" class="room-form">
+                <div class="room-field">
+                    <label for="username-input">Tu nombre de jugador</label>
+                    <input type="text" id="username-input" required maxlength="32" autocomplete="nickname" placeholder="Tu nombre…">
+                    <small id="player-name-hint">Así aparecerás en la sala.</small>
+                </div>
+                <div class="room-field">
+                    <label for="room-name-input">Nombre de la sala</label>
+                    <input type="text" id="room-name-input" required maxlength="48" placeholder="Ej. La mesa del dragón">
+                </div>
+                <button type="submit" class="room-create-btn"><span aria-hidden="true">✦</span> Crear sala y entrar <span aria-hidden="true">→</span></button>
+            </form>
+            <div class="rooms-private-note"><span aria-hidden="true">◈</span> Comparte el nombre de la sala para que tus amigos puedan encontrarte.</div>
+        </section>
 
+        <section class="rooms-panel open-rooms-panel" aria-labelledby="open-rooms-title">
+            <div class="rooms-panel-heading rooms-list-heading">
+                <div class="rooms-panel-title-group">
+                    <span class="rooms-panel-icon" aria-hidden="true">▤</span>
+                    <div><p class="games-eyebrow">ENCUENTRA CONTRINCANTES</p><h2 id="open-rooms-title">Salas abiertas</h2></div>
+                </div>
+                <button id="refresh-btn" class="rooms-refresh-btn" type="button"><span aria-hidden="true">↻</span> Actualizar</button>
+            </div>
+            <p class="rooms-panel-copy">Las salas se actualizan automáticamente.</p>
+            <div id="rooms-list" class="rooms-list" aria-live="polite" aria-busy="true">
+                <div class="rooms-empty"><span class="rooms-empty-icon" aria-hidden="true">◌</span><strong>Buscando salas abiertas…</strong><span>En unos segundos verás quién está listo para jugar.</span></div>
+            </div>
+        </section>
     </div>
-
+</main>
+</div>
     <script src="js/pages/rooms.js"></script>
     <script src="js/shared/footer.js"></script>
+    <script src="js/shared/app-shell.js"></script>
 </body>
 </html>

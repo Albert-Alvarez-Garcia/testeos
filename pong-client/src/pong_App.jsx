@@ -1,6 +1,6 @@
 // pong_App.jsx · Raíz de la aplicación con motor isométrico en Canvas 2D.
 import { useCallback, useEffect, useRef, useState } from "react";
-import { DEFAULT_CONFIG, DEFAULT_PADDLE_COLORS, MANA, TABLES, accentVars, describeWin, formatTime, gameWsUrl } from "./pong_config.js";
+import { DEFAULT_CONFIG, DEFAULT_PADDLE_COLORS, MANA, TABLES, describeWin, formatTime, gameWsUrl } from "./pong_config.js";
 import PongLobby from "./pong_Lobby.jsx";
 import { probeOrb } from "./pong_orbs.js";
 
@@ -50,17 +50,6 @@ function readSession() {
   try { return JSON.parse(raw); } catch { return null; }
 }
 
-// Botón fijo para volver al inicio del portal (mismo aspecto que "Volver al Portal" del resto de la web).
-// Usa una ruta absoluta porque Pong vive bajo /pong/. Al navegar se desmonta la app y se cierra el WebSocket.
-const HOME_URL = "/index.html";
-function HomeButton() {
-  return (
-    <a href={HOME_URL} className="btn btn-ghost home-link" title="Volver al inicio">
-      <span aria-hidden="true">←</span> Volver al Inicio
-    </a>
-  );
-}
-
 export default function PongApp() {
   const [username, setUsername] = useState(readInitialName);
   const [session, setSession] = useState(readSession);
@@ -102,7 +91,6 @@ export default function PongApp() {
 
   return (
     <>
-      <HomeButton />
       {session ? (
         <PongGame session={session} onExit={leaveGame} />
       ) : (
@@ -122,6 +110,7 @@ export default function PongApp() {
 // ---------------------------------------------------------------------------
 function PongGame({ session, onExit }) {
   const canvasRef = useRef(null);
+  const touchControlsRef = useRef(null);
   const [scoreLeft, setScoreLeft] = useState(0);
   const [scoreRight, setScoreRight] = useState(0);
   const [roomStatus, setRoomStatus] = useState("Conectando a la arena...");
@@ -180,6 +169,17 @@ function PongGame({ session, onExit }) {
       lastSent = key;
       msgs.forEach((msg) => ws.send(JSON.stringify(msg)));
     }
+
+    touchControlsRef.current = {
+      press(key) {
+        if (spectator || !GAME_KEYS.has(key) || keys.has(key)) return;
+        keys.add(key);
+        sendInputs();
+      },
+      release(key) {
+        if (keys.delete(key)) sendInputs();
+      },
+    };
 
     const onKeyDown = (e) => {
       const k = e.key.toLowerCase();
@@ -409,11 +409,12 @@ function PongGame({ session, onExit }) {
       window.removeEventListener("blur", onBlur);
       cancelAnimationFrame(animationFrameId);
       if (ws) ws.close();
+      touchControlsRef.current = null;
     };
   }, [roomId, mode, username, spectator, t, m]);
 
   return (
-    <main className="scene scene-game" style={accentVars(cfg.ball_mana)}>
+    <main className="scene scene-game">
       <div className="arena">
         <header className="pong-head">
           <div className="pong-room">
@@ -456,11 +457,19 @@ function PongGame({ session, onExit }) {
             <>
               <span><kbd>W</kbd> <kbd>S</kbd> Jugador 1</span>
               <span><kbd>↑</kbd> <kbd>↓</kbd> Jugador 2</span>
+              <span className="pong-touch-hint">o usa los controles en pantalla en móvil</span>
             </>
           ) : (
-            <span><kbd>W</kbd> <kbd>S</kbd> o <kbd>↑</kbd> <kbd>↓</kbd> para mover tu pala</span>
+            <span><kbd>W</kbd> <kbd>S</kbd> o <kbd>↑</kbd> <kbd>↓</kbd> para mover tu pala · controles táctiles en móvil</span>
           )}
         </p>
+
+        {!spectator && (
+          <div className={`pong-touch-controls ${mode === "local" ? "is-local" : ""}`} role="group" aria-label="Controles táctiles de Pong">
+            <TouchPad title={mode === "local" ? "Jugador 1" : "Mover pala"} keys={["w", "s"]} controlRef={touchControlsRef} />
+            {mode === "local" && <TouchPad title="Jugador 2" keys={["arrowup", "arrowdown"]} controlRef={touchControlsRef} />}
+          </div>
+        )}
       </div>
 
       {gameOverData && (
@@ -487,5 +496,43 @@ function PongGame({ session, onExit }) {
         </div>
       )}
     </main>
+  );
+}
+
+function TouchPad({ title, keys, controlRef }) {
+  const labels = ["↑", "↓"];
+  const press = (key) => (event) => {
+    if ((event.type === "keydown" || event.type === "keyup") && !["Enter", " "].includes(event.key)) return;
+    if (event.type === "keydown" && event.repeat) return;
+    if (event.type === "keydown" || event.type === "keyup") event.preventDefault();
+    if (event.type === "keyup" || event.type === "blur" || event.type === "pointerup" || event.type === "pointercancel" || event.type === "lostpointercapture") {
+      controlRef.current?.release(key);
+    } else {
+      controlRef.current?.press(key);
+      if (event.type === "pointerdown") event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
+  };
+
+  return (
+    <section className="pong-touch-pad" aria-label={title}>
+      <span>{title}</span>
+      <div>
+        {keys.map((key, index) => (
+          <button
+            key={key}
+            type="button"
+            className="btn btn-ghost"
+            aria-label={`${title}: mover ${index === 0 ? "arriba" : "abajo"}`}
+            onPointerDown={press(key)}
+            onPointerUp={press(key)}
+            onPointerCancel={press(key)}
+            onLostPointerCapture={press(key)}
+            onKeyDown={press(key)}
+            onKeyUp={press(key)}
+            onBlur={press(key)}
+          >{labels[index]}</button>
+        ))}
+      </div>
+    </section>
   );
 }

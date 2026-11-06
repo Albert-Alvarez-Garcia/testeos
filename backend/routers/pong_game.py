@@ -51,6 +51,7 @@ from typing import Dict, List, Optional, Union
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 from backend.security import ws_username
 from backend.routers.stats import save_game_result
+from backend.routers.chat_notify import announce_game
 
 router = APIRouter(
     prefix="/api/pong",
@@ -254,6 +255,7 @@ class PongRoom:
         self.winner_side: Optional[int] = None
         self.finish_reason: Optional[str] = None
         self.over_payload: Optional[dict] = None
+        self.result_announcement_sent = False
 
         self.seq = 0
         self.loop_task: Optional[asyncio.Task] = None
@@ -369,12 +371,15 @@ class PongRoom:
         }
 
     async def record_result(self, over: dict):
-        """Guarda en estadísticas la partida online terminada (la local y las sin ganador real no cuentan)."""
+        """Guarda y anuncia una partida online válida, una sola vez."""
         if self.mode != "online" or len(self.slots) < 2 or not all(self.slots):
             return
         winner = over.get("winner")
         if winner is None or over.get("reason") in ("no_show", "abandoned"):
             return
+        if self.result_announcement_sent:
+            return
+        self.result_announcement_sent = True
         # El ganador va primero (en un abandono puede tener menos goles que el rival)
         ranking = sorted(
             ({"username": r["username"], "score": r["score"]} for r in over["ranking"]),
@@ -384,6 +389,11 @@ class PongRoom:
             await asyncio.to_thread(save_game_result, "pong", self.room_id, ranking, winner)
         except Exception as e:
             print(f"⚠️ No se pudo guardar el resultado de Pong: {e}")
+        scoreline = " · ".join(f"{r['username']}: {r['score']}" for r in ranking)
+        try:
+            await announce_game("Pong", winner, ranking, details=f"Marcador: {scoreline}" if scoreline else "")
+        except Exception as e:
+            print(f"⚠️ No se pudo anunciar el resultado de Pong en el chat global: {e}")
 
     async def broadcast(self, message: dict):
         if message.get("type") == "GAME_OVER":
@@ -529,6 +539,7 @@ class PongRoom:
         self.winner_side = None
         self.finish_reason = None
         self.over_payload = None
+        self.result_announcement_sent = False
         self.pause_reason = None
         self.pause_state = None
         self.inputs = [0, 0]

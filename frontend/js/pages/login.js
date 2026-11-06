@@ -8,8 +8,16 @@
         const isLogin = tab === 'login';
         $('tabLoginBtn').classList.toggle('active', isLogin);
         $('tabRegisterBtn').classList.toggle('active', !isLogin);
+        $('tabLoginBtn').setAttribute('aria-selected', String(isLogin));
+        $('tabRegisterBtn').setAttribute('aria-selected', String(!isLogin));
         $('loginFormContainer').classList.toggle('hidden', !isLogin);
         $('registerFormContainer').classList.toggle('hidden', isLogin);
+        $('loginFormContainer').hidden = !isLogin;
+        $('registerFormContainer').hidden = isLogin;
+        $('auth-title').textContent = isLogin ? 'Inicia sesión' : 'Crea tu cuenta';
+        $('auth-description').textContent = isLogin
+            ? 'Accede para continuar organizando tu colección.'
+            : 'Crea tu archivo personal en unos pocos pasos.';
     }
 
     // Guarda la sesión del navegador (la cookie de sesión la pone el servidor)

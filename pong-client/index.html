@@ -8,9 +8,24 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/portal.css" />
+    <link rel="stylesheet" href="/css/index.css" />
+    <link rel="stylesheet" href="/css/games-shell.css" />
+    <script src="/js/shared/theme.js"></script>
+    <script src="/js/shared/user-menu.js"></script>
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="games-shell" data-shell-page="game" data-shell-context="JUEGOS / PONG ISOMÉTRICO">
+    <div class="app-main">
+      <div id="root"></div>
+      <script src="/js/shared/footer.js"></script>
+    </div>
+    <section id="pong-global-chat" class="pong-global-chat" aria-label="Chat global" aria-live="polite">
+      <header><strong>Sala Global de Conjuradores</strong><button id="chat-close-btn" type="button" aria-label="Cerrar chat">×</button></header>
+      <div id="chat-messages" class="pong-global-chat-messages"></div>
+      <form id="chat-form"><input id="chat-input" type="text" placeholder="Escribe a la comunidad…" autocomplete="off" required><button type="submit">Enviar</button></form>
+    </section>
+    <script src="/js/shared/app-shell.js"></script>
+    <script src="/js/shared/chat.js"></script>
     <script type="module" src="/src/pong_main.jsx"></script>
   </body>
 </html>

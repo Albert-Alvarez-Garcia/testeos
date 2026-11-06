@@ -9,81 +9,71 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/games-shell.css">
     <script src="js/shared/theme.js"></script>
+    <script src="js/shared/user-menu.js"></script>
 </head>
-<body class="font-ui min-h-screen flex flex-col items-center justify-center p-4">
-
-    <!-- Cabecera del Lobby -->
-    <div class="w-full max-w-4xl flex flex-wrap gap-3 justify-between items-center mb-6 bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.3)] p-4 rounded-xl shadow-lg">
+<body class="games-shell font-ui" data-shell-page="lobby">
+<div class="app-main">
+<main class="games-content lobby-content">
+    <header class="lobby-heading">
         <div>
-            <h1 class="magic-title text-xl text-[rgb(var(--c-amber-400))] font-bold">🏛️ Sala de Duelo: <span id="room-name-display">sala-1</span></h1>
-            <p id="room-status" class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">Conectando al vestíbulo...</p>
+            <p class="games-eyebrow">ADIVINA LA CARTA · SALA DE ESPERA</p>
+            <h1>Sala <span id="room-name-display">sala-1</span></h1>
+            <p id="room-status" class="lobby-connection" data-connection="connecting">Conectando al vestíbulo…</p>
         </div>
-        <div class="flex items-center gap-3">
-            <div class="text-right">
-                <span class="text-xs text-[rgb(var(--c-amber-200)/0.7)]">Jugadores en sala:</span>
-                <span id="player-count" class="text-xl font-bold text-emerald-400 ml-2">0/4</span>
-            </div>
-            <button id="invite-btn" type="button" class="bg-[rgb(var(--c-raised-2))] hover:bg-[rgb(var(--c-raised-3))] text-[rgb(var(--c-amber-200))] font-semibold px-3 py-2 rounded-xl text-xs transition-all border border-[rgb(var(--c-gold)/0.4)] cursor-pointer">
-                🔗 Invitar
-            </button>
-            <button id="leave-room-btn" type="button" class="bg-red-900/80 hover:bg-red-800 text-white font-bold px-3 py-2 rounded-xl text-xs transition-all shadow cursor-pointer border border-red-700/50">
-                🚪 Salir
-            </button>
+        <div class="lobby-heading-actions">
+            <div class="lobby-player-count"><span>Jugadores</span><strong id="player-count">0/4</strong></div>
+            <button id="invite-btn" type="button" class="lobby-button invite-button"><span aria-hidden="true">↗</span> Invitar</button>
+            <button id="leave-room-btn" type="button" class="lobby-button leave-button"><span aria-hidden="true">←</span> Salir</button>
         </div>
-    </div>
+    </header>
 
-    <!-- Contenedor Principal -->
-    <div class="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <!-- Jugadores y controles del Host -->
-        <div class="bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.4)] rounded-2xl p-6 shadow-2xl flex flex-col justify-between">
-            <div>
-                <h2 class="magic-title text-sm font-bold text-[rgb(var(--c-amber-400))] mb-4 uppercase tracking-wider">👥 Combatientes</h2>
-                <ul id="players-list" class="space-y-2 mb-6">
-                    <li class="text-xs text-[rgb(var(--c-amber-200)/0.5)] italic">Esperando jugadores...</li>
-                </ul>
+    <div class="lobby-layout">
+        <section class="lobby-panel players-panel" aria-labelledby="players-heading">
+            <div class="lobby-panel-heading">
+                <div><p class="games-eyebrow">EN LA MESA</p><h2 id="players-heading">Jugadores</h2></div>
+                <span class="lobby-panel-mark" aria-hidden="true">♙</span>
             </div>
+            <ul id="players-list" class="lobby-players-list" aria-live="polite">
+                <li class="lobby-empty-player">Esperando jugadores…</li>
+            </ul>
 
-            <div id="host-controls" class="hidden border-t border-[rgb(var(--c-gold)/0.2)] pt-4 mt-4">
-                <h3 class="text-xs font-semibold text-[rgb(var(--c-amber-300))] mb-2">⚙️ Configuración de Sala</h3>
-                <label for="max-players-select" class="block text-[11px] text-[rgb(var(--c-amber-200)/0.7)] mb-1">Máximo de jugadores:</label>
-                <select id="max-players-select" class="w-full bg-[rgb(var(--c-ink))] border border-[rgb(var(--c-gold)/0.3)] text-[rgb(var(--c-amber-100))] text-xs rounded-lg p-2 mb-4 focus:outline-none focus:border-[rgb(var(--c-amber-400))]">
-                    <option value="1">1 Jugador (Práctica)</option>
-                    <option value="2">2 Jugadores (Duelo)</option>
-                    <option value="3">3 Jugadores</option>
-                    <option value="4" selected>4 Jugadores</option>
+            <div id="host-controls" class="lobby-host-controls hidden">
+                <p class="games-eyebrow">CONFIGURACIÓN DE SALA</p>
+                <label for="max-players-select">Máximo de jugadores</label>
+                <select id="max-players-select">
+                    <option value="1">1 jugador · práctica</option>
+                    <option value="2">2 jugadores · duelo</option>
+                    <option value="3">3 jugadores</option>
+                    <option value="4" selected>4 jugadores</option>
                 </select>
-
-                <button id="start-game-btn" type="button" class="w-full bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-xl text-sm transition-all shadow-lg cursor-pointer">
-                    🚀 Comenzar Partida
-                </button>
+                <button id="start-game-btn" type="button" class="lobby-start-btn">Comenzar partida <span aria-hidden="true">→</span></button>
             </div>
-            <div id="waiting-host-msg" class="text-center text-xs text-[rgb(var(--c-amber-200)/0.6)] italic border-t border-[rgb(var(--c-gold)/0.2)] pt-4 mt-4">
-                Esperando a que el Host inicie la partida...
+            <p id="waiting-host-msg" class="lobby-waiting-note">Esperando a que el anfitrión inicie la partida…</p>
+        </section>
+
+        <section class="lobby-panel room-chat-panel" aria-labelledby="lobby-chat-heading">
+            <div class="lobby-panel-heading chat-panel-heading">
+                <div><p class="games-eyebrow">COORDINA LA PARTIDA</p><h2 id="lobby-chat-heading">Chat de la sala</h2></div>
+                <span class="lobby-chat-online"><i aria-hidden="true"></i> En directo</span>
             </div>
-        </div>
-
-        <!-- Chat -->
-        <div class="md:col-span-2 bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.4)] rounded-2xl p-6 shadow-2xl flex flex-col justify-between h-[420px] md:h-[500px]">
-            <h2 class="magic-title text-sm font-bold text-[rgb(var(--c-amber-400))] mb-4 uppercase tracking-wider">💬 Conversación en el Vestíbulo</h2>
-
-            <div id="chat-messages" aria-live="polite" class="flex-1 min-h-0 bg-[rgb(var(--c-ink))] border border-[rgb(var(--c-gold)/0.2)] rounded-xl p-4 overflow-y-auto space-y-2 mb-4 text-xs">
-                <div class="text-[rgb(var(--c-amber-200)/0.4)] italic">Bienvenido al vestíbulo. ¡Prepara tus tácticas!</div>
+            <div id="chat-messages" aria-live="polite" aria-relevant="additions" class="lobby-chat-messages">
+                <div class="lobby-system-message">Bienvenido al vestíbulo. ¡Prepara tus tácticas!</div>
             </div>
-
-            <form id="chat-form" class="flex gap-2">
-                <input type="text" id="chat-input" placeholder="Escribe un mensaje..." autocomplete="off" maxlength="200"
-                    class="flex-1 bg-[rgb(var(--c-ink))] border border-[rgb(var(--c-gold)/0.3)] text-[rgb(var(--c-amber-100))] text-xs rounded-xl px-4 py-3 focus:outline-none focus:border-[rgb(var(--c-amber-400))]">
-                <button type="submit" class="bg-[rgb(var(--c-amber-600))] hover:bg-[rgb(var(--c-amber-500))] text-black font-bold px-5 py-3 rounded-xl text-xs transition-all cursor-pointer">
-                    Enviar
-                </button>
+            <form id="chat-form" class="lobby-chat-form">
+                <label class="visually-hidden" for="chat-input">Mensaje para el chat de la sala</label>
+                <input type="text" id="chat-input" placeholder="Escribe un mensaje…" autocomplete="off" maxlength="200">
+                <button type="submit" aria-label="Enviar mensaje">Enviar <span aria-hidden="true">↑</span></button>
             </form>
-        </div>
-
+        </section>
     </div>
 
     <script src="js/pages/lobby.js"></script>
     <script src="js/shared/footer.js"></script>
+    </main>
+    </div>
+    <script src="js/shared/app-shell.js"></script>
 </body>
 </html>

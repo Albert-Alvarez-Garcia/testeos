@@ -35,6 +35,7 @@
         $('avatar-panel').classList.add('hidden');
         $('social-panel').classList.add('hidden');
         $('collection-panel').classList.add('hidden');
+        $('privacy-panel').classList.add('hidden');
         $('avatar-slot').replaceChildren(avatarNode(null, session ? session.username : '?', 128));
     }
 
@@ -108,6 +109,9 @@
         const shown = me.avatar || (session.avatar && !me.avatar ? session.avatar : null);
         $('avatar-slot').replaceChildren(avatarNode(shown, me.username, 128));
         $('remove-avatar-btn').classList.toggle('hidden', !me.avatar);
+        $('profile-private').checked = Boolean(me.profile_private);
+        $('collection-visibility').value = me.collection_visibility || 'stats';
+        updatePrivacyDescription();
 
         // La página de inicio lee el avatar de la sesión
         if (me.avatar) patchSession({ avatar: me.avatar });
@@ -116,6 +120,39 @@
     async function loadProfile() {
         renderProfile(await api('/me'));
     }
+
+    const PRIVACY_COPY = {
+        hidden: 'Solo tú puedes ver los datos de tu colección.',
+        summary: 'Tus amistades verán el número de copias, cartas distintas y contenedores.',
+        stats: 'Tus amistades verán el resumen y el reparto de copias por rareza, incluidas las foil.',
+        browse: 'Tus amistades verán las estadísticas y podrán explorar tus cartas y ediciones, sin ver sus ubicaciones.',
+    };
+    function updatePrivacyDescription() {
+        const value = $('collection-visibility').value;
+        $('privacy-description').textContent = PRIVACY_COPY[value] || PRIVACY_COPY.hidden;
+    }
+    $('collection-visibility').addEventListener('change', updatePrivacyDescription);
+    $('privacy-form').addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const button = $('save-privacy');
+        const status = $('privacy-status');
+        button.disabled = true;
+        status.classList.remove('is-error');
+        status.textContent = 'Guardando…';
+        try {
+            const data = await api('/privacy', { method: 'PATCH', json: {
+                profile_private: $('profile-private').checked,
+                collection_visibility: $('collection-visibility').value,
+            } });
+            $('profile-private').checked = Boolean(data.profile_private);
+            $('collection-visibility').value = data.collection_visibility;
+            updatePrivacyDescription();
+            status.textContent = 'Preferencias guardadas.';
+        } catch (error) {
+            status.classList.add('is-error');
+            status.textContent = error.message || 'No se pudieron guardar los cambios.';
+        } finally { button.disabled = false; }
+    });
 
     // ---------- Avatar: subir y quitar ----------
     async function sendAvatar(blob) {
@@ -257,11 +294,33 @@
 
     function userRow(user, note, buttons, onOpen) {
         const row = el('div', 'flex items-center justify-between gap-3 bg-[rgb(var(--c-ink-3))] p-2.5 rounded-lg border border-[rgb(var(--c-gold-dark))]');
-        const left = el('div', 'flex items-center gap-3 min-w-0');
+        const left = el('div', 'friend-user-info flex items-center gap-3 min-w-0');
         left.append(avatarNode(user.avatar, user.username, 36));
-        const text = el('div', 'min-w-0');
-        text.append(el('p', 'text-sm font-bold text-[color:var(--text-main)] truncate', user.username));
+        const text = el('div', 'friend-user-copy min-w-0');
+        const nameLine = el('div', 'friend-name-line');
+        nameLine.append(el('p', 'text-sm font-bold text-[color:var(--text-main)] truncate', user.username));
+        if (Number.isFinite(Number(user.level))) {
+            const level = Math.max(1, Number(user.level));
+            nameLine.append(el('span', 'friend-level-chip', `Nivel ${level}`));
+        }
+        text.append(nameLine);
         if (note) text.append(el('p', 'text-xs text-[color:var(--text-muted)]', note));
+        if (Number.isFinite(Number(user.level)) && Number.isFinite(Number(user.level_progress))) {
+            const progress = Math.max(0, Math.min(100, Number(user.level_progress)));
+            const experience = el('div', 'friend-xp-progress');
+            experience.append(el('span', 'friend-xp-label', `${progress}% hacia el siguiente nivel`));
+            const track = el('span', 'friend-xp-track');
+            track.setAttribute('role', 'progressbar');
+            track.setAttribute('aria-label', `Nivel ${Number(user.level)}: ${progress}% de experiencia para el siguiente nivel`);
+            track.setAttribute('aria-valuemin', '0');
+            track.setAttribute('aria-valuemax', '100');
+            track.setAttribute('aria-valuenow', String(progress));
+            const fill = el('span', 'friend-xp-fill');
+            fill.style.width = `${progress}%`;
+            track.append(fill);
+            experience.append(track);
+            text.append(experience);
+        }
         left.append(text);
         if (onOpen) {
             left.classList.add('cursor-pointer', 'hover:opacity-80', 'transition');
@@ -307,12 +366,26 @@
         const box = $('social-lists');
         try {
             const s = await api('/friends');
+            let levelByUsername = new Map();
+            try {
+                const data = await socialApi('/friends/levels');
+                levelByUsername = new Map((data.levels || []).map((item) => [item.username.toLowerCase(), {
+                    level: item.level,
+                    level_progress: item.progress,
+                }]));
+            } catch (error) {
+                console.warn('No se pudo cargar el nivel de las amistades:', error);
+            }
+            const friends = (s.friends || []).map((friend) => ({
+                ...friend,
+                ...(levelByUsername.get((friend.username || '').toLowerCase()) || {}),
+            }));
             box.replaceChildren(
                 section('Solicitudes recibidas', s.incoming, 'No tienes solicitudes pendientes.', (u) =>
                     userRow(u, 'quiere ser tu amigo', [actionBtn('Aceptar', 'primary', () => accept(u.username)), actionBtn('Rechazar', 'ghost', () => reject(u.username))])),
                 section('Solicitudes enviadas', s.outgoing, 'No has enviado ninguna solicitud.', (u) =>
                     userRow(u, 'pendiente de respuesta', [actionBtn('Cancelar', 'ghost', () => reject(u.username))])),
-                section('Amigos', s.friends, 'Aún no tienes amigos añadidos.', (u) =>
+                section('Amigos', friends, 'Aún no tienes amigos añadidos.', (u) =>
                     userRow(u, u.online ? '🟢 En línea' : '⚫ Desconectado', [actionBtn('Mensaje', 'primary', () => openFriend(u)), actionBtn('Eliminar', 'ghost', () => removeFriend(u.username)), actionBtn('Bloquear', 'danger', () => block(u.username))], () => openFriend(u))),
                 section('Bloqueados', s.blocked, 'No has bloqueado a nadie.', (u) =>
                     userRow(u, null, [actionBtn('Desbloquear', 'ghost', () => unblock(u.username))]))
@@ -375,6 +448,223 @@
     const fm = { user: null, lastId: 0, timer: null, queue: Promise.resolve(), pending: 0 };
     const fmBox = $('fm-messages');
     const socialApi = (path, opts = {}) => api(path, { ...opts, base: '/api/social' });
+    const sharedCollection = { username: null, q: '', rarity: '', type: '', subtype: '', sort: 'name', dir: 'asc', page: 1, size: 24, totalPages: 1, seq: 0 };
+    const shared = {
+        modal: $('friend-collection-modal'), q: $('friend-collection-q'), rarity: $('friend-collection-rarity'),
+        type: $('friend-collection-type'), subtype: $('friend-collection-subtype'), sort: $('friend-collection-sort'),
+        size: $('friend-collection-size'), dir: $('friend-collection-dir'), results: $('friend-collection-results'),
+        summary: $('friend-collection-summary'), pager: $('friend-collection-pager'),
+    };
+    const sharedLightbox = {
+        modal: $('shared-card-lightbox'), image: $('shared-card-lightbox-image'),
+        caption: $('shared-card-lightbox-caption'), opener: null,
+    };
+    let sharedSearchTimer = null;
+
+    function openSharedCardImage(src, caption, opener) {
+        if (!/^https:\/\//i.test(src || '')) return;
+        sharedLightbox.opener = opener;
+        sharedLightbox.image.src = src;
+        sharedLightbox.image.alt = caption;
+        sharedLightbox.caption.textContent = caption;
+        sharedLightbox.modal.classList.remove('hidden');
+        $('shared-card-lightbox-close').focus();
+    }
+
+    function closeSharedCardImage() {
+        sharedLightbox.modal.classList.add('hidden');
+        sharedLightbox.image.removeAttribute('src');
+        if (sharedLightbox.opener?.isConnected) sharedLightbox.opener.focus();
+        sharedLightbox.opener = null;
+    }
+
+    function sharedParams(page = sharedCollection.page, pageSize = sharedCollection.size) {
+        const params = new URLSearchParams({ page: String(page), page_size: String(pageSize), sort: sharedCollection.sort, dir: sharedCollection.dir });
+        if (sharedCollection.q) params.set('q', sharedCollection.q);
+        if (sharedCollection.rarity) params.set('rarity', sharedCollection.rarity);
+        if (sharedCollection.type) params.set('type_line', sharedCollection.type);
+        if (sharedCollection.subtype) params.set('subtype', sharedCollection.subtype);
+        return params;
+    }
+
+    function renderSharedCollection(data) {
+        const items = data.items || [];
+        const cardCount = Number(data.total_cards || 0);
+        const copies = Number(data.total_copies || 0);
+        shared.summary.textContent = `${cardCount.toLocaleString('es-ES')} cartas · ${copies.toLocaleString('es-ES')} copias${sharedCollection.q || sharedCollection.rarity || sharedCollection.type || sharedCollection.subtype ? ' con los filtros aplicados' : ''}`;
+        if (!items.length) {
+            shared.results.replaceChildren(el('div', 'shared-collection-empty', 'No hay cartas que coincidan con estos filtros.'));
+            shared.pager.replaceChildren();
+            return;
+        }
+        const fragment = document.createDocumentFragment();
+        items.forEach((item) => {
+            const article = el('article', 'shared-card-entry');
+            const header = el('div', 'shared-card-heading');
+            const title = el('div', 'shared-card-title');
+            title.append(el('h3', '', item.name), el('p', '', item.type_line || 'Tipo no disponible'));
+            const imageUrl = item.printings?.[0]?.image_uri;
+            if (typeof imageUrl === 'string' && /^https:\/\//i.test(imageUrl)) {
+                const imageButton = el('button', 'shared-card-image-button');
+                imageButton.type = 'button';
+                imageButton.setAttribute('aria-label', `Ampliar imagen de ${item.name}`);
+                const image = el('img', 'shared-card-image');
+                image.src = imageUrl; image.alt = `Carta ${item.name}`; image.loading = 'lazy'; image.decoding = 'async';
+                image.addEventListener('error', () => image.remove());
+                imageButton.append(image);
+                imageButton.addEventListener('click', () => openSharedCardImage(imageUrl, item.name, imageButton));
+                header.append(imageButton);
+            }
+            header.append(title, el('span', 'shared-card-count', `${item.copies} copias · ${item.printings_count} ediciones`));
+            article.append(header);
+            const details = el('details', 'shared-card-editions');
+            const summary = el('summary', '', 'Ver ediciones y detalles');
+            details.append(summary);
+            const list = el('div', 'shared-edition-list');
+            (item.printings || []).forEach((printing) => {
+                const rarityNames = { common: 'Común', uncommon: 'Poco común', rare: 'Rara', mythic: 'Mítica', special: 'Especial', bonus: 'Bonus' };
+                const label = `${printing.set_name || 'Edición desconocida'} · ${(printing.set_code || '').toUpperCase()} #${printing.collector_number || '—'} · ${rarityNames[printing.rarity] || printing.rarity || 'Sin rareza'} · ${printing.copies} copias${printing.foil_copies ? ` · ${printing.foil_copies} foil` : ''}`;
+                list.append(el('p', '', label));
+            });
+            details.append(list);
+            article.append(details);
+            fragment.append(article);
+        });
+        shared.results.replaceChildren(fragment);
+        const from = (data.page - 1) * data.page_size + 1;
+        const to = Math.min(cardCount, data.page * data.page_size);
+        const note = el('span', '', `${from}–${to} de ${cardCount}`);
+        const back = el('button', 'collection-action', 'Anterior');
+        back.type = 'button'; back.disabled = data.page <= 1; back.addEventListener('click', () => loadFriendCollection(data.page - 1));
+        const forward = el('button', 'collection-action', 'Siguiente');
+        forward.type = 'button'; forward.disabled = data.page >= data.total_pages; forward.addEventListener('click', () => loadFriendCollection(data.page + 1));
+        shared.pager.replaceChildren(back, note, forward);
+    }
+
+    async function loadFriendCollection(page = 1) {
+        if (!sharedCollection.username) return;
+        const seq = ++sharedCollection.seq;
+        const target = sharedCollection.username;
+        const params = sharedParams(page);
+        shared.results.setAttribute('aria-busy', 'true');
+        shared.results.replaceChildren(el('div', 'shared-collection-empty', 'Cargando colección…'));
+        try {
+            const data = await socialApi(`/user/${encodeURIComponent(target)}/collection?${params}`);
+            if (seq !== sharedCollection.seq || target !== sharedCollection.username) return;
+            sharedCollection.page = data.page;
+            sharedCollection.totalPages = data.total_pages;
+            renderSharedCollection(data);
+        } catch (error) {
+            if (seq === sharedCollection.seq) shared.results.replaceChildren(el('div', 'shared-collection-empty is-error', error.message || 'No se pudo cargar la colección.'));
+        } finally {
+            if (seq === sharedCollection.seq) shared.results.setAttribute('aria-busy', 'false');
+        }
+    }
+
+    function syncSharedFilters(reset = true) {
+        sharedCollection.q = shared.q.value.trim().replace(/\s+/g, ' ');
+        sharedCollection.rarity = shared.rarity.value;
+        sharedCollection.type = shared.type.value;
+        sharedCollection.subtype = shared.subtype.value;
+        sharedCollection.sort = shared.sort.value;
+        sharedCollection.size = Number(shared.size.value) || 24;
+        sharedCollection.dir = shared.dir.dataset.dir || 'asc';
+        loadFriendCollection(reset ? 1 : sharedCollection.page);
+    }
+
+    function fillSharedSubtypes() {
+        const values = (sharedTaxonomy[shared.type.value] || []);
+        shared.subtype.innerHTML = '<option value="">Cualquier subtipo</option>' + values.map((value) => `<option value="${value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))}">${value}</option>`).join('');
+        shared.subtype.disabled = !values.length;
+    }
+
+    let sharedTaxonomy = {};
+    fetch('/api/cards/types-taxonomy').then((response) => response.ok ? response.json() : {}).then((taxonomy) => {
+        sharedTaxonomy = taxonomy || {};
+        shared.type.innerHTML = '<option value="">Cualquier tipo</option>' + Object.keys(sharedTaxonomy).sort().map((value) => `<option value="${value.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))}">${value}</option>`).join('');
+    }).catch(() => {});
+
+    $('friend-collection-close').addEventListener('click', () => shared.modal.classList.add('hidden'));
+    shared.modal.addEventListener('click', (event) => { if (event.target === shared.modal) shared.modal.classList.add('hidden'); });
+    $('shared-card-lightbox-close').addEventListener('click', closeSharedCardImage);
+    sharedLightbox.modal.addEventListener('click', (event) => { if (event.target === sharedLightbox.modal) closeSharedCardImage(); });
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        if (!sharedLightbox.modal.classList.contains('hidden')) {
+            closeSharedCardImage();
+            event.stopImmediatePropagation();
+        } else if (!shared.modal.classList.contains('hidden')) {
+            shared.modal.classList.add('hidden');
+        }
+    });
+    shared.q.addEventListener('input', () => { clearTimeout(sharedSearchTimer); sharedSearchTimer = setTimeout(() => syncSharedFilters(), 300); });
+    shared.rarity.addEventListener('change', () => syncSharedFilters());
+    shared.type.addEventListener('change', () => { fillSharedSubtypes(); syncSharedFilters(); });
+    shared.subtype.addEventListener('change', () => syncSharedFilters());
+    shared.sort.addEventListener('change', () => syncSharedFilters());
+    shared.size.addEventListener('change', () => syncSharedFilters());
+    shared.dir.dataset.dir = 'asc';
+    shared.dir.addEventListener('click', () => {
+        shared.dir.dataset.dir = shared.dir.dataset.dir === 'asc' ? 'desc' : 'asc';
+        shared.dir.textContent = shared.dir.dataset.dir === 'asc' ? 'Ascendente' : 'Descendente';
+        syncSharedFilters();
+    });
+
+    async function exportSharedCollection(format) {
+        if (!sharedCollection.username) return;
+        const buttons = [$('friend-collection-export-csv'), $('friend-collection-export-json')];
+        buttons.forEach((button) => { button.disabled = true; });
+        try {
+            const items = [];
+            let page = 1;
+            let totalPages = 1;
+            const exportParams = sharedParams(1, 100);
+            do {
+                const params = new URLSearchParams(exportParams);
+                params.set('page', String(page));
+                const result = await socialApi(`/user/${encodeURIComponent(sharedCollection.username)}/collection?${params}`);
+                items.push(...result.items);
+                totalPages = result.total_pages;
+                page += 1;
+            } while (page <= totalPages);
+            if (format === 'json') {
+                const safeItems = items.map(({ name, type_line, copies, printings }) => ({ name, type_line, copies, printings }));
+                downloadShared(new Blob([JSON.stringify(safeItems, null, 2)], { type: 'application/json;charset=utf-8' }), `coleccion-${sharedCollection.username}.json`);
+            } else {
+                const rows = [['Carta', 'Tipo', 'Edición', 'Código', 'Número', 'Rareza', 'Copias', 'Copias foil']];
+                items.forEach((item) => (item.printings || []).forEach((printing) => rows.push([item.name, item.type_line, printing.set_name, printing.set_code, printing.collector_number, printing.rarity, printing.copies, printing.foil_copies])));
+                const csv = rows.map((row) => row.map((value) => {
+                    let cell = String(value ?? '');
+                    if (/^[=+\-@\t\r]/.test(cell)) cell = `'${cell}`;
+                    return `"${cell.replace(/"/g, '""')}"`;
+                }).join(',')).join('\r\n');
+                downloadShared(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }), `coleccion-${sharedCollection.username}.csv`);
+            }
+        } catch (error) { toast(error.message || 'No se pudo exportar la colección.', true); }
+        finally { buttons.forEach((button) => { button.disabled = false; }); }
+    }
+
+    function downloadShared(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const link = el('a'); link.href = url; link.download = filename;
+        document.body.append(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+    $('friend-collection-export-csv').addEventListener('click', () => exportSharedCollection('csv'));
+    $('friend-collection-export-json').addEventListener('click', () => exportSharedCollection('json'));
+
+    $('fm-open-collection').addEventListener('click', () => {
+        if (!fm.user) return;
+        sharedCollection.username = fm.user;
+        sharedCollection.page = 1;
+        $('friend-collection-title').textContent = `Colección de ${fm.user}`;
+        shared.q.value = ''; shared.rarity.value = ''; shared.type.value = ''; shared.subtype.value = '';
+        shared.sort.value = 'name'; shared.size.value = '24'; shared.dir.dataset.dir = 'asc'; shared.dir.textContent = 'Ascendente';
+        fillSharedSubtypes();
+        syncSharedFilters();
+        shared.modal.classList.remove('hidden');
+        $('friend-collection-close').focus();
+    });
 
     const GIF_RE = /^gif:(https:\/\/(?:[a-z0-9-]+\.)*giphy\.com\/[^\s"'<>]{1,400})$/i;
     const INVITE_RE = /^invite:lobby:([A-Za-z0-9_-]{3,40})$/;
@@ -479,6 +769,10 @@
         $('fm-name').textContent = who;
         $('fm-avatar').replaceChildren(avatarNode(u.avatar, who, 64));
         $('fm-badge').classList.add('hidden');
+        $('fm-privacy-note').textContent = '';
+        $('fm-rarity-stats').replaceChildren();
+        $('fm-rarity-stats').classList.add('hidden');
+        $('fm-open-collection').classList.add('hidden');
         document.querySelectorAll('[data-fm-stat]').forEach((n) => { n.textContent = '—'; });
         fmBox.replaceChildren();
         $('fm-modal').classList.remove('hidden');
@@ -494,10 +788,28 @@
                 $('fm-badge').classList.remove('hidden');
             }
             const c = p.collection || {};
+            const collectionHidden = p.collection_visibility === 'hidden';
+            $('fm-privacy-note').textContent = p.collection_visibility === 'hidden'
+                ? 'Esta persona mantiene su colección privada.'
+                : p.collection_visibility === 'summary'
+                    ? 'Resumen de colección compartido con sus amistades.'
+                    : p.collection_visibility === 'browse'
+                        ? 'Comparte sus estadísticas y permite explorar las cartas, sin revelar sus ubicaciones.'
+                        : 'Comparte el resumen y las estadísticas de rareza.';
             document.querySelectorAll('[data-fm-stat]').forEach((n) => {
                 const v = c[n.dataset.fmStat];
-                n.textContent = v == null ? '—' : Number(v).toLocaleString('es-ES');
+                n.textContent = collectionHidden ? 'Privada' : (v == null ? '—' : Number(v).toLocaleString('es-ES'));
             });
+            if (Array.isArray(c.by_rarity) && c.by_rarity.length) {
+                const box = $('fm-rarity-stats');
+                box.classList.remove('hidden');
+                box.append(el('p', 'mb-2 text-xs font-semibold text-[color:var(--text-muted)]', 'Copias por rareza'));
+                const names = { common: 'Comunes', uncommon: 'Poco comunes', rare: 'Raras', mythic: 'Míticas', special: 'Especiales', bonus: 'Bonus', unknown: 'Sin rareza' };
+                c.by_rarity.forEach((entry) => box.append(el('span', 'mr-2 inline-block rounded border border-[rgb(var(--c-gold-dark))] px-2 py-1 text-xs', `${names[entry.rarity] || entry.rarity}: ${Number(entry.copies).toLocaleString('es-ES')}`)));
+            }
+            if (p.collection_visibility === 'browse') {
+                $('fm-open-collection').classList.remove('hidden');
+            }
         } catch (e) {
             if (fm.user === who && e.message !== 'Sesión caducada') toast(e.message, true);
         }
@@ -513,7 +825,7 @@
 
     $('fm-close').addEventListener('click', closeFriend);
     $('fm-modal').addEventListener('click', (e) => { if (e.target === $('fm-modal')) closeFriend(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && fm.user) closeFriend(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && fm.user && shared.modal.classList.contains('hidden')) closeFriend(); });
 
     $('fm-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -594,6 +906,7 @@
         else if (h === 'solicitudes') $('social-panel').scrollIntoView({ behavior: 'smooth' });
         if (h) history.replaceState(null, '', location.pathname + location.search);
     }
+    window.addEventListener('hashchange', handleHash);
 
     // ---------- Arranque ----------
     if (!session) {

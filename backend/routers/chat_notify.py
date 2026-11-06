@@ -29,9 +29,11 @@ def _insert(text):
         conn.close()
 
 
-async def announce_game(game: str, winner: str, ranking: list):
+async def announce_game(game: str, winner: str, ranking: list, details: str = ""):
     rivals = [r["username"] for r in ranking if r["username"] != winner]
     text = f"🏆 {winner} ha ganado una partida de {game}" + (f" contra {', '.join(rivals)}" if rivals else "")
+    if details:
+        text += f" · {details}"
     row = await asyncio.to_thread(_insert, text[:300])
     await manager.broadcast({
         "id": str(row["id"]), "username": row["username"], "user_login": row["user_login"],

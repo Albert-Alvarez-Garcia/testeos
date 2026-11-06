@@ -9,8 +9,8 @@
 
     const $ = (id) => document.getElementById(id);
     const el = {
-        userChip: $('user-chip'), summary: $('summary'), q: $('q'), sort: $('sort'), dir: $('dir'), size: $('size'),
-        type: $('type'), subtype: $('subtype'), container: $('container'),
+        summary: $('summary'), q: $('q'), sort: $('sort'), dir: $('dir'), size: $('size'),
+        type: $('type'), subtype: $('subtype'), container: $('container'), rarity: $('rarity'),
         chips: $('chips'), results: $('results'), entries: $('entries'), pager: $('pager'),
         lightbox: $('lightbox'), lightboxImg: $('lightbox-img'), lightboxCaption: $('lightbox-caption'), lightboxClose: $('lightbox-close'),
     };
@@ -36,7 +36,12 @@
         window.location.href = 'login.html';
         return;
     }
-    el.userChip.innerHTML = `<span>👤 <b>${escapeHtml(user.username)}</b></span>` + (user.badge ? `<span class="bg-[rgb(var(--c-gold)/0.2)] px-2 py-0.5 rounded-sm border border-[rgb(var(--c-gold)/0.4)] text-[10px] text-[rgb(var(--c-amber-300))]">${escapeHtml(user.badge)}</span>` : '');
+    document.addEventListener('keydown', (event) => {
+        if (event.key === '/' && !event.ctrlKey && !event.metaKey && !event.altKey && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) {
+            event.preventDefault();
+            el.q.focus();
+        }
+    });
 
     class ApiError extends Error {
         constructor(message, status) { super(message); this.status = status; }
@@ -59,7 +64,7 @@
         return response.json();
     }
 
-    const state = { q: '', type: '', subtype: '', cont: '', sort: SORT_DEFAULT, dir: 'asc', page: 1, size: 24 };
+    const state = { q: '', type: '', subtype: '', cont: '', rarity: '', sort: SORT_DEFAULT, dir: 'asc', page: 1, size: 24 };
     let taxonomy = {};
     let containers = [];
 
@@ -69,6 +74,7 @@
         state.type = (p.get('tipo') || '').slice(0, 60);
         state.subtype = (p.get('subtipo') || '').slice(0, 60);
         state.cont = (p.get('cont') || '').slice(0, 40);
+        state.rarity = p.get('rareza') || '';
         state.sort = SORTS.includes(p.get('sort')) ? p.get('sort') : SORT_DEFAULT;
         state.dir = p.get('dir') === 'desc' ? 'desc' : 'asc';
         state.page = Math.max(1, parseInt(p.get('page'), 10) || 1);
@@ -82,6 +88,7 @@
         if (state.type) p.set('tipo', state.type);
         if (state.subtype) p.set('subtipo', state.subtype);
         if (state.cont) p.set('cont', state.cont);
+        if (state.rarity) p.set('rareza', state.rarity);
         if (state.sort !== SORT_DEFAULT) p.set('sort', state.sort);
         if (state.dir !== 'asc') p.set('dir', state.dir);
         if (state.page > 1) p.set('page', state.page);
@@ -96,6 +103,7 @@
         if (state.type) p.set('type_line', state.type);
         if (state.subtype) p.set('subtype', state.subtype);
         if (state.cont) p.set('container_id', state.cont);
+        if (state.rarity) p.set('rarity', state.rarity);
         p.set('sort', state.sort);
         p.set('dir', state.dir);
         p.set('page', state.page);
@@ -103,7 +111,7 @@
         return p;
     }
 
-    const RARITY = { common: 'Común', uncommon: 'Poco común', rare: 'Rara', mythic: 'Mítica' };
+    const RARITY = { common: 'Común', uncommon: 'Poco común', rare: 'Rara', mythic: 'Mítica', special: 'Especial', bonus: 'Bonus' };
     const KIND = { deck: 'Mazo', box: 'Caja' };
     const containerKind = (type) => (String(type || '').startsWith('binder') ? 'Archivador' : (KIND[type] || 'Contenedor'));
 
@@ -134,75 +142,80 @@
         const img = safeImage(pr.image_uri);
         const caption = `${cardName}, ${pr.set_name} nº ${pr.collector_number}`;
         const media = img
-            ? `<button type="button" class="print-img relative w-20 h-28 shrink-0 rounded-sm overflow-hidden border border-black group cursor-zoom-in" data-src="${escapeHtml(img)}" data-caption="${escapeHtml(caption)}">
-                   <img src="${escapeHtml(img)}" alt="" loading="lazy" class="w-full h-full object-cover">
+            ? `<button type="button" class="print-img printing-art" data-src="${escapeHtml(img)}" data-caption="${escapeHtml(caption)}" aria-label="Ampliar ${escapeHtml(caption)}">
+                   <img src="${escapeHtml(img)}" alt="" loading="lazy" decoding="async">
                </button>`
-            : `<div class="w-20 h-28 shrink-0 flex items-center justify-center text-center text-[10px] text-[rgb(var(--c-amber-200)/0.5)] bg-[rgb(var(--c-panel))] border border-dashed border-[rgb(var(--c-gold)/0.3)] rounded-sm">Sin foto</div>`;
+            : `<div class="printing-art no-art">Sin imagen</div>`;
         
-        const foil = pr.foil_quantity ? `<span class="ml-2 px-1.5 py-0.5 text-[10px] font-bold text-black rounded-sm bg-linear-to-r from-purple-300 via-sky-300 to-[rgb(var(--c-amber-200))]">${pr.foil_quantity} foil</span>` : '';
-        const where = pr.containers.map((c) => `
-            <li class="flex items-center justify-between text-xs text-[rgb(var(--c-amber-200)/0.8)]">
-                <span class="truncate">${escapeHtml(c.name)}</span>
-                <span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)] ml-1">(${containerKind(c.type)})</span>
-                <span class="font-bold text-[rgb(var(--c-amber-400))] ml-2">×${c.quantity}</span>
-            </li>`).join('');
+        const foil = pr.foil_quantity ? `<span class="foil-tag">${pr.foil_quantity} foil</span>` : '';
+        const rarity = RARITY[pr.rarity] || pr.rarity || 'Sin rareza';
+        const where = pr.containers.map((c) => {
+            const positions = (c.positions || []).map((position) => {
+                if (String(c.type).startsWith('binder')) return `Pág. ${position.page ?? '?'} · hueco ${position.slot ?? '?'}`;
+                if (c.type === 'deck') return `${position.section === 'sideboard' ? 'Banquillo' : 'Mazo'}${position.slot ? ` · ${position.slot}` : ''}`;
+                return position.slot ? `Hueco ${position.slot}` : '';
+            }).filter(Boolean);
+            const conditions = Object.entries(c.conditions || {}).map(([condition, quantity]) =>
+                `<span class="condition-tag">${escapeHtml(condition)} ×${quantity}</span>`).join(' ');
+            const details = [conditions, positions.length ? `<small>${escapeHtml([...new Set(positions)].join(', '))}</small>` : ''].filter(Boolean).join('<br>');
+            return `
+            <li class="printing-location">
+                <span>${escapeHtml(c.name)} <small>${containerKind(c.type)}</small>${details ? `<small class="location-detail">${details}</small>` : ''}</span>
+                <b>×${c.quantity}</b>
+            </li>`;
+        }).join('');
 
         return `
-            <div class="flex gap-3 p-3 bg-[rgb(var(--c-ink-2))] border border-[rgb(var(--c-gold)/0.3)] rounded-xl">
+            <article class="printing-card">
                 ${media}
-                <div class="flex-1 min-w-0 flex flex-col gap-1">
-                    <p class="text-xs font-bold text-[rgb(var(--c-amber-100))] truncate">${escapeHtml(pr.set_name)}</p>
-                    <p class="text-[11px] text-[rgb(var(--c-amber-200)/0.6)] flex items-center gap-2">
-                        <span class="bg-[rgb(var(--c-gold)/0.2)] px-1 rounded-sm font-mono font-bold text-[rgb(var(--c-amber-300))]">${escapeHtml(String(pr.set_code || '').toUpperCase())}</span>
-                        <span>Nº ${escapeHtml(pr.collector_number)}</span>
-                    </p>
-                    <p class="text-xs text-[rgb(var(--c-amber-200))] mt-1">
-                        <b class="text-[rgb(var(--c-amber-400))]">${pr.quantity}</b> ${pr.quantity === 1 ? 'copia' : 'copias'}${foil}
-                    </p>
-                    <ul class="flex flex-col gap-1 mt-2 pt-2 border-t border-[rgb(var(--c-gold)/0.2)]">${where}</ul>
+                <div class="printing-info">
+                    <p class="printing-set">${escapeHtml(pr.set_name)}</p>
+                    <p class="printing-code"><span>${escapeHtml(String(pr.set_code || '').toUpperCase())}</span> Nº ${escapeHtml(pr.collector_number)} · ${escapeHtml(rarity)}</p>
+                    <p class="printing-quantity"><b>${pr.quantity}</b> ${pr.quantity === 1 ? 'copia' : 'copias'}${foil}</p>
+                    <ul class="printing-locations">${where || '<li class="printing-location muted">Sin ubicación registrada</li>'}</ul>
                 </div>
-            </div>`;
+            </article>`;
     }
 
     function entryHtml(item) {
         const tags = item.containers.map((c) =>
-            `<li class="inline-flex items-center gap-1.5 px-2 py-0.5 text-xs bg-[rgb(var(--c-ink-2))] border border-[rgb(var(--c-gold)/0.3)] rounded-lg">
-                <span class="text-[rgb(var(--c-amber-100))]">${escapeHtml(c.name)}</span>
-                <small class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">${containerKind(c.type)}</small>
-                <b class="text-[rgb(var(--c-amber-400))]">×${c.quantity}</b>
+            `<li class="location-chip">
+                <span>${escapeHtml(c.name)} <small>${containerKind(c.type)}</small></span>
+                <b>×${c.quantity}</b>
             </li>`).join('');
 
         const oracle = item.oracle_text
-            ? `<details class="mt-3"><summary class="cursor-pointer text-xs text-[rgb(var(--c-amber-300))] hover:underline">Texto de la carta</summary><p class="mt-2 text-xs text-[rgb(var(--c-amber-200)/0.7)] border-l-2 border-[rgb(var(--c-gold)/0.4)] pl-3 leading-relaxed">${escapeHtml(item.oracle_text).replace(/\n/g, '<br>')}</p></details>` : '';
+            ? `<details class="oracle-details"><summary>Leer texto de reglas</summary><p>${escapeHtml(item.oracle_text).replace(/\n/g, '<br>')}</p></details>` : '';
+        const featured = item.printings[0];
+        const featuredImage = featured && safeImage(featured.image_uri);
+        const cover = featuredImage
+            ? `<button type="button" class="entry-cover print-img" data-src="${escapeHtml(featuredImage)}" data-caption="${escapeHtml(`${item.name}, ${featured.set_name} nº ${featured.collector_number}`)}" aria-label="Ampliar arte de ${escapeHtml(item.name)}"><img src="${escapeHtml(featuredImage)}" alt="" loading="lazy" decoding="async"></button>`
+            : '<div class="entry-cover no-art">Sin imagen</div>';
+        const setCount = item.printings.length;
 
         return `
-            <article class="fantasy-panel p-5 border border-[rgb(var(--c-gold)/0.4)] flex flex-col gap-4">
-                <header class="flex flex-wrap justify-between items-start gap-4">
-                    <div class="flex flex-col gap-1">
-                        <div class="flex items-center gap-3">
-                            <h2 class="font-magic text-xl font-bold text-[rgb(var(--c-amber-200))] tracking-wide">${escapeHtml(item.name)}</h2>
-                            ${manaHtml(item.mana_cost)}
+            <article class="collection-card">
+                ${cover}
+                <div class="card-overview">
+                    <div class="card-title-row">
+                        <div><h2>${escapeHtml(item.name)}</h2><p>${escapeHtml(item.type_line)}</p></div>
+                        ${manaHtml(item.mana_cost)}
+                    </div>
+                    <div class="card-facts">
+                        <span><b>${item.copies}</b> copias</span>
+                        <span><b>${item.printings_count}</b> artes</span>
+                        <span><b>${item.containers_count}</b> ubicaciones</span>
+                        <span class="last-added">Añadida ${fmtDate(item.last_added)}</span>
+                    </div>
+                    <div class="card-locations"><span>Guardada en</span><ul>${tags || '<li class="location-chip muted">Sin contenedor</li>'}</ul></div>
+                    <details class="entry-details">
+                        <summary><span>Ver ediciones y detalles</span><b>${setCount}</b></summary>
+                        <div class="entry-details-content">
+                            <div class="prints-grid">${item.printings.map((pr) => printHtml(pr, item.name)).join('')}</div>
+                            ${oracle}
                         </div>
-                        <p class="text-xs text-[rgb(var(--c-amber-200)/0.6)]">${escapeHtml(item.type_line)}</p>
-                    </div>
-                    <div class="flex gap-4 text-xs">
-                        <div class="flex flex-col text-right"><span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">Copias</span><b class="text-[rgb(var(--c-amber-300))] font-bold">${item.copies}</b></div>
-                        <div class="flex flex-col text-right"><span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">Artes</span><b class="text-[rgb(var(--c-amber-300))] font-bold">${item.printings_count}</b></div>
-                        <div class="flex flex-col text-right"><span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">Contenedores</span><b class="text-[rgb(var(--c-amber-300))] font-bold">${item.containers_count}</b></div>
-                        <div class="flex flex-col text-right"><span class="text-[10px] text-[rgb(var(--c-amber-200)/0.5)]">Última alta</span><b class="text-[rgb(var(--c-amber-200))]">${fmtDate(item.last_added)}</b></div>
-                    </div>
-                </header>
-
-                <div class="flex items-center gap-2">
-                    <span class="text-xs text-[rgb(var(--c-amber-200)/0.5)]">Está en:</span>
-                    <ul class="flex flex-wrap gap-2">${tags}</ul>
+                    </details>
                 </div>
-
-                <div class="prints-grid">
-                    ${item.printings.map((pr) => printHtml(pr, item.name)).join('')}
-                </div>
-
-                ${oracle}
             </article>`;
     }
 
@@ -238,7 +251,7 @@
             </div>`;
     }
 
-    const hasFilters = () => Boolean(state.q || state.type || state.subtype || state.cont);
+    const hasFilters = () => Boolean(state.q || state.type || state.subtype || state.cont || state.rarity);
 
     function renderChips() {
         const contName = (containers.find((c) => String(c.id) === state.cont) || {}).name || 'Contenedor';
@@ -247,6 +260,7 @@
             state.type && ['type', `Tipo: ${state.type}`],
             state.subtype && ['subtype', `Subtipo: ${state.subtype}`],
             state.cont && ['cont', `Contenedor: ${contName}`],
+            state.rarity && ['rarity', `Rareza: ${RARITY[state.rarity] || state.rarity}`],
         ].filter(Boolean);
         const chip = ([key, text]) => `<button type="button" class="bg-[rgb(var(--c-gold)/0.2)] border border-[rgb(var(--c-gold))] px-3 py-1 rounded-full text-xs text-[rgb(var(--c-amber-200))] flex items-center gap-2" data-clear="${key}">
                 ${escapeHtml(text)} <span class="text-[rgb(var(--c-amber-400))] font-bold" aria-label="Quitar">✕</span>
@@ -268,7 +282,8 @@
         if (key === 'type') { state.type = ''; state.subtype = ''; }
         if (key === 'subtype') state.subtype = '';
         if (key === 'cont') state.cont = '';
-        if (key === 'all') { state.q = ''; state.type = ''; state.subtype = ''; state.cont = ''; }
+        if (key === 'rarity') state.rarity = '';
+        if (key === 'all') { state.q = ''; state.type = ''; state.subtype = ''; state.cont = ''; state.rarity = ''; }
         fillSubtypes();
         changeFilters();
     }
@@ -279,6 +294,7 @@
         fillSubtypes();
         el.subtype.value = state.subtype;
         el.container.value = state.cont;
+        el.rarity.value = state.rarity;
         el.sort.value = state.sort;
         el.size.value = String(state.size);
         el.dir.textContent = state.dir === 'asc' ? 'Ascendente' : 'Descendente';
@@ -351,6 +367,7 @@
     el.type.addEventListener('change', () => { state.type = el.type.value; state.subtype = ''; fillSubtypes(); changeFilters(); });
     el.subtype.addEventListener('change', () => { state.subtype = el.subtype.value; changeFilters(); });
     el.container.addEventListener('change', () => { state.cont = el.container.value; changeFilters(); });
+    el.rarity.addEventListener('change', () => { state.rarity = el.rarity.value; changeFilters(); });
 
     el.chips.addEventListener('click', (event) => {
         const one = event.target.closest('[data-clear]');
@@ -378,6 +395,51 @@
 
     el.lightboxClose.addEventListener('click', () => el.lightbox.close());
     el.lightbox.addEventListener('click', (event) => { if (event.target === el.lightbox) el.lightbox.close(); });
+
+    async function printCollection() {
+        const button = $('print-collection');
+        const report = $('printReport');
+        const original = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Preparando…';
+        try {
+            const items = [];
+            let page = 1;
+            let totalPages = 1;
+            do {
+                const params = requestParams();
+                params.set('page', String(page));
+                params.set('page_size', '100');
+                const data = await api('/api/reports/collection', params);
+                items.push(...data.items);
+                totalPages = data.total_pages;
+                page += 1;
+            } while (page <= totalPages);
+            if (!items.length) { window.alert('No hay cartas que coincidan con los filtros actuales.'); return; }
+            const rows = items.flatMap((item) => item.printings.map((printing) => {
+                const locations = printing.containers.map((container) => {
+                    const positions = (container.positions || []).map((position) =>
+                        String(container.type).startsWith('binder') ? `pág. ${position.page ?? '?'} / hueco ${position.slot ?? '?'}` :
+                            container.type === 'deck' ? (position.section === 'sideboard' ? 'banquillo' : 'mazo') :
+                                (position.slot ? `hueco ${position.slot}` : '')).filter(Boolean);
+                    return `${container.name} ×${container.quantity}${positions.length ? ` (${[...new Set(positions)].join(', ')})` : ''}`;
+                }).join('; ');
+                const conditions = Object.entries(printing.conditions || {}).map(([condition, quantity]) => `${condition} ×${quantity}`).join(', ');
+                return `<tr><td>${escapeHtml(item.name)}</td><td>${escapeHtml(printing.set_name)} (${escapeHtml(printing.set_code)})</td><td>${escapeHtml(printing.rarity || '—')}</td><td>${printing.quantity}</td><td>${printing.foil_quantity || '—'}</td><td>${escapeHtml(conditions || '—')}</td><td>${escapeHtml(locations || 'Sin ubicación')}</td></tr>`;
+            }));
+            report.innerHTML = `<h1>Mi colección</h1><p>${new Date().toLocaleDateString('es-ES', { dateStyle: 'long' })} · ${items.length} cartas · ${items.reduce((n, item) => n + item.copies, 0)} copias</p><table><thead><tr><th>Carta</th><th>Edición</th><th>Rareza</th><th>Copias</th><th>Foil</th><th>Estado</th><th>Ubicación</th></tr></thead><tbody>${rows.join('')}</tbody></table><footer>Card Binder Pro</footer>`;
+            document.body.classList.add('printing-report');
+            window.print();
+        } catch (error) {
+            window.alert(`No se pudo preparar el informe: ${error.message}`);
+        } finally {
+            button.disabled = false;
+            button.textContent = original;
+        }
+    }
+
+    $('print-collection').addEventListener('click', printCollection);
+    window.addEventListener('afterprint', () => document.body.classList.remove('printing-report'));
 
     async function loadFilterOptions() {
         const [tax, conts] = await Promise.allSettled([

@@ -4,100 +4,99 @@
     <meta charset="UTF-8">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🃏%3C/text%3E%3C/svg%3E">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Binder - Informe de Colección</title>
-
-    <!-- Tailwind CSS Play CDN -->
+    <title>Mi colección · Card Binder Pro</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    
-    <!-- Estilos Unificados -->
-    <link rel="stylesheet" href="css/portal.css">
-    <link rel="stylesheet" href="css/report.css">
-
-    <!-- Fuentes opcionales para la tipografía de títulos e interfaz -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-
+    <link rel="stylesheet" href="css/portal.css">
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/report.css">
     <script src="js/shared/theme.js"></script>
+    <script src="js/shared/user-menu.js"></script>
 </head>
-<body class="min-h-screen w-full flex flex-col justify-between py-6 px-6 font-sans select-none">
+<body class="collection-page" data-shell-page="collection">
+<div class="app-main">
+<main class="collection-content">
+            <header class="collection-heading">
+                <div>
+                    <p class="collection-eyebrow">TU ARCHIVO PERSONAL</p>
+                    <h1>Mi colección</h1>
+                    <p class="collection-lead">Encuentra tus cartas y consulta sus ediciones y ubicaciones.</p>
+                </div>
+                <div class="collection-actions">
+                    <a href="visor-admin-25d.html" class="collection-action primary"><span aria-hidden="true">＋</span> Añadir cartas</a>
+                    <a href="containers.html" class="collection-action"><span aria-hidden="true">▣</span> Ver contenedores</a>
+                    <button id="print-collection" class="collection-action" type="button">Imprimir informe</button>
+                </div>
+            </header>
 
-    <!-- 🔙 BOTÓN DE RETORNO AL PORTAL Y CHIP DE USUARIO -->
-    <header class="w-full max-w-7xl mx-auto flex items-center justify-between gap-4 mb-6 z-40">
-        <a href="index.html" class="bg-[rgb(var(--c-panel)/0.9)] border border-[rgb(var(--c-gold)/0.6)] px-4 py-2 rounded-xl text-[rgb(var(--c-amber-200))] text-xs font-semibold hover:bg-[rgb(var(--c-gold)/0.3)] transition-colors shadow-2xl backdrop-blur-md flex items-center space-x-2">
-            <span>← Volver al Portal</span>
-        </a>
-        <h1 class="font-magic text-2xl md:text-3xl font-bold text-[rgb(var(--c-amber-300))] tracking-wider drop-shadow-md text-center flex-1">
-            Informe de Colección
-        </h1>
-        <div id="user-chip" class="fantasy-panel px-3 py-1.5 flex items-center gap-2 text-xs text-[rgb(var(--c-amber-200))] border border-[rgb(var(--c-gold)/0.4)]"></div>
-    </header>
+            <section class="collection-toolbar" aria-label="Buscar y filtrar la colección">
+                <div class="collection-search-wrap">
+                    <label for="q">Buscar en mi colección</label>
+                    <div class="collection-search">
+                        <span aria-hidden="true">⌕</span>
+                        <input id="q" type="search" autocomplete="off" placeholder="Nombre de carta, set o tipo…">
+                        <kbd>/</kbd>
+                    </div>
+                </div>
+                <details class="filters-disclosure" id="advanced-filters">
+                    <summary><span class="filter-summary-icon" aria-hidden="true">☷</span> Filtros avanzados <span class="filter-chevron" aria-hidden="true">⌄</span></summary>
+                    <div class="filter-grid">
+                        <div class="filter-field">
+                            <label for="rarity">Rareza</label>
+                            <select id="rarity"><option value="">Todas las rarezas</option><option value="common">Común</option><option value="uncommon">Poco común</option><option value="rare">Rara</option><option value="mythic">Mítica</option><option value="special">Especial</option><option value="bonus">Bonus</option></select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="type">Tipo de carta</label>
+                            <select id="type"><option value="">Cualquier tipo…</option></select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="subtype">Subtipo</label>
+                            <select id="subtype" disabled><option value="">Cualquier subtipo…</option></select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="container">Contenedor</label>
+                            <select id="container"><option value="">Todos los contenedores</option></select>
+                        </div>
+                        <div class="filter-field">
+                            <label for="sort">Ordenar por</label>
+                            <div class="filter-sort-controls">
+                                <select id="sort">
+                                    <option value="name">Nombre</option>
+                                    <option value="type">Tipo</option>
+                                    <option value="copies">Número de copias</option>
+                                    <option value="printings">Número de artes</option>
+                                    <option value="containers">Número de contenedores</option>
+                                    <option value="added">Fecha de alta</option>
+                                </select>
+                                <button id="dir" class="collection-action" type="button" aria-label="Cambiar sentido del orden">Ascendente</button>
+                            </div>
+                        </div>
+                        <div class="filter-field">
+                            <label for="size">Resultados por página</label>
+                            <select id="size">
+                                <option value="12">12 cartas</option>
+                                <option value="24">24 cartas</option>
+                                <option value="48">48 cartas</option>
+                                <option value="96">96 cartas</option>
+                            </select>
+                        </div>
+                    </div>
+                </details>
+            </section>
 
-    <!-- 🎬 CONTENEDOR PRINCIPAL -->
-    <main class="w-full max-w-7xl mx-auto flex-1 flex flex-col gap-6 relative z-20">
-
-        <!-- RESUMEN DE LA COLECCIÓN -->
-        <p id="summary" class="text-sm text-[rgb(var(--c-amber-200)/0.7)]" role="status" aria-live="polite"></p>
-
-        <!-- BARRA DE HERRAMIENTAS (Buscador + Orden + Paginación) -->
-        <section class="fantasy-panel p-4 flex flex-wrap items-end gap-4 border border-[rgb(var(--c-gold)/0.3)]" aria-label="Búsqueda y orden">
-            <div class="flex-1 min-w-[260px] flex flex-col gap-1">
-                <label for="q" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Buscar por nombre, set o tipo</label>
-                <input id="q" type="search" autocomplete="off" placeholder="Por ejemplo: bolt, alpha o legendary" class="w-full">
+            <div class="collection-overview">
+                <p id="summary" class="collection-summary" role="status" aria-live="polite"></p>
+                <div id="chips" class="active-filters" aria-label="Filtros aplicados"></div>
             </div>
 
-            <div class="flex flex-col gap-1 min-w-[160px]">
-                <label for="sort" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Ordenar por</label>
-                <select id="sort" class="w-full">
-                    <option value="name">Nombre</option>
-                    <option value="type">Tipo</option>
-                    <option value="copies">Número de copias</option>
-                    <option value="printings">Número de artes</option>
-                    <option value="containers">Número de contenedores</option>
-                    <option value="added">Fecha de alta</option>
-                </select>
-            </div>
+            <section id="results" class="collection-results" tabindex="-1" aria-label="Resultados de la colección" aria-busy="true">
+                <div id="entries" class="collection-grid"></div>
+                <nav id="pager" class="collection-pager" aria-label="Páginas de resultados"></nav>
+            </section>
+        </main>
+    </div>
 
-            <button id="dir" class="btn-fantasy py-2.5 text-xs h-[42px]" type="button">Ascendente</button>
-
-            <div class="flex flex-col gap-1 min-w-[160px]">
-                <label for="type" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Tipo de carta</label>
-                <select id="type" class="w-full"><option value="">Cualquier tipo...</option></select>
-            </div>
-
-            <div class="flex flex-col gap-1 min-w-[160px]">
-                <label for="subtype" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Subtipo</label>
-                <select id="subtype" class="w-full" disabled><option value="">Cualquier subtipo...</option></select>
-            </div>
-
-            <div class="flex flex-col gap-1 min-w-[200px]">
-                <label for="container" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Contenedor</label>
-                <select id="container" class="w-full"><option value="">Todos los contenedores</option></select>
-            </div>
-
-            <div class="flex flex-col gap-1 min-w-[120px]">
-                <label for="size" class="text-xs text-[rgb(var(--c-amber-200)/0.6)] font-semibold">Cartas por página</label>
-                <select id="size" class="w-full">
-                    <option value="12">12</option>
-                    <option value="24">24</option>
-                    <option value="48">48</option>
-                    <option value="96">96</option>
-                </select>
-            </div>
-        </section>
-
-        <!-- CHIPS DE FILTRO ACTIVO -->
-        <div id="chips" class="flex flex-wrap items-center gap-2"></div>
-
-        <!-- LISTADO DE RESULTADOS DE CARTAS -->
-        <section id="results" class="flex-1 flex flex-col gap-6" tabindex="-1" aria-label="Resultados" aria-busy="true">
-            <div id="entries" class="flex flex-col gap-6"></div>
-            <nav id="pager" class="fantasy-panel p-4 flex flex-wrap items-center justify-between gap-4 border border-[rgb(var(--c-gold)/0.3)]"></nav>
-        </section>
-
-    </main>
-
-    <!-- VISOR AMPLIADO (LIGHTBOX) -->
+    <section id="printReport" aria-label="Informe imprimible de la colección"></section>
     <dialog id="lightbox" class="fantasy-panel p-0 max-w-md w-full border-2 border-[rgb(var(--c-gold))] rounded-2xl overflow-hidden backdrop:bg-black/80">
         <img id="lightbox-img" class="w-full h-auto block" alt="">
         <div class="p-4 flex items-center justify-between gap-4 bg-[rgb(var(--c-panel))]">
@@ -106,9 +105,28 @@
         </div>
     </dialog>
 
-    <script src="js/shared/section-nav.js" data-section="coleccion"></script>
-    <noscript><p class="p-6 text-center text-[rgb(var(--c-amber-200))]">Este informe necesita JavaScript para funcionar.</p></noscript>
+    <div id="chat-box" class="fixed bottom-24 right-6 w-80 md:w-96 h-[450px] bg-[rgb(var(--c-panel)/0.95)] border-2 border-[rgb(var(--c-gold))] rounded-2xl shadow-2xl backdrop-blur-md hidden flex-col z-50 overflow-hidden font-sans">
+        <div class="bg-[rgb(var(--c-panel-2))] border-b border-[rgb(var(--c-gold)/0.4)] px-4 py-3 flex justify-between items-center text-[rgb(var(--c-amber-100))]">
+            <div class="flex items-center space-x-2"><span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span><span class="font-bold tracking-wide text-sm">Sala Global de Conjuradores 🌐</span></div>
+            <button id="chat-close-btn" class="text-[rgb(var(--c-amber-400))] hover:text-white transition-colors cursor-pointer text-lg font-bold px-1" type="button">✕</button>
+        </div>
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto flex flex-col bg-[rgb(var(--c-ink-2)/0.6)] text-sm"></div>
+        <form id="chat-form" class="bg-[rgb(var(--c-panel-2))] border-t border-[rgb(var(--c-gold)/0.4)] p-3 flex items-center space-x-2 relative">
+            <div class="relative">
+                <button type="button" id="sticker-toggle-btn" class="bg-[rgb(var(--c-gold)/0.2)] hover:bg-[rgb(var(--c-gold)/0.4)] border border-[rgb(var(--c-gold)/0.6)] text-[rgb(var(--c-amber-200))] px-2.5 py-2 rounded-xl text-xs transition-colors cursor-pointer" title="Buscar GIF">✨ GIF</button>
+                <div id="sticker-picker" class="absolute bottom-12 left-0 w-64 bg-[rgb(var(--c-panel-2))] border-2 border-[rgb(var(--c-gold))] rounded-xl p-3 shadow-2xl hidden flex flex-col space-y-2 z-50 font-sans">
+                    <input type="text" id="giphy-search-input" placeholder="Buscar GIF (ej. magic, fire)…" autocomplete="off" class="bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.6)] rounded-lg px-2.5 py-1.5 text-[rgb(var(--c-amber-100))] text-xs">
+                    <div id="giphy-results" class="grid grid-cols-3 gap-1.5 max-h-40 overflow-y-auto"><span class="chat-hint">Escribe algo para buscar…</span></div>
+                    <div class="pt-1.5 border-t border-[rgb(var(--c-gold)/0.3)] flex justify-center items-center"><img src="public/assets/Poweredby_100px-Black_VertLogo.png" alt="Powered by Giphy" class="h-4 opacity-75 object-contain"></div>
+                </div>
+            </div>
+            <input type="text" id="chat-input" placeholder="Escribe un mensaje a la comunidad…" autocomplete="off" class="flex-1 bg-[rgb(var(--c-panel))] border border-[rgb(var(--c-gold)/0.6)] rounded-xl px-3 py-2 text-[rgb(var(--c-amber-100))] text-xs" required>
+            <button type="submit" class="bg-[rgb(var(--c-gold)/0.3)] hover:bg-[rgb(var(--c-gold)/0.6)] border border-[rgb(var(--c-gold))] text-[rgb(var(--c-amber-200))] px-4 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer">Enviar</button>
+        </form>
+    </div>
 
+    <script src="js/shared/app-shell.js"></script>
+    <script src="js/shared/chat.js"></script>
     <script src="js/pages/report.js"></script>
     <script src="js/pages/dataio.js"></script>
     <script src="js/shared/footer.js"></script>

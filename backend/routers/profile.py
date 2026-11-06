@@ -5,6 +5,7 @@ Todas las rutas identifican al usuario con la cabecera X-Username (igual que el 
 El usuario NUNCA va en la URL: sale de la cabecera X-Username (pendiente de endurecer con token más adelante).
 
     GET    /api/profile/me                    Perfil propio (+ avatar)
+    PATCH  /api/profile/preferences           Guarda preferencias del perfil (tema de maná)
     POST   /api/profile/avatar                Sube avatar: el cuerpo es la imagen en bruto (Content-Type: image/*)
     DELETE /api/profile/avatar                Quita el avatar propio
 
@@ -22,6 +23,7 @@ La subida usa el cuerpo en bruto (no multipart) porque python-multipart no está
 """
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
+from typing import Literal
 
 from backend.services import get_user_by_username
 from backend import profile_services as svc
@@ -44,6 +46,15 @@ class TargetUser(BaseModel):
     username: str = Field(..., min_length=1, max_length=100)
 
 
+class ThemePreference(BaseModel):
+    theme: Literal["white", "blue", "black", "red", "green", "42"]
+
+
+class PrivacyPreference(BaseModel):
+    profile_private: bool
+    collection_visibility: Literal["hidden", "summary", "stats", "browse"]
+
+
 def _call(func, *args):
     """Ejecuta una operación del servicio y traduce ProfileError a una respuesta HTTP."""
     try:
@@ -56,6 +67,16 @@ def _call(func, *args):
 @router.get("/me")
 def get_my_profile(current_user: dict = Depends(get_session_user)):
     return svc.get_profile(current_user)
+
+
+@router.patch("/preferences")
+def update_preferences(body: ThemePreference, current_user: dict = Depends(get_session_user)):
+    return {"mana_theme": _call(svc.update_mana_theme, current_user, body.theme)}
+
+
+@router.patch("/privacy")
+def update_privacy(body: PrivacyPreference, current_user: dict = Depends(get_session_user)):
+    return _call(svc.update_privacy, current_user, body.profile_private, body.collection_visibility)
 
 
 @router.post("/avatar")

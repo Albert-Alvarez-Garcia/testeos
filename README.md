@@ -1,58 +1,64 @@
-*This project has been created as part of the 42 curriculum by albealva, mgrandia, gasroman, avelandr.*
+*Proyecto desarrollado íntegramente por Alberto Álvarez García (`albealva`) como parte del currículo de 42.*
 
 # Card Binder Pro
 
-Card Binder Pro is a web application for organizing a Magic: The Gathering collection. Users can search for cards, record physical copies, place them in binders, decks or boxes, review their collection, interact with other users and play online games.
+Card Binder Pro es una aplicación web para organizar una colección de Magic: The Gathering. Permite buscar cartas, registrar copias físicas, ubicarlas en archivadores, mazos o cajas, revisar la colección, relacionarse con otros usuarios y jugar online.
 
-The README is complete apart from the individual author fields, which each team member will fill in before submission.
 
-## Description
+## Descripción
 
-The project connects a searchable card catalog with a personal inventory. A card is not the same as a printing or a physical copy: one card can have many printings, and a user can own several copies with different conditions, languages, foil finishes and locations.
+El proyecto conecta un catálogo de cartas con un inventario personal. Una carta no es lo mismo que una impresión ni que una copia física: una carta puede tener muchas impresiones, y una persona puede guardar varias copias con estados, idiomas, acabados foil y ubicaciones distintos.
 
-Key features include:
+Funciones principales:
 
-- Card search with filters, sorting and pagination.
-- Collection management across binders, decks and boxes, including copy condition, language, foil and notes.
-- Import and export of collections in CSV and JSON.
-- Collection reports and visual views of containers.
-- Local and 42 OAuth sign-in, user profiles, avatars, friends, presence and direct messages.
-- Real-time chat and two online games: an isometric Pong game and a multiplayer card-guessing game.
-- Pong lobbies, configurable matches and spectator support.
-- Statistics, match history, achievements and collection progression.
+- Buscar cartas con filtros, ordenación y paginación.
+- Gestionar la colección en archivadores, mazos y cajas, incluyendo estado, idioma, foil y notas.
+- Importar y exportar colecciones en CSV y JSON.
+- Consultar informes y vistas de los contenedores.
+- Iniciar sesión con cuenta local o OAuth de 42; usar perfiles, avatares, amistades, presencia y mensajes directos.
+- Elegir un tema visual de maná; las cuentas de 42 también pueden elegir su tema exclusivo.
+- Configurar la privacidad del perfil y decidir si las amistades pueden explorar la colección.
+- Usar chat en tiempo real y jugar a dos juegos online: Pong isométrico y Adivina Cartas multijugador.
+- Abrir sobres en una experiencia de azar con animación y revelaciones aleatorias.
+- Crear salas y partidas de Pong configurables, con modo espectador.
+- Consultar estadísticas, historial, logros y progreso de colección.
 
-## Technical stack and choices
+## Tecnologías y decisiones
 
-| Area | Technologies | Why |
+| Área | Tecnologías | Motivo |
 |---|---|---|
-| Main portal | HTML, CSS, JavaScript and Tailwind CSS utilities | Keeps the collection interface lightweight and lets the team use page-specific code with a shared visual palette. |
-| Pong client | React 18 and Vite | Provides a component-based client for the live game interface. React is used in the Pong client; the main portal remains vanilla JavaScript. |
-| Backend | Python and FastAPI | Provides structured API routes, request validation, OpenAPI documentation and WebSocket endpoints. |
-| Database | PostgreSQL 15 | Relational tables and foreign keys represent users, card data, printings, copies, containers and social relationships. |
-| Delivery | Docker Compose and Nginx | Runs the database, API and web server as services; Nginx serves the frontend and proxies API and WebSocket traffic. |
-| Local setup | Make and Python 3 | Provides repeatable setup, catalog import, status and smoke-check commands. |
-| Project documentation | Markdown rendered with Python-Markdown during the frontend image build | The portal displays these same English and Spanish README sources. |
+| Portal principal | HTML, CSS, JavaScript y utilidades Tailwind CSS | Mantiene ligera la interfaz de colección y permite organizar código por página con una paleta visual compartida. |
+| Cliente de Pong | React 18 y Vite | Ofrece una interfaz de juego en vivo basada en componentes. React se usa en Pong; el portal principal sigue en JavaScript vanilla. |
+| Backend | Python y FastAPI | Estructura las rutas API, valida peticiones y ofrece documentación OpenAPI y WebSockets. |
+| Base de datos | PostgreSQL 15 | Las tablas relacionales y claves foráneas representan usuarios, cartas, impresiones, copias, contenedores y relaciones sociales. |
+| Despliegue | Docker Compose y Nginx | Ejecuta la base de datos, la API y el servidor web; Nginx sirve el frontend y redirige API y WebSockets. |
+| Entorno local | Make y Python 3 | Facilita la preparación, la importación del catálogo, la consulta del estado y las pruebas de humo. |
+| Documentación | Markdown convertido con Python-Markdown durante la compilación del frontend | El portal muestra estas mismas fuentes en inglés y español. |
 
-## Architecture
+## Arquitectura
 
 ```text
-Browser
+Navegador
   └── HTTPS :8443 / HTTP :8080
        └── Nginx
-            ├── serves static HTML, CSS, JavaScript and the built React Pong client
-            ├── proxies /api/ to FastAPI
-            └── proxies WebSocket connections to FastAPI
+            ├── sirve HTML, CSS, JavaScript y el cliente React compilado
+            ├── redirige /api/ a FastAPI
+            └── redirige WebSockets a FastAPI
                  └── FastAPI
                       └── PostgreSQL
 ```
 
-Docker Compose runs PostgreSQL, the FastAPI backend and Nginx. The database and uploaded avatars use Docker volumes. The Pong client is built into the Nginx image.
+Docker Compose ejecuta PostgreSQL, el backend FastAPI y Nginx. La base de datos y los avatares usan volúmenes Docker. El cliente Pong se compila dentro de la imagen de Nginx.
 
-The portal's project overview is generated from `README.md` and `README.es.md` during the frontend image build, keeping its content aligned with the repository documents.
+La página «Sobre el proyecto» se genera durante la compilación del frontend a partir de la documentación del repositorio.
 
-## Database schema
+### Interfaz compartida
 
-The main relationships are:
+Las páginas del portal que usan la navegación común indican su sección con `data-shell-page`. `frontend/js/shared/app-shell.js` genera el menú lateral y la barra superior; `frontend/js/shared/user-menu.js` aporta la cuenta, las notificaciones y el selector de temas. `frontend/js/shared/theme.js` aplica el tema guardado y sincroniza la preferencia del usuario con la API. Cada página mantiene su propio contenido y sus estilos, mientras que Pong integra este mismo marco alrededor de su cliente React.
+
+## Esquema de base de datos
+
+Las relaciones principales son:
 
 ```mermaid
 erDiagram
@@ -67,154 +73,135 @@ erDiagram
     USERS ||--o{ BLOCKED_USERS : blocks
 ```
 
-- `users` stores local and 42 accounts.
-- `cards` stores a card’s shared identity; `printings` stores set-specific editions and image references.
-- `containers`, `container_slots` and `card_copies` model the user’s physical collection and its location.
-- Social relationships are stored in `friendships` and `blocked_users`.
-- `user_achievements` stores permanent collection milestones. Other progress is calculated from current database records.
-- Game results and player rows are created by the statistics service.
+- `users` guarda cuentas locales y de 42, el tema de maná (`mana_theme`) y las preferencias de privacidad (`profile_private`, `collection_visibility`). `GET /api/profile/me` devuelve estos ajustes; `PATCH /api/profile/preferences` actualiza el tema y `PATCH /api/profile/privacy` actualiza la visibilidad del perfil y la colección. La API añade las columnas al iniciar en instalaciones existentes.
+- `cards` representa la identidad común de una carta; `printings` guarda las ediciones e imágenes de cada set.
+- `containers`, `container_slots` y `card_copies` modelan la colección física y su ubicación.
+- Las relaciones sociales se guardan en `friendships` y `blocked_users`. Los perfiles privados no aparecen en las búsquedas. La colección se puede ocultar, compartir como resumen, compartir con estadísticas o permitir su exploración; la vista de amistad permite filtrar y exportar cartas y ediciones, pero nunca revela contenedores ni ubicaciones.
+- `user_achievements` conserva los hitos permanentes de colección. Otros progresos se calculan a partir de los datos actuales.
+- El servicio de estadísticas crea las tablas de resultados de partidas y jugadores.
 
-The initial schema is in `database/init.sql`; some runtime tables are created by their backend services.
+El esquema inicial está en `database/init.sql`; algunos servicios del backend crean tablas durante la ejecución. Al iniciar, la API añade `users.mana_theme` y las columnas de privacidad a las instalaciones existentes si aún no existen.
 
-## Team information
+## Organización del desarrollo
 
-| 42 login | Role(s) | Responsibilities |
+El alcance, la planificación, la implementación, la integración y la documentación de esta versión se realizaron de forma individual. GitHub se utilizó para mantener el código y el historial del proyecto.
+
+## Funciones y módulos
+
+Los módulos base seleccionados suman 14 puntos: 2 por cada Major y 1 por cada Minor. Cada módulo debe demostrarse como plenamente funcional durante la evaluación.
+
+| Módulo | Tipo | Puntos | Evidencia en el proyecto | Rutas principales |
+| --- | ---: | ---: | --- | --- |
+| Framework frontend y backend | Major | 2 | React en el cliente de Pong y FastAPI en el backend. | `pong-client/package.json`, `backend/main.py` |
+| Funciones en tiempo real | Major | 2 | WebSockets para estado de juegos, salas y chat. | `backend/routers/pong_game.py`, `backend/routers/game.py`, `backend/routers/chat.py` |
+| Interacción entre usuarios | Major | 2 | Chat, perfiles y relaciones de amistad. | `backend/routers/social.py`, `backend/routers/profile.py`, `frontend/js/pages/profile.js` |
+| Gestión estándar de usuarios | Major | 2 | Perfiles, avatares, amistades y presencia online. | `backend/routers/auth.py`, `backend/routers/profile.py`, `backend/presence.py` |
+| Juego web completo | Major | 2 | Pong con partidas en vivo, reglas y condiciones de victoria. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` |
+| Jugadores remotos | Major | 2 | Salas de Pong online y reconexión de jugadores. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` |
+| OAuth 2.0 | Minor | 1 | Inicio de sesión con 42. | `backend/routers/auth.py`, `docker/nginx.conf` |
+| Importación y exportación de datos | Minor | 1 | CSV y JSON con validación de importación. | `backend/routers/dataio.py`, `frontend/js/pages/dataio.js` |
+| **Total base seleccionado** |  | **14** |  |  |
+
+Los primeros seis módulos son Majors; los dos Minors completan la base de 14. La interacción entre usuarios se demuestra con funciones sociales (chat, perfiles y amistades), mientras que la gestión estándar se demuestra con cuentas, perfiles/avatares y presencia. React se usa en Pong; el portal principal usa JavaScript vanilla.
+
+### Retos técnicos y soluciones
+
+| Reto | Solución aplicada | Código relacionado |
 |---|---|---|
-| `gasroman` | Product Owner, DBA, Developer | Product priorities and validation; database responsibilities; implementation. |
-| `albealva` | Project Manager, Tech Lead/Architect, QA, DevOps, Developer | Coordination, architecture, quality checks, deployment and implementation. |
-| `mgrandia` | Frontend Developer, Developer | Frontend implementation. |
-| `avelandr` | Frontend Developer, Developer | Frontend implementation. |
+| Representar una colección física sin mezclar carta, impresión y copia | Registros relacionales separados y claves foráneas conectan catálogo, impresiones, contenedores, huecos y copias. | `database/init.sql`, `backend/routers/containers.py` |
+| Evitar que escrituras simultáneas superen la capacidad del contenedor | El backend valida la operación y devuelve conflicto; la interfaz explica el rechazo para que se pueda actualizar y reintentar. | `backend/routers/containers.py`, `frontend/js/pages/visor-admin-25d.js` |
+| Mantener correctos los callbacks OAuth detrás de Nginx en localhost y por IP LAN | El proxy conserva host y puerto; el callback se deriva de la petición y el preflight valida secretos y TLS local. | `docker/nginx.conf`, `backend/routers/auth.py`, `tools/prepare_local.py` |
+| Mantener consistente el estado multijugador ante desconexiones y espectadores | El servidor conserva el estado de Pong y reconecta al jugador a la sala existente; las conexiones de espectadores se separan de las plazas de jugador. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` |
+| Arrancar el proyecto de forma predecible y preparar una evaluación sin Internet | El preflight de Make valida configuración/TLS; la carga habitual y el catálogo de emergencia usan comandos separados. | `Makefile`, `tools/prepare_local.py`, `tools/install_emergency_catalog.py` |
 
-All team members contributed as developers. Individual feature ownership is recorded in the contribution section below for each member to complete.
+Estos retos resumen algunas de las decisiones técnicas abordadas durante el desarrollo individual de la aplicación.
 
-## Project management
+### Módulos de reserva para la evaluación
 
-The team used GitHub to organize the project and track its code and tasks. A task tied to a specific role was handled by that role. For other tasks, team members volunteered for the work they felt best prepared to complete.
+Son alternativas para demostrar si no se acepta un punto base, o candidatos adicionales para el bonus. El subject permite hasta 5 puntos de bonus después de alcanzar 14. Solo se seleccionarán módulos que superen su demostración.
 
-The team held one weekly meeting, either on Google Meet or in person, and used WhatsApp for day-to-day communication.
-
-## Features and modules
-
-The selected base modules total 14 points: 2 points per Major and 1 per Minor. Each module should be demonstrated as fully functional during evaluation.
-
-| Module | Type | Points | Evidence in the project | Main code locations | Contributors |
-|---|---:|---:|---|---|---|
-| Frontend and backend frameworks | Major | 2 | React in the Pong client and FastAPI in the backend. | `pong-client/package.json`, `backend/main.py` | Fill in author(s) |
-| Real-time features | Major | 2 | WebSockets for game state, lobbies and chat. | `backend/routers/pong_game.py`, `backend/routers/game.py`, `backend/routers/chat.py` | Fill in author(s) |
-| User interaction | Major | 2 | Chat, user profiles and friend relationships. | `backend/routers/social.py`, `backend/routers/profile.py`, `frontend/js/pages/profile.js` | Fill in author(s) |
-| Standard user management | Major | 2 | Profiles, avatars, friends and online presence. | `backend/routers/auth.py`, `backend/routers/profile.py`, `backend/presence.py` | Fill in author(s) |
-| Complete web game | Major | 2 | Pong has live play, rules and win conditions. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` | Fill in author(s) |
-| Remote players | Major | 2 | Online Pong rooms and player reconnection. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` | Fill in author(s) |
-| OAuth 2.0 | Minor | 1 | Sign-in with 42. | `backend/routers/auth.py`, `docker/nginx.conf` | Fill in author(s) |
-| Data import and export | Minor | 1 | Collection import/export in CSV and JSON with validation. | `backend/routers/dataio.py`, `frontend/js/pages/dataio.js` | Fill in author(s) |
-| **Selected base total** |  | **14** |  |  |  |
-
-The first six entries are Majors; the two Minors complete the 14-point base. User interaction is evidenced by social features (chat, profiles and friend relationships), while user management is evidenced by account lifecycle, profile/avatar and presence capabilities. React is used in the Pong client; the main portal uses vanilla JavaScript.
-
-### Engineering challenges and solutions
-
-| Challenge | Approach used | Relevant code | Contributors |
-|---|---|---|---|
-| Representing a physical collection without mixing a card, a printing and an owned copy | Separate relational records and foreign keys connect the card catalog, printings, containers, slots and copies. | `database/init.sql`, `backend/routers/containers.py` | Fill in author(s) |
-| Preventing collection writes from silently exceeding container capacity during concurrent use | The backend validates the operation and returns a conflict response; the interface reports the rejected action so the user can refresh and retry. | `backend/routers/containers.py`, `frontend/js/pages/visor-admin-25d.js` | Fill in author(s) |
-| Keeping OAuth callbacks correct behind Nginx for localhost and LAN access | Forward the original host and port through the proxy and derive the callback from the request; preflight checks local secrets and TLS. | `docker/nginx.conf`, `backend/routers/auth.py`, `tools/prepare_local.py` | Fill in author(s) |
-| Keeping multiplayer state consistent through disconnects and spectator joins | The server owns Pong state and reconnects a player to the existing room; spectator connections are tracked separately from player slots. | `backend/routers/pong_game.py`, `pong-client/src/pong_App.jsx` | Fill in author(s) |
-| Starting the project predictably and preparing for an offline evaluation | A Make preflight validates configuration/TLS; catalog bootstrap and the optional emergency catalog use separate commands. | `Makefile`, `tools/prepare_local.py`, `tools/install_emergency_catalog.py` | Fill in author(s) |
-
-These grouped work areas avoid attributing every individual endpoint separately. Each contributor should add their name to the relevant rows and describe their specific contribution in the section below.
-
-### Reserve modules for evaluation
-
-These are alternatives to demonstrate if a base module is not accepted, or additional candidates for the subject’s bonus. The subject allows up to 5 bonus points after the 14-point minimum. We will select only modules that pass their demonstrations.
-
-| Candidate | Points | Demonstration to prepare |
+| Candidato | Puntos | Demostración que preparar |
 |---|---:|---|
-| Multiplayer with more than two active players | Major · 2 | Join one card-guessing room with at least three separate users; verify shared rounds, timer, scores and final ranking. Spectators do not count as active players for this requirement. |
-| Game statistics and match history | Minor · 1 | Finish matches, then verify wins/losses, history, opponents, leaderboard and persistence after reload. |
-| Spectator mode | Minor · 1 | Join an ongoing Pong match, verify the initial state and live updates, confirm spectators cannot control paddles, then observe disconnect and match completion. Tests have already included up to ten spectators. |
-| Game customization | Minor · 1 | Change game mode, win condition, score/time limit, orb and table theme; verify defaults and that both players receive the same match configuration. |
-| Gamification | Minor · 1 | Demonstrate achievements, leaderboard and XP/levels; verify permanent first-container/first-card milestones survive collection deletion and dynamic progress follows current database state. |
-| Advanced chat | Minor · 1 | Demonstrate blocking, game invitations from chat, game notifications, profile access, persisted history, typing indicators and read receipts. |
-| Advanced search | Minor · 1 | Combine filters, change sort direction and page through results using 12, 24, 36 and 52 cards per page. |
-| Complete notification system | Minor · 1 | Exercise creation, update and deletion for containers and cards, plus game events; record which changes appear in the bell, pop-ups or messages. |
-| Additional browsers | Minor · 1 | Repeat key flows in Firefox and Opera as well as Chrome; check functionality, layout and browser console. |
-| Custom design system | Minor · 1 | Inventory and locate at least ten reusable components, then show the shared palette, typography and icon system. |
-| Custom collection-management module | Major · 2 | Justify its substantial value beyond generic CRUD; demonstrate ownership isolation, inventory placement and capacity/concurrency behavior. |
-| Collection-progression module | Minor · 1 | Explain how collection milestones differ from the standard gamification module and demonstrate their persistence rules. |
+| Multijugador con más de dos jugadores activos | Major · 2 | Entrar con al menos tres usuarios distintos a una sala de Adivina Cartas; comprobar rondas, temporizador, puntuaciones y clasificación compartidos. Los espectadores no cuentan como jugadores activos. |
+| Estadísticas e historial de partidas | Minor · 1 | Terminar partidas y comprobar victorias/derrotas, historial, oponentes, clasificación y persistencia tras recargar. |
+| Modo espectador | Minor · 1 | Entrar en una partida Pong ya iniciada, comprobar estado inicial y actualizaciones en directo, verificar que el espectador no controla palas y observar desconexión y fin. Ya se han probado hasta diez espectadores. |
+| Personalización del juego | Minor · 1 | Cambiar modo, condición de victoria, límite de puntos/tiempo, orbe y tapete; comprobar opciones por defecto y configuración idéntica para ambos jugadores. |
+| Gamificación | Minor · 1 | Demostrar logros, clasificación y XP/niveles; comprobar que primer contenedor/primera carta persisten tras vaciar la colección y que el progreso dinámico sigue el estado actual de la base de datos. |
+| Chat avanzado | Minor · 1 | Demostrar bloqueo, invitaciones a partidas desde el chat, avisos de juego, acceso a perfiles, historial persistente, indicador de escritura y confirmaciones de lectura. |
+| Búsqueda avanzada | Minor · 1 | Combinar filtros, cambiar sentido de ordenación y recorrer resultados con 12, 24, 36 y 52 cartas por página. |
+| Sistema de notificaciones completo | Minor · 1 | Probar creación, modificación y borrado de contenedores y cartas, además de eventos de juego; registrar qué aparece en campana, pop-ups o mensajes. |
+| Navegadores adicionales | Minor · 1 | Repetir flujos importantes en Firefox y Opera, además de Chrome; revisar funcionalidad, aspecto y consola. |
+| Sistema de diseño propio | Minor · 1 | Inventariar y localizar al menos diez componentes reutilizables y mostrar la paleta, tipografía e iconos compartidos. |
+| Módulo propio de gestión de colecciones | Major · 2 | Justificar su valor sustancial frente a un CRUD genérico; demostrar aislamiento de propiedad, ubicación de inventario y capacidad/concurrencia. |
+| Módulo propio de progresión de colección | Minor · 1 | Explicar cómo los hitos de colección se diferencian de la gamificación estándar y demostrar sus reglas de persistencia. |
 
-File upload is not included as a reserve claim because the avatar flow has not been verified against every subject requirement, including upload progress and supported file types. The second-game-with-matchmaking Major is also not included because the current room flow is manual rather than automatic matchmaking.
+La subida de archivos no se incluye como reserva porque el flujo de avatar no se ha verificado frente a todos los requisitos del subject, incluido el progreso de carga y los tipos admitidos. Tampoco se incluye el Major de segundo juego con matchmaking: las salas actuales se eligen manualmente, sin emparejamiento automático.
 
-## Instructions
+## Instrucciones
 
-### Prerequisites
+### Requisitos previos
 
-- Docker Engine with the Docker Compose plugin.
+- Docker Engine y el complemento Docker Compose.
 - GNU Make.
-- Python 3 and OpenSSL on the host.
-- Internet access for the initial Scryfall catalog download, unless using the emergency catalog.
+- Python 3 y OpenSSL instalados en el equipo.
+- Internet para la primera descarga del catálogo Scryfall, salvo que se use el catálogo de emergencia.
 
-Node is used inside the frontend Docker build; it does not need to be installed on the host.
+Node se usa dentro de la compilación Docker del frontend; no hace falta instalarlo en el equipo anfitrión.
 
-### Configure and start
+### Configurar y arrancar
 
-1. Create a local `.env` from the supplied template or copy the team’s private configuration into the repository root. **Do not commit it.**
-2. Fill in the required database credentials, JWT secret and 42 OAuth credentials. The preflight step checks these values and restricts the file permissions.
-3. Run:
+1. Crea un `.env` local desde la plantilla en la raíz del repositorio. **No lo subas a Git.**
+2. Rellena credenciales de base de datos, secreto JWT y credenciales OAuth de 42. La preparación previa valida estos valores y restringe los permisos del fichero.
+3. Ejecuta:
 
    ```bash
    make up
    ```
 
-   The preflight creates or validates a self-signed TLS certificate for localhost and the detected LAN IPv4 address, then Docker Compose builds and starts the services.
-4. Load the card catalog:
+   La preparación crea o valida un certificado TLS autofirmado para localhost y la IPv4 LAN detectada. Después Docker Compose construye e inicia los servicios.
+4. Carga el catálogo de cartas:
 
    ```bash
    make seed
    ```
 
-   This downloads the Scryfall bulk file if it is missing locally, then imports it. The first catalog download requires Internet access.
-5. Open `https://localhost:8443`. From another device, use `https://<LAN-IP>:8443`. The local certificate is self-signed, so the browser may ask you to trust it.
+   Si falta el archivo bulk local, lo descarga de Scryfall y luego lo importa. La primera descarga requiere Internet.
+5. Abre `https://localhost:8443`. Desde otro dispositivo usa `https://<IP-LAN>:8443`. El certificado local es autofirmado; el navegador puede pedir que se confíe en él.
 
-For an offline evaluation, place the emergency ZIP outside the repository (default: `/tmp/card-binder-emergency.zip`) and run `make emergency`. The package is an optional fallback; it is not part of the Git repository.
+Para una evaluación sin Internet, coloca el ZIP de emergencia fuera del repositorio (por defecto `/tmp/card-binder-emergency.zip`) y ejecuta `make emergency`. Es una alternativa opcional, no se guarda en Git.
 
-### Useful commands
+### Comandos útiles
 
-| Command | Purpose |
+| Comando | Para qué sirve |
 |---|---|
-| `make up` | Validate local configuration, create/validate TLS and start the services. |
-| `make restart` | Rebuild and recreate services while preserving Docker volumes. |
-| `make status` | Show service state. |
-| `make logs` | Follow service logs. |
-| `make test` | Run the read-only HTTPS, API and database smoke checks. |
-| `make down` | Stop services while preserving volumes. |
-| `make clean` | Remove the project’s containers, images and volumes; this deletes stored user and collection data. |
-| `make prune` | Run Docker system prune; this can affect unused Docker resources outside this project. |
+| `make up` | Valida configuración, prepara TLS e inicia los servicios. |
+| `make restart` | Reconstruye y recrea servicios conservando volúmenes Docker. |
+| `make status` | Muestra el estado de los servicios. |
+| `make logs` | Sigue los logs de los servicios. |
+| `make test` | Ejecuta comprobaciones de humo de solo lectura para HTTPS, API y base de datos. |
+| `make down` | Detiene servicios y conserva volúmenes. |
+| `make clean` | Elimina contenedores, imágenes y volúmenes del proyecto; borra los datos guardados. |
+| `make prune` | Ejecuta Docker system prune; puede afectar recursos Docker no usados fuera de este proyecto. |
 
-## Resources and AI use
+## Recursos y uso de IA
 
-Project references:
+Referencias del proyecto:
 
-- [FastAPI documentation](https://fastapi.tiangolo.com/)
-- [React documentation](https://react.dev/)
-- [PostgreSQL documentation](https://www.postgresql.org/docs/)
-- [Docker Compose documentation](https://docs.docker.com/compose/)
-- [Tailwind CSS documentation](https://tailwindcss.com/docs)
-- [Scryfall API documentation](https://scryfall.com/docs/api)
-- [GIPHY API documentation](https://developers.giphy.com/docs/)
+- [Documentación de FastAPI](https://fastapi.tiangolo.com/)
+- [Documentación de React](https://react.dev/)
+- [Documentación de PostgreSQL](https://www.postgresql.org/docs/)
+- [Documentación de Docker Compose](https://docs.docker.com/compose/)
+- [Documentación de Tailwind CSS](https://tailwindcss.com/docs)
+- [Documentación de la API Scryfall](https://scryfall.com/docs/api)
+- [Documentación de la API GIPHY](https://developers.giphy.com/docs/)
 
-Claude and ChatGPT were used as advisory tools for the Product Owner, especially for product scope and prioritization. They also assisted with documentation, smoke-test scripts, edge-case test planning, repetitive frontend/backend corrections, refactoring discussions and stability improvements. Human contributors reviewed, corrected and tested relevant suggestions before relying on them. AI is not a feature embedded in the product.
+Utilicé Claude y ChatGPT como herramientas de asesoría para el alcance, la priorización, la documentación, la planificación de pruebas, la depuración y la revisión de código. Revisé y validé las sugerencias antes de incorporarlas. La IA no es una función integrada en el producto.
 
-## Individual contributions
+## Autor
 
-Each team member should complete their own row. Group related features, identify the relevant code paths, and explain a significant challenge and how it was addressed. Contributions may include implementation, review, testing or integration; this section does not imply that every feature had a single owner.
+- **Nombre:** Alberto Álvarez García
+- **Login de 42:** `albealva`
 
-| 42 login | Features/modules and code paths | Challenge and solution |
-|---|---|---|
-| `gasroman` | Fill in author | Fill in author |
-| `albealva` | Fill in author | Fill in author |
-| `mgrandia` | Fill in author | Fill in author |
-| `avelandr` | Fill in author | Fill in author |
+## Créditos
 
-## Credits
-
-Card catalog data and card image references are provided through Scryfall. GIF search uses GIPHY. The repository includes third-party assets; their applicable license and attribution information should be retained alongside the assets where provided.
+Los datos del catálogo y las referencias a imágenes de cartas se obtienen de Scryfall. La búsqueda de GIF usa GIPHY. El repositorio incluye recursos de terceros; cuando se proporciona información de licencia o atribución junto a esos recursos, debe conservarse.

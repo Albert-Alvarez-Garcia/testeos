@@ -2,7 +2,7 @@
 //   Entry -> elegir nombre y modo (Local / Online) y entrar en una sala
 //   Room  -> sala conectada: jugadores, configuración, chat y botón de empezar
 import { useEffect, useRef, useState } from "react";
-import { DEFAULT_CONFIG, accentVars, describeWin, httpUrl } from "./pong_config.js";
+import { DEFAULT_CONFIG, describeWin, httpUrl } from "./pong_config.js";
 import useLobbySocket from "./pong_useLobbySocket.js";
 import IsoPreview from "./pong_IsoPreview.jsx";
 import LobbyConfig from "./pong_LobbyConfig.jsx";
@@ -94,7 +94,7 @@ function Entry({ username, onJoin }) {
   }
 
   return (
-    <main className="scene scene-entry" style={accentVars(DEFAULT_CONFIG.ball_mana)}>
+    <main className="scene scene-entry">
       <section className="stage">
         <div className="stage-title">
           <h1 className="title">Pong isométrico</h1>
@@ -107,7 +107,7 @@ function Entry({ username, onJoin }) {
         <form className="block" onSubmit={submit}>
           <h2 id="entry-title" className="block-title">Antes del duelo</h2>
           <p className="lead">Elige cómo quieres jugar.</p>
-          <p className="note note-warn">Para jugar a Pong necesitas un teclado. Desde móvil o tablet puedes ver partidas como espectador.</p>
+          <p className="note">Juega con teclado en escritorio o con los controles táctiles en móvil. También puedes ver partidas como espectador.</p>
 
           <div className="field">
             <label className="field-label" htmlFor="player-name">Tu nombre</label>
@@ -221,7 +221,7 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
 
   if (status === "rejected" || status === "replaced") {
     return (
-      <main className="scene scene-solo" style={accentVars(config.ball_mana)}>
+      <main className="scene scene-solo">
         <section className="plate plate-solo">
           <h1 className="title">{status === "rejected" ? "No se puede entrar" : "Sala abierta en otra pestaña"}</h1>
           <p className="lead">
@@ -244,13 +244,13 @@ function Room({ username, join, initialConfig, onLeave, onStartGame }) {
   const canStart = status === "open" && isHost && !!lobby?.can_start;
 
   return (
-    <main className="scene scene-room" style={accentVars(config.ball_mana)}>
+    <main className="scene scene-room">
       <section className="stage">
         <IsoPreview mana={config.ball_mana} table={config.table_theme}>
           <div className="stage-caption plate plate-sm">
             <p className="stage-win">{describeWin(config)}</p>
             <p className="stage-sub">
-              {isLocal ? "Jugador 1: W y S. Jugador 2: ↑ y ↓." : "Cada jugador controla su pala con W y S o con ↑ y ↓."}
+              {isLocal ? "Jugador 1: W y S. Jugador 2: ↑ y ↓. En móvil, usa los controles en pantalla." : "Controla tu pala con W y S o con los controles táctiles en pantalla."}
             </p>
           </div>
         </IsoPreview>

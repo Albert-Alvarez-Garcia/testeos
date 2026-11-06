@@ -3,12 +3,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from typing import List
 import json
 from backend.routers import cards, containers, auth, chat, game, pong_game, achievements, reports, access, profile, social, giphy, stats, dataio
+from backend.profile_services import init_theme_preference_schema, init_privacy_schema
 
 app = FastAPI(title="Card Binder Pro API", version="1.0")
 
 @app.on_event("startup")
 def _startup():
     stats.init_stats_tables()
+    init_theme_preference_schema()
+    init_privacy_schema()
 
 app.add_middleware(
     CORSMiddleware,

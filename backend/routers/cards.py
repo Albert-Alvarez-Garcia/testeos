@@ -14,18 +14,20 @@ router = APIRouter(prefix="/api/cards", tags=["cards"])
 def filter_cards(
     name: Optional[str] = Query(None, description="Filtrar por nombre de la carta"),
     type_line: Optional[str] = Query(None, description="Filtrar por tipo"),
+    subtype: Optional[str] = Query(None, description="Filtrar por subtipo"),
     rarity: Optional[str] = Query(None, description="Filtrar por rareza")
 ):
     # Normalizamos los parámetros
     name = name.strip() if name else ""
     type_line = type_line.strip() if type_line else None
+    subtype = subtype.strip() if subtype else None
 
     # Si no hay ningún filtro, no hacemos la búsqueda
     if not name and not type_line:
         return []
 
     # Buscamos usando nombre (aunque esté vacío) y/o tipo
-    cards = search_cards_by_substring(name, type_line)
+    cards = search_cards_by_substring(name, type_line, subtype)
 
     return cards or []
 

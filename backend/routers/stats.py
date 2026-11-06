@@ -121,6 +121,19 @@ XP_CARD, XP_CONTAINER, XP_MEDAL, XP_GAME, XP_WIN = 2, 25, 50, 20, 50
 MEDAL_CARD_TARGETS = (1, 100, 500, 1000)   # coinciden con las medallas de achievements.py
 
 
+def level_progress_for_xp(xp: int) -> dict:
+    """Resumen de nivel y avance; centraliza la curva que ven Estadísticas y la lista de amigos."""
+    xp = max(0, int(xp))
+    level = 1 + int((xp / 100) ** 0.5)
+    start, nxt = 100 * (level - 1) ** 2, 100 * level ** 2
+    return {
+        "level": level,
+        "level_start": start,
+        "next_level_xp": nxt,
+        "progress": round(100 * (xp - start) / (nxt - start)),
+    }
+
+
 @router.get("/xp")
 def my_xp(username: str = Depends(session_username)):
     conn = get_db_connection()
@@ -147,7 +160,4 @@ def my_xp(username: str = Depends(session_username)):
     parts = {"cards": cards * XP_CARD, "containers": containers * XP_CONTAINER, "medals": medals * XP_MEDAL,
              "games": games * XP_GAME, "wins": wins * XP_WIN}
     xp = sum(parts.values())
-    level = 1 + int((xp / 100) ** 0.5)
-    start, nxt = 100 * (level - 1) ** 2, 100 * level ** 2
-    return {"xp": xp, "level": level, "level_start": start, "next_level_xp": nxt,
-            "progress": round(100 * (xp - start) / (nxt - start)), "breakdown": parts}
+    return {"xp": xp, **level_progress_for_xp(xp), "breakdown": parts}

@@ -16,12 +16,11 @@
     const SECTIONS = {
         coleccion: {
             title: 'Mi colección',
-            hub: 'hub-coleccion.html',
+            hub: 'report.html',
             items: [
                 { label: 'Todas mis cartas', href: 'report.html', also: ['coleccion.html'] },
-                { label: 'Contenedores', href: 'visor-containers.html', also: ['gestor-contenedor.html'] },
+                { label: 'Contenedores', href: 'containers.html', also: ['visor-containers.html', 'gestor-contenedor.html'] },
                 { label: 'Añadir cartas', href: 'visor-admin-25d.html' },
-                { label: 'Crear contenedor', href: 'containers.html' }
             ]
         },
         juegos: {
