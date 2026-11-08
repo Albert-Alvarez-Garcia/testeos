@@ -18,6 +18,7 @@ __pycache__/
 *.md
 !README.md
 !README.es.md
+!README.en.md
 data/default-cards.json
 data/default-cards.jsonl.gz
 data/emergency/

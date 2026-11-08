@@ -10,10 +10,18 @@ RUN npm run build
 FROM python:3.12-alpine AS readme-builder
 WORKDIR /docs
 RUN pip install --no-cache-dir Markdown==3.11.2
-COPY README.md README.es.md ./
+COPY README*.md ./
 COPY docker/render_readme.py ./render_readme.py
-RUN python render_readme.py README.md /output/en.html \
-    && python render_readme.py README.es.md /output/es.html
+RUN if [ -f README.en.md ]; then \
+        python render_readme.py README.en.md /output/en.html; \
+    else \
+        python render_readme.py README.md /output/en.html; \
+    fi \
+    && if [ -f README.es.md ]; then \
+        python render_readme.py README.es.md /output/es.html; \
+    else \
+        python render_readme.py README.md /output/es.html; \
+    fi
 
 # --- ETAPA 2: Servir con Nginx ---
 FROM nginx:alpine
